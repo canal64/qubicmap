@@ -156,7 +156,7 @@ function die(){st="over";deadAt=performance.now();flash=1;beep(140,.35,"sawtooth
   var nm=store.get("fq_name","");$("iName").value=nm;$("fName").hidden=tick===0;
   $("oRank").textContent=tick>0?preRank(tick):"";gameToken=token;
   if(tick>0&&nm)submit(nm,false);
-  var txt="I reached tick "+tick+" in Flappy Qubic, epoch "+epochInfo().n+". Beat me: https://qubicmap.org/play";shareText="I reached tick "+tick+" in Flappy Qubic, epoch "+epochInfo().n+". Beat me:";
+  var txt="I reached tick "+tick+" in Flappy $QUBIC, epoch "+epochInfo().n+". Beat me: https://qubicmap.org/play";shareText="I reached tick "+tick+" in Flappy $QUBIC, epoch "+epochInfo().n+". Beat me:";
   $("aShare").href="https://x.com/intent/post?text="+encodeURIComponent(txt);
   setTimeout(function(){$("ovOver").hidden=false},350)}
 
