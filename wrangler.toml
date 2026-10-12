@@ -1,8 +1,16 @@
 name = "qubicmap-site"
-pages_build_output_dir = "public"
+main = "src/worker.js"
 compatibility_date = "2026-06-01"
+
+[assets]
+directory = "public"
+binding = "ASSETS"
+run_worker_first = true
 
 [[d1_databases]]
 binding = "DB"
 database_name = "qubicmap"
 database_id = "8e5625ed-2b7b-4cdf-a7c5-fdbd6277c066"
+
+[observability]
+enabled = true
