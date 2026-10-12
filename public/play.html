@@ -212,7 +212,7 @@ document.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")re
 /* Drawing */
 function bars(x,y,s,rot,glow){cx.save();cx.translate(x,y);cx.rotate(rot);
   cx.shadowColor=C.ice;cx.shadowBlur=glow;cx.fillStyle=C.ice;
-  rr(-13*s,-17*s,9*s,34*s,3*s);rr(1*s,-17*s,9*s,26*s,3*s);cx.restore()}
+  rr(-9.9*s,-17*s,8.5*s,25.5*s,1.1*s);rr(1.4*s,-17*s,8.5*s,34*s,1.1*s);cx.restore()}
 function rr(x,y,w,h,r){cx.beginPath();cx.moveTo(x+r,y);cx.arcTo(x+w,y,x+w,y+h,r);cx.arcTo(x+w,y+h,x,y+h,r);cx.arcTo(x,y+h,x,y,r);cx.arcTo(x,y,x+w,y,r);cx.closePath();cx.fill()}
 function pillar(x,y,h,top){var g=cx.createLinearGradient(x,0,x+PW,0);g.addColorStop(0,"#16304d");g.addColorStop(.5,"#2b5684");g.addColorStop(1,"#16304d");
   cx.fillStyle=g;cx.fillRect(x,y,PW,h);cx.fillStyle=C.live;cx.globalAlpha=.85;cx.fillRect(x-3,top?y+h-6:y,PW+6,6);cx.globalAlpha=1;
