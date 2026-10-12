@@ -49,6 +49,7 @@ canvas{display:block;width:100%;height:100%}
 .board li.ex .n{color:var(--muted)}
 .board li.ex .n i{font-style:normal;font-size:10px;letter-spacing:.08em;margin-left:6px;border:1px solid var(--rule);padding:0 4px}
 .board h3{margin:10px 0 4px;font:600 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:left}
+.sbtn{background:none;border:0;padding:0;cursor:pointer}
 .share{font:12px var(--mono);color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .foot{max-width:440px;width:100%;font:11.5px var(--mono);color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .foot a{color:inherit;text-decoration:underline;text-underline-offset:3px}
@@ -88,7 +89,7 @@ canvas{display:block;width:100%;height:100%}
       <button class="btn" id="bAgain">Play again</button>
       <button class="btn ghost" id="bBoard">Board</button>
     </div>
-    <a class="share" id="aShare" target="_blank" rel="noopener" href="#">Share my score on X ↗</a>
+    <div class="row"><a class="share" id="aShare" target="_blank" rel="noopener" href="https://x.com/intent/post">Post my score on X ↗</a><button class="share sbtn" id="bShare" type="button" hidden>Other apps…</button></div>
   </div>
 
   <div class="ov" id="ovBoard" hidden>
@@ -155,7 +156,7 @@ function die(){st="over";deadAt=performance.now();flash=1;beep(140,.35,"sawtooth
   var nm=store.get("fq_name","");$("iName").value=nm;$("fName").hidden=tick===0;
   $("oRank").textContent=tick>0?preRank(tick):"";gameToken=token;
   if(tick>0&&nm)submit(nm,false);
-  var txt="I reached tick "+tick+" in Flappy Qubic, epoch "+epochInfo().n+". Beat me on qubicmap.org";shareText="I reached tick "+tick+" in Flappy Qubic, epoch "+epochInfo().n+". Beat me:";
+  var txt="I reached tick "+tick+" in Flappy Qubic, epoch "+epochInfo().n+". Beat me: https://qubicmap.org/play";shareText="I reached tick "+tick+" in Flappy Qubic, epoch "+epochInfo().n+". Beat me:";
   $("aShare").href="https://x.com/intent/post?text="+encodeURIComponent(txt);
   setTimeout(function(){$("ovOver").hidden=false},350)}
 
@@ -192,12 +193,10 @@ $("fName").addEventListener("submit",function(e){e.preventDefault();var n=$("iNa
   if(!n){$("iName").focus();return}store.set("fq_name",n);submit(n,true)});
 $("bStart").onclick=start;$("bAgain").onclick=start;$("bBack").onclick=start;$("bBoard").onclick=showBoard;
 
-/* Share: the phone's share sheet (X app, Telegram…) when available, otherwise the X web link */
+/* Share: "Post my score on X" is a plain link to X (opens the X app on phones); "Other apps…" opens the phone's share sheet */
 var shareText="";
-$("aShare").addEventListener("click",function(e){var a=this;if(!navigator.share||a.dataset.web)return;e.preventDefault();
-  navigator.share({text:shareText,url:"https://qubicmap.org/"}).catch(function(err){if(err&&err.name==="AbortError")return;
-    a.dataset.web="1";a.textContent="Open X in the browser ↗"})});
-
+if(navigator.share)$("bShare").hidden=false;
+$("bShare").addEventListener("click",function(){navigator.share({text:shareText+" https://qubicmap.org/play"}).catch(function(){})});
 /* Input: tap anywhere on the stage, or Space / Up */
 $("stage").addEventListener("pointerdown",function(e){if(e.target.closest("button,input,a,form"))return;
   if(st==="play")flap();else if(st==="over"&&performance.now()-deadAt>450)start();else if(st==="start")start()});
