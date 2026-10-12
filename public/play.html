@@ -196,6 +196,12 @@ $("bStart").onclick=start;$("bAgain").onclick=start;$("bBack").onclick=start;$("
 /* Share: "Post my score on X" is a plain link to X (opens the X app on phones); "Other apps…" opens the phone's share sheet */
 var shareText="";
 if(navigator.share)$("bShare").hidden=false;
+/* iPhone: open the X app straight to a new post; if the app does not answer, fall back to x.com */
+$("aShare").addEventListener("click",function(e){if(!/iPhone|iPad|iPod/.test(navigator.userAgent))return;e.preventDefault();
+  var web=this.href,m=web.split("text=")[1]||"",gone=false;
+  var off=function(){if(document.hidden)gone=true};document.addEventListener("visibilitychange",off);
+  setTimeout(function(){document.removeEventListener("visibilitychange",off);if(!gone&&!document.hidden)window.location.href=web},1500);
+  window.location.href="twitter://post?message="+m});
 $("bShare").addEventListener("click",function(){navigator.share({text:shareText+" https://qubicmap.org/play"}).catch(function(){})});
 /* Input: tap anywhere on the stage, or Space / Up */
 $("stage").addEventListener("pointerdown",function(e){if(e.target.closest("button,input,a,form"))return;
