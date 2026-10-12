@@ -1,0 +1,250 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Flappy Qubic: fly the Qubic bars through the gaps. A weekly board that resets with every Qubic epoch, on the Qubic Ecosystem Map.">
+<link rel="canonical" href="https://qubicmap.org/play"><meta property="og:type" content="website"><meta property="og:title" content="Flappy Qubic"><meta property="og:description" content="Fly the Qubic bars through the gaps. Weekly board, reset every epoch."><meta property="og:url" content="https://qubicmap.org/play"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#04070c">
+<title>Flappy Qubic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: one centred game column, HUD over the canvas, overlays for start / game over / board. Single dark look, same as qubicmap.org. */
+:root{
+  --void:#04070c; --panel:#0a1019; --rule:#182434; --ink:#dfe9f3; --muted:#7f93a8;
+  --ice:#cfe6ff; --live:#62d6a0; --warn:#f1bb5c; --hold:#f08a72;
+  --display:"Chakra Petch","Eurostile",system-ui,sans-serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;min-height:100%;background:var(--void);color:var(--ink);font:14px/1.45 var(--sans);padding-inline:16px;padding-block:16px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:12px}
+.top{width:100%;max-width:440px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.top h1{margin:0;font:700 18px var(--display);letter-spacing:.12em;text-transform:uppercase}
+.top h1 span{color:transparent;-webkit-text-stroke:1px var(--ice)}
+.top .ep{font:12px var(--mono);color:var(--muted);text-align:right}
+.top .ep b{color:var(--ice);font-weight:500}
+.stage{position:relative;width:100%;max-width:440px;aspect-ratio:9/15;max-height:calc(100% - 90px);border:1px solid var(--rule);background:var(--panel);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;inset:12px 14px auto;display:flex;justify-content:space-between;pointer-events:none;font:12px var(--mono);color:var(--muted)}
+.hud b{display:block;font:600 26px var(--display);color:var(--ink);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.hud .r{text-align:right}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:color-mix(in srgb,var(--void) 72%,transparent)}
+.ov h2{margin:0;font:700 26px/1.1 var(--display);letter-spacing:.08em;text-transform:uppercase;text-wrap:balance}
+.ov p{margin:0;color:var(--muted);max-width:30ch}
+.ov .big{font:600 44px var(--display);color:var(--ice);font-variant-numeric:tabular-nums;line-height:1}
+.ov .sub{font:12px var(--mono);color:var(--muted)}
+.btn{font:600 12px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--void);background:var(--ice);border:0;padding:11px 18px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule)}
+.btn:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.name{display:flex;gap:8px;width:100%;max-width:300px}
+.name input{flex:1;min-width:0;font:14px var(--mono);color:var(--ink);background:var(--void);border:1px solid var(--rule);padding:9px 10px}
+.rec{font:600 12px var(--display);letter-spacing:.14em;color:var(--warn);text-transform:uppercase}
+.board{width:100%;max-width:300px;border-top:1px solid var(--rule)}
+.board ol{list-style:none;margin:0;padding:0}
+.board li{display:grid;grid-template-columns:2.2em 1fr auto;gap:8px;padding:6px 2px;border-bottom:1px solid var(--rule);font:13px var(--mono);text-align:left;font-variant-numeric:tabular-nums}
+.board li .k{color:var(--muted)}
+.board li .s{color:var(--ice)}
+.board li.me{background:color-mix(in srgb,var(--live) 12%,transparent)}
+.board li.me .n{color:var(--live)}
+.board li.ex .n{color:var(--muted)}
+.board li.ex .n i{font-style:normal;font-size:10px;letter-spacing:.08em;margin-left:6px;border:1px solid var(--rule);padding:0 4px}
+.board h3{margin:10px 0 4px;font:600 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:left}
+.share{font:12px var(--mono);color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.foot{max-width:440px;width:100%;font:11.5px var(--mono);color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.foot a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.foot button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@keyframes pop{from{transform:scale(.92);opacity:.4}to{transform:none;opacity:1}}
+.ov:not([hidden]) > *{animation:pop .22s ease-out both}
+@media (prefers-reduced-motion:reduce){.ov:not([hidden]) > *{animation:none}}
+</style>
+</head><body>
+
+<div class="top">
+  <h1>Flappy <span>Qubic</span></h1>
+  <div class="ep">Epoch <b id="epN">—</b><br><span id="epLeft">board resets …</span></div>
+</div>
+
+<div class="stage" id="stage">
+  <canvas id="c" aria-label="Flappy Qubic game"></canvas>
+  <div class="hud"><div>TICK<b id="hTick">0</b></div><div class="r">BEST<b id="hBest">0</b></div></div>
+
+  <div class="ov" id="ovStart">
+    <h2>Fly the Qubic bars<br>through the gaps</h2>
+    <p>Tap, click or press Space to flap. Every gap you clear is one tick.</p>
+    <button class="btn" id="bStart">Play</button>
+    <span class="sub">The weekly board resets with each epoch.</span>
+  </div>
+
+  <div class="ov" id="ovOver" hidden>
+    <span class="rec" id="oRec" hidden>New personal best</span>
+    <span class="sub">Epoch ended at tick</span>
+    <div class="big" id="oScore">0</div>
+    <span class="sub" id="oRank"></span>
+    <form class="name" id="fName" autocomplete="off">
+      <input id="iName" maxlength="16" placeholder="Your name" aria-label="Your name for the board">
+      <button class="btn" type="submit">Save</button>
+    </form>
+    <div class="row">
+      <button class="btn" id="bAgain">Play again</button>
+      <button class="btn ghost" id="bBoard">Board</button>
+    </div>
+    <a class="share" id="aShare" target="_blank" rel="noopener" href="#">Share my score on X ↗</a>
+  </div>
+
+  <div class="ov" id="ovBoard" hidden>
+    <h2 id="bTitle">Epoch board</h2>
+    <div class="board"><h3>Top 10 this epoch</h3><ol id="olBoard"></ol></div>
+    <span class="sub" id="bPlayers"></span>
+    <button class="btn" id="bBack">Play</button>
+  </div>
+</div>
+
+<div class="foot">
+  <a href="/">← Qubic Ecosystem Map</a>
+  <button id="bSound" type="button">Sound: on</button>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var store={get:function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
+           set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* Epoch: 234 began Wed 7 Oct 2026 12:00 UTC; each epoch lasts 7 days. */
+var E0=Date.UTC(2026,9,7,12,0,0),WEEK=7*864e5;
+function epochInfo(){var now=Date.now(),k=Math.floor((now-E0)/WEEK);return{n:234+k,left:E0+(k+1)*WEEK-now}}
+function fmtLeft(ms){var h=Math.floor(ms/36e5),d=Math.floor(h/24);h%=24;var m=Math.floor(ms%36e5/6e4);return d?d+"d "+h+"h":h+"h "+m+"m"}
+function paintEpoch(){var e=epochInfo();$("epN").textContent=e.n;$("epLeft").textContent="board resets in "+fmtLeft(e.left)}
+paintEpoch();setInterval(paintEpoch,30000);
+
+/* Canvas in logical units 360 x 600 */
+var W=360,H=600,cv=$("c"),cx=cv.getContext("2d"),dpr=1;
+function fit(){var r=cv.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);H=W*r.height/r.width}
+window.addEventListener("resize",fit);
+
+var C={ice:"#cfe6ff",live:"#62d6a0",warn:"#f1bb5c",hold:"#f08a72",rule:"#182434",panel:"#0a1019",void:"#04070c",muted:"#7f93a8"};
+var G=1500,FLAP=-430,PW=58,GAP0=170,GAPMIN=128,SPACING=210,SPD0=140,SPDMAX=230;
+var st="start",bird,pipes,tick,speed,t0,best=store.get("fq_best",0),dots=[],flash=0,deadAt=0;
+$("hBest").textContent=best;
+
+for(var i=0;i<70;i++)dots.push({x:Math.random()*W,y:Math.random(),z:.3+Math.random()*.7});
+
+function reset(){bird={x:W*.3,y:H*.45,v:0,a:0};pipes=[];tick=0;speed=SPD0;t0=0;$("hTick").textContent=0;spawn(W+60)}
+function gapFor(){return Math.max(GAPMIN,GAP0-tick*1.6)}
+function spawn(x){var g=gapFor(),m=70,y=m+Math.random()*(H-2*m-g);pipes.push({x:x,y:y,g:g,done:false})}
+
+/* Sound */
+var ac=null,sound=store.get("fq_sound",true);
+$("bSound").textContent="Sound: "+(sound?"on":"off");
+$("bSound").onclick=function(){sound=!sound;store.set("fq_sound",sound);this.textContent="Sound: "+(sound?"on":"off")};
+/* Mobile browsers only start audio from a touch: unlock on the first one, and ask iOS to play even in silent mode */
+function unlock(){try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
+  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state!=="running")ac.resume();
+    var b=ac.createBuffer(1,1,22050),s=ac.createBufferSource();s.buffer=b;s.connect(ac.destination);s.start(0)}catch(e){}}
+["pointerdown","touchend","keydown","click"].forEach(function(ev){document.addEventListener(ev,unlock,true)});
+function beep(f,d,type,vol){if(!sound)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state!=="running")ac.resume();var o=ac.createOscillator(),g=ac.createGain();o.type=type||"square";o.frequency.value=f;g.gain.value=vol||.04;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+
+function flap(){if(st==="play"){bird.v=FLAP;beep(660,.08)}}
+function start(){hide();reset();st="play";newToken();flap()}
+function hide(){["ovStart","ovOver","ovBoard"].forEach(function(id){$(id).hidden=true})}
+
+function die(){st="over";deadAt=performance.now();flash=1;beep(140,.35,"sawtooth",.06);
+  var rec=tick>best;if(rec){best=tick;store.set("fq_best",best);$("hBest").textContent=best}
+  $("oScore").textContent=tick;$("oRec").hidden=!rec;
+  var nm=store.get("fq_name","");$("iName").value=nm;$("fName").hidden=tick===0;
+  $("oRank").textContent=tick>0?preRank(tick):"";gameToken=token;
+  if(tick>0&&nm)submit(nm,false);
+  var txt="I reached tick "+tick+" in Flappy Qubic, epoch "+epochInfo().n+". Beat me on qubicmap.org";shareText="I reached tick "+tick+" in Flappy Qubic, epoch "+epochInfo().n+". Beat me:";
+  $("aShare").href="https://x.com/intent/post?text="+encodeURIComponent(txt);
+  setTimeout(function(){$("ovOver").hidden=false},350)}
+
+/* Weekly board, stored on qubicmap.org (one best score per visitor per epoch) */
+var API="/api/game/",BOARD=null,token=null,gameToken=null;
+function getBoard(){return fetch(API+"board",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(j){if(j)BOARD=j;return j}).catch(function(){return null})}
+function newToken(){token=null;fetch(API+"start",{method:"POST"}).then(function(r){return r.json()}).then(function(j){token=j.token}).catch(function(){})}
+getBoard();
+function preRank(s){if(!BOARD)return "";var t=BOARD.top,r=1;t.forEach(function(x){if(x.score>=s)r++});
+  return t.length<10||s>t[9].score?"That puts you around #"+r+" this epoch":"Top 10 this epoch needs "+(t[9].score+1)}
+function submit(name,show){var s=tick,tk=gameToken;
+  if(!tk){$("oRank").textContent="Score not saved: no connection";return}
+  $("oRank").textContent="Saving…";
+  fetch(API+"score",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tk,score:s,name:name})})
+  .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+  .then(function(x){if(!x.ok){$("oRank").textContent=x.j.error==="pick another name"?"That name is not allowed, pick another one":"Score not saved: "+(x.j.error||"error");return}
+    BOARD=x.j;var me=x.j.me;
+    $("oRank").textContent=me?(me.score>s?"Your best this epoch stays "+me.score+" · #"+me.rank:"Saved as "+me.name+" · #"+me.rank+" this epoch"):"Saved";
+    if(show)showBoard()})
+  .catch(function(){$("oRank").textContent="Score not saved: no connection"})}
+function row(ol,rank,name,score,cls){var li=document.createElement("li");if(cls)li.className=cls;
+  li.innerHTML='<span class="k"></span><span class="n"></span><span class="s"></span>';
+  li.querySelector(".k").textContent=rank;li.querySelector(".n").textContent=name;li.querySelector(".s").textContent=score;ol.appendChild(li)}
+function render(b){var ol=$("olBoard");ol.textContent="";
+  $("bTitle").textContent="Epoch "+(b?b.epoch:epochInfo().n)+" board";
+  if(!b){row(ol,"–","Board unavailable right now","","ex");$("bPlayers").textContent="";return}
+  if(!b.top.length)row(ol,"–","No scores yet. Be the first.","","ex");
+  b.top.forEach(function(x,i){row(ol,i+1,x.name,x.score,b.me&&b.me.rank===i+1?"me":"")});
+  if(b.me&&b.me.rank>10){row(ol,"…","","","ex");row(ol,b.me.rank,b.me.name,b.me.score,"me")}
+  $("bPlayers").textContent=b.players+(b.players===1?" player":" players")+" this epoch"}
+function showBoard(){hide();st="board";render(BOARD);$("ovBoard").hidden=false;getBoard().then(function(j){if(j&&st==="board")render(j)})}
+
+$("fName").addEventListener("submit",function(e){e.preventDefault();var n=$("iName").value.trim().replace(/\s+/g," ").slice(0,16);
+  if(!n){$("iName").focus();return}store.set("fq_name",n);submit(n,true)});
+$("bStart").onclick=start;$("bAgain").onclick=start;$("bBack").onclick=start;$("bBoard").onclick=showBoard;
+
+/* Share: the phone's share sheet (X app, Telegram…) when available, otherwise the X web link */
+var shareText="";
+$("aShare").addEventListener("click",function(e){var a=this;if(!navigator.share||a.dataset.web)return;e.preventDefault();
+  navigator.share({text:shareText,url:"https://qubicmap.org/"}).catch(function(err){if(err&&err.name==="AbortError")return;
+    a.dataset.web="1";a.textContent="Open X in the browser ↗"})});
+
+/* Input: tap anywhere on the stage, or Space / Up */
+$("stage").addEventListener("pointerdown",function(e){if(e.target.closest("button,input,a,form"))return;
+  if(st==="play")flap();else if(st==="over"&&performance.now()-deadAt>450)start();else if(st==="start")start()});
+document.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;if(e.code==="Space"||e.code==="ArrowUp"){e.preventDefault();
+  if(st==="play")flap();else if(st!=="over"||performance.now()-deadAt>450)start()}});
+
+/* Drawing */
+function bars(x,y,s,rot,glow){cx.save();cx.translate(x,y);cx.rotate(rot);
+  cx.shadowColor=C.ice;cx.shadowBlur=glow;cx.fillStyle=C.ice;
+  rr(-13*s,-17*s,9*s,34*s,3*s);rr(1*s,-17*s,9*s,26*s,3*s);cx.restore()}
+function rr(x,y,w,h,r){cx.beginPath();cx.moveTo(x+r,y);cx.arcTo(x+w,y,x+w,y+h,r);cx.arcTo(x+w,y+h,x,y+h,r);cx.arcTo(x,y+h,x,y,r);cx.arcTo(x,y,x+w,y,r);cx.closePath();cx.fill()}
+function pillar(x,y,h,top){var g=cx.createLinearGradient(x,0,x+PW,0);g.addColorStop(0,"#16304d");g.addColorStop(.5,"#2b5684");g.addColorStop(1,"#16304d");
+  cx.fillStyle=g;cx.fillRect(x,y,PW,h);cx.fillStyle=C.live;cx.globalAlpha=.85;cx.fillRect(x-3,top?y+h-6:y,PW+6,6);cx.globalAlpha=1;
+  cx.strokeStyle="rgba(207,230,255,.08)";cx.lineWidth=1;for(var k=10;k<PW;k+=12){cx.beginPath();cx.moveTo(x+k+.5,y);cx.lineTo(x+k+.5,y+h);cx.stroke()}}
+
+function draw(){var s=cv.width/W;cx.setTransform(s,0,0,s,0,0);
+  cx.fillStyle=C.panel;cx.fillRect(0,0,W,H);
+  dots.forEach(function(d){cx.fillStyle="rgba(207,230,255,"+(.08+.18*d.z)+")";cx.fillRect(d.x,d.y*H,1.6*d.z+.4,1.6*d.z+.4)});
+  pipes.forEach(function(p){pillar(p.x,0,p.y,true);pillar(p.x,p.y+p.g,H-p.y-p.g,false)});
+  cx.fillStyle=C.rule;cx.fillRect(0,H-2,W,2);
+  if(bird)bars(bird.x,bird.y,1,bird.a,st==="play"?14:4);
+  if(flash>0){cx.fillStyle="rgba(240,138,114,"+(flash*.35)+")";cx.fillRect(0,0,W,H)}}
+
+/* Fixed-step physics so the game runs the same at 60 Hz and 120 Hz */
+var last=0,acc=0,STEP=1/120;
+function update(dt){
+  dots.forEach(function(d){d.x-=speed*.15*d.z*dt;if(d.x<0)d.x+=W});
+  if(st!=="play"){if(st==="over"&&bird.y<H-14){bird.v+=G*dt;bird.y=Math.min(H-14,bird.y+bird.v*dt);bird.a=Math.min(1.4,bird.a+4*dt)}return}
+  bird.v+=G*dt;bird.y+=bird.v*dt;bird.a=Math.max(-.45,Math.min(1.2,bird.v/600));
+  speed=Math.min(SPDMAX,SPD0+tick*3);
+  pipes.forEach(function(p){p.x-=speed*dt});
+  if(pipes.length&&pipes[0].x<-PW-10)pipes.shift();
+  var lastP=pipes[pipes.length-1];if(lastP.x<W+60-SPACING)spawn(lastP.x+SPACING);
+  var hx=11,hy=15;
+  if(bird.y-hy<0){bird.y=hy;bird.v=0}
+  if(bird.y+hy>H-2)return die();
+  for(var i=0;i<pipes.length;i++){var p=pipes[i];
+    if(bird.x+hx>p.x&&bird.x-hx<p.x+PW&&(bird.y-hy<p.y||bird.y+hy>p.y+p.g))return die();
+    if(!p.done&&p.x+PW<bird.x-hx){p.done=true;tick++;$("hTick").textContent=tick;beep(990,.06,"triangle",.035)}}}
+function loop(t){var dt=Math.min(.05,(t-last)/1000||0);last=t;acc+=dt;
+  while(acc>=STEP){update(STEP);acc-=STEP}
+  if(flash>0)flash=Math.max(0,flash-dt*2.5);
+  draw();requestAnimationFrame(loop)}
+
+fit();reset();bird.y=H*.45;requestAnimationFrame(loop);
+/* idle bob on the start screen */
+setInterval(function(){if(st==="start"||st==="board"){bird.y=H*.45+Math.sin(performance.now()/300)*8;bird.a=0}},16);
+})();
+</script>
+</body></html>
