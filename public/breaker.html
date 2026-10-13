@@ -1,0 +1,331 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Epoch Breaker</title>
+<meta name="description" content="Epoch Breaker: break the wall of Qubic contracts, one epoch at a time. Weekly board that resets with every Qubic epoch.">
+<link rel="canonical" href="https://qubicmap.org/breaker"><meta property="og:type" content="website"><meta property="og:title" content="Epoch Breaker"><meta property="og:description" content="Break the wall of Qubic contracts. Weekly board, reset every epoch."><meta property="og:url" content="https://qubicmap.org/breaker"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#04070c">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: same shell as Flappy Qubic. One game column, HUD over the canvas, overlays for start and game over. Single dark look, as on qubicmap.org. */
+:root{
+  --void:#04070c; --panel:#0a1019; --rule:#182434; --ink:#dfe9f3; --muted:#7f93a8;
+  --ice:#cfe6ff; --live:#62d6a0; --warn:#f1bb5c; --hold:#f08a72; --fud:#ff5b5b;
+  --display:"Chakra Petch","Eurostile",system-ui,sans-serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--void);color:var(--ink);font:14px/1.45 var(--sans);padding-inline:16px;padding-block:16px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:12px}
+.top{width:100%;max-width:440px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.top h1{margin:0;font:700 18px var(--display);letter-spacing:.12em;text-transform:uppercase}
+.top h1 span{color:transparent;-webkit-text-stroke:1px var(--ice)}
+.top .ep{font:12px var(--mono);color:var(--muted);text-align:right}
+.stage{position:relative;width:100%;max-width:440px;aspect-ratio:9/15;max-height:calc(100% - 90px);border:1px solid var(--rule);background:var(--panel);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:crosshair}
+canvas{display:block;width:100%;height:100%}
+.hud{position:absolute;inset:12px 14px auto;display:flex;justify-content:space-between;pointer-events:none;font:12px var(--mono);color:var(--muted)}
+.hud b{display:block;font:600 26px var(--display);color:var(--ink);letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.hud .c{text-align:center}.hud .c b{color:var(--warn)}
+.hud .r b{color:var(--ice);letter-spacing:.12em}
+
+.hud .r{text-align:right}
+.ov{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;text-align:center;background:color-mix(in srgb,var(--void) 78%,transparent)}
+.ov h2{margin:0;font:700 26px/1.1 var(--display);letter-spacing:.08em;text-transform:uppercase;text-wrap:balance}
+.ov p{margin:0;color:var(--muted);max-width:32ch}
+.ov .big{font:600 44px var(--display);color:var(--ice);font-variant-numeric:tabular-nums;line-height:1}
+.ov .sub{font:12px var(--mono);color:var(--muted)}
+.legend{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;align-items:center;text-align:left;font:12.5px var(--sans);color:var(--muted)}
+.legend canvas{width:30px;height:30px}
+.legend b{color:var(--ink);font-weight:500}
+.btn{font:600 12px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--void);background:var(--ice);border:0;padding:11px 18px;cursor:pointer}
+.btn:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.rec{font:600 12px var(--display);letter-spacing:.14em;color:var(--warn);text-transform:uppercase}
+.foot{max-width:440px;width:100%;font:11.5px var(--mono);color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.foot button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@keyframes pop{from{transform:scale(.92);opacity:.4}to{transform:none;opacity:1}}
+.ov:not([hidden]) > *{animation:pop .22s ease-out both}
+@media (prefers-reduced-motion:reduce){.ov:not([hidden]) > *{animation:none}}
+.hud .nx{position:absolute;left:0;right:0;top:64px;text-align:center;font:11px var(--mono);color:var(--warn);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud .nx b{display:inline;font:600 12px var(--mono);color:var(--warn)}
+.ov .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--rule)}
+.name{display:flex;gap:8px;width:100%;max-width:300px}
+.name input{flex:1;min-width:0;font:14px var(--mono);color:var(--ink);background:var(--void);border:1px solid var(--rule);padding:9px 10px}
+.name input:focus-visible,.share:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.board{width:100%;max-width:300px;border-top:1px solid var(--rule)}
+.board ol{list-style:none;margin:0;padding:0}
+.board li{display:grid;grid-template-columns:2.2em 1fr auto;gap:8px;padding:6px 2px;border-bottom:1px solid var(--rule);font:13px var(--mono);text-align:left;font-variant-numeric:tabular-nums}
+.board li .k{color:var(--muted)}.board li .s{color:var(--ice)}
+.board li.me{background:color-mix(in srgb,var(--live) 12%,transparent)}.board li.me .n{color:var(--live)}
+.board li.ex .n{color:var(--muted)}
+.board h3{margin:10px 0 4px;font:600 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:left}
+.champs li .k{color:var(--warn)}
+.lead{color:var(--warn)}
+.ov#ovBoard{justify-content:flex-start;overflow-y:auto;padding-top:28px}
+.sbtn{background:none;border:0;padding:0;cursor:pointer}
+.share{font:12px var(--mono);color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.foot a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+</style>
+</head><body>
+<div class="top">
+  <h1>Epoch <span>Breaker</span></h1>
+  <div class="ep">Epoch <b id="epN">—</b><br><span id="epLeft">board resets …</span></div>
+</div>
+
+<div class="stage" id="stage">
+  <canvas id="c" aria-label="Epoch Breaker game"></canvas>
+  <div class="hud"><div>SCORE<b id="hScore">0</b></div><div class="c">LEVEL<b id="hEpoch">1</b></div><div class="r">BALLS<b id="hLives">●●●</b></div><div class="nx" id="hNext"></div></div>
+
+  <div class="ov" id="ovStart">
+    <h2>Break the epoch</h2>
+    <p>Every brick is a Qubic contract. Clear the wall to reach the next level. Slide to move, tap to launch. You have 3 balls.</p>
+    <div class="legend" id="legend"></div>
+    <button class="btn" id="bStart">Play</button>
+    <span class="sub lead" id="sLead"></span>
+  </div>
+
+  <div class="ov" id="ovOver" hidden>
+    <span class="rec" id="oRec" hidden>New personal best</span>
+    <span class="sub">Game over · score</span>
+    <div class="big" id="oScore">0</div>
+    <span class="sub" id="oStats"></span>
+    <span class="sub" id="oRank"></span>
+    <form class="name" id="fName" autocomplete="off">
+      <input id="iName" maxlength="16" placeholder="Your name" aria-label="Your name for the board">
+      <button class="btn" type="submit">Save</button>
+    </form>
+    <div class="row">
+      <button class="btn" id="bAgain">Play again</button>
+      <button class="btn ghost" id="bBoard">Board</button>
+    </div>
+    <div class="row"><a class="share" id="aShare" target="_blank" rel="noopener" href="https://x.com/intent/post">Post my score on X ↗</a><button class="share sbtn" id="bShare" type="button">Share score card</button></div>
+  </div>
+
+  <div class="ov" id="ovBoard" hidden>
+    <h2 id="bTitle">Epoch board</h2>
+    <div class="board"><h3>Top 10 this epoch</h3><ol id="olBoard"></ol></div>
+    <span class="sub" id="bPlayers"></span>
+    <div class="board champs"><h3>Champions</h3><ol id="olChamps"></ol></div>
+    <button class="btn" id="bBack">Play</button>
+  </div>
+</div>
+
+<div class="foot">
+  <a href="/arcade">← Arcade</a>
+  <span>Best <b id="fBest">0</b></span>
+  <button id="bSound" type="button">Sound: on</button>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var store={get:function(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set:function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+var C={ice:"#cfe6ff",live:"#62d6a0",warn:"#f1bb5c",fud:"#ff5b5b",rule:"#182434",panel:"#0a1019",void:"#04070c",muted:"#7f93a8",ink:"#dfe9f3",gold:"#ffd36b"};
+
+var W=360,H=600,cv=$("c"),cx=cv.getContext("2d");
+function fit(){var r=cv.getBoundingClientRect(),d=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(r.width*d);cv.height=Math.round(r.height*d);H=W*r.height/r.width;PY=H-46}
+
+/* Bricks are Qubic core contracts. Each cleared wall is one epoch. */
+var NAMES=["QX","QUOTTERY","RANDOM","QUTIL","MLM","GQMPROP","SWATCH","CCF","QEARN","QVAULT","MSVAULT","QBAY","QSWAP","NOSTROMO","QDRAW","RL","QBOND","QIP","QRAFFLE","QRWA","QRP","QTF","QDUEL","PULSE","VOTTUN","ESCROW","QBAY","QX"];
+var ROWCOL=["#ff5b5b","#f08a72","#f1bb5c","#62d6a0","#5fb8ff","#a98bff"];
+var COLS=7,BW=44,BH=17,GAP=4,BX0=(360-COLS*BW-(COLS-1)*GAP)/2,BY0=118;
+var sinceHit=0,st="start",score=0,lvl=1,lives=3,bricks=[],balls=[],drops=[],sparks=[],fx=[],pad,PY=554,burn=0,wide=0,stuck=true,shake=0,best=store.get("eb_best",0),broken=0;
+$("fBest").textContent=best;
+
+/* Sound */
+var ac=null,sound=store.get("fq_sound",true);
+$("bSound").textContent="Sound: "+(sound?"on":"off");
+$("bSound").onclick=function(){sound=!sound;store.set("fq_sound",sound);this.textContent="Sound: "+(sound?"on":"off")};
+function unlock(){try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state!=="running")ac.resume()}catch(e){}}
+["pointerdown","keydown"].forEach(function(ev){document.addEventListener(ev,unlock,true)});
+function beep(f,d,type,vol,slide){if(!sound||!ac)return;try{var o=ac.createOscillator(),g=ac.createGain();o.type=type||"square";o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(slide,ac.currentTime+d);g.gain.value=vol||.04;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+
+function hud(){$("hScore").textContent=score;$("hEpoch").textContent=lvl;$("hLives").textContent=lives>0?"●".repeat(lives):"–";if(st==="play")checkPassed()}
+
+function build(){bricks=[];var rows=Math.min(6,3+lvl),k=(lvl*5)%NAMES.length;
+  for(var r=0;r<rows;r++)for(var c=0;c<COLS;c++){var hp=1+(lvl>=2&&r<Math.floor(lvl/2)?1:0)+(lvl>=5&&r===0?1:0),ipo=Math.random()<.05;
+    bricks.push({x:BX0+c*(BW+GAP),y:BY0+r*(BH+GAP),hp:ipo?1:hp,max:ipo?1:hp,ipo:ipo,col:ROWCOL[r%ROWCOL.length],name:ipo?"IPO":NAMES[(k+r*COLS+c)%NAMES.length]})}}
+function speed(){return 250+lvl*22}
+function serve(){balls=[{x:pad.x,y:PY-8,vx:0,vy:0}];stuck=true}
+function launch(){if(!stuck||st!=="play")return;stuck=false;var a=-Math.PI/2+(Math.random()-.5)*.6;balls[0].vx=Math.cos(a)*speed();balls[0].vy=Math.sin(a)*speed();beep(660,.06)}
+function padW(){return wide>0?92:60}
+
+function start(){hideAll();passed={};newToken();score=0;lvl=1;lives=3;broken=0;burn=0;wide=0;drops=[];sparks=[];fx=[];pad={x:W/2,tx:W/2};build();serve();st="play";hud();paintNext();
+  fx.push({x:W/2,y:H*.55,t:0,txt:"LEVEL 1",col:C.warn,big:1});beep(392,.08);setTimeout(function(){beep(523,.08)},90);setTimeout(function(){beep(784,.14)},180)}
+function end(){st="over";
+  var rec=score>best;if(rec){best=score;store.set("eb_best",best);$("fBest").textContent=best}
+  $("oScore").textContent=score;$("oRec").hidden=!rec;$("oStats").textContent="Reached level "+lvl+" · "+broken+" contracts broken";
+  $("hNext").textContent="";lastRes=null;gameToken=token;var nm=store.get("fq_name","");$("iName").value=nm;$("fName").hidden=score===0;
+  $("oRank").textContent=score>0?preRank(score):"";if(score>0&&nm)submit(nm,false);
+  shareText="I broke through to level "+lvl+" and scored "+score+" in Epoch Breaker on the $QUBIC map, epoch "+epochInfo().n+". Beat me:";
+  $("aShare").href="https://x.com/intent/post?text="+encodeURIComponent(shareText+" https://qubicmap.org/breaker");
+  beep(330,.15);setTimeout(function(){beep(196,.4,"sawtooth",.05)},150);setTimeout(function(){$("ovOver").hidden=false},600)}
+
+/* Controls: drag or move to steer the paddle, tap to launch */
+var stage=$("stage");
+function steer(e){if(st!=="play")return;var r=cv.getBoundingClientRect();pad.tx=(e.clientX-r.left)/r.width*W}
+stage.addEventListener("pointerdown",function(e){if(e.target.closest("button,input,a,form"))return;steer(e);launch()});
+stage.addEventListener("pointermove",function(e){if(e.pointerType==="mouse"||e.buttons||e.pressure>0)steer(e)});
+var keys={};document.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;keys[e.code]=1;
+  if(e.code==="Space"||e.code==="ArrowUp"){e.preventDefault();if(st==="play")launch();else if(st!=="board")start()}});
+document.addEventListener("keyup",function(e){keys[e.code]=0});
+$("bStart").onclick=start;$("bAgain").onclick=start;
+
+function burst(x,y,col,n){for(var i=0;i<n;i++){var a=Math.random()*6.28,v=40+Math.random()*130;sparks.push({x:x,y:y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,t:0,col:col})}}
+function hitBrick(b,ball){sinceHit=0;
+  if(burn>0)b.hp=0;else b.hp--;
+  if(b.hp<=0){b.dead=1;broken++;var pts=b.ipo?5:b.max;score+=pts;burst(b.x+BW/2,b.y+BH/2,b.ipo?C.gold:b.col,b.ipo?16:8);
+    if(b.ipo){fx.push({x:b.x+BW/2,y:b.y,t:0,txt:"IPO +5",col:C.gold});beep(1175,.08,"triangle",.05);setTimeout(function(){beep(1568,.12,"triangle",.05)},70)}
+    else beep(520+(b.y-BY0)*-3+lvl*20,.05,"square",.035);
+    if(Math.random()<(b.ipo?.6:.12)){var r=Math.random();drops.push({t:r<.34?"burn":r<.67?"qearn":"multi",x:b.x+BW/2,y:b.y+BH/2})}
+    hud()}
+  else{beep(300,.04,"square",.03)}}
+
+/* ---- update ---- */
+function update(dt){
+  if(shake>0)shake=Math.max(0,shake-dt*3);
+  sparks.forEach(function(p){p.t+=dt*1.6;p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=200*dt});sparks=sparks.filter(function(p){return p.t<1});
+  fx.forEach(function(f){f.t+=dt*1.1});fx=fx.filter(function(f){return f.t<1});
+  if(st!=="play")return;
+  if(burn>0)burn-=dt;if(wide>0)wide-=dt;if(!stuck)sinceHit+=dt;
+  if(keys.ArrowLeft||keys.KeyA)pad.tx-=320*dt;if(keys.ArrowRight||keys.KeyD)pad.tx+=320*dt;
+  var hw=padW()/2;pad.tx=Math.max(hw,Math.min(W-hw,pad.tx));pad.x+=(pad.tx-pad.x)*Math.min(1,dt*18);
+  if(stuck){balls[0].x=pad.x;balls[0].y=PY-8}
+  /* sub-steps keep fast balls from tunnelling through bricks */
+  var steps=3,sd=dt/steps;
+  for(var s=0;s<steps;s++)balls.forEach(function(bl){if(stuck)return;var px=bl.x,py=bl.y;bl.x+=bl.vx*sd;bl.y+=bl.vy*sd;
+    if(bl.x<5){bl.x=5;bl.vx=Math.abs(bl.vx);beep(220,.02,"square",.015)}if(bl.x>W-5){bl.x=W-5;bl.vx=-Math.abs(bl.vx);beep(220,.02,"square",.015)}
+    if(bl.y<104){bl.y=104;bl.vy=Math.abs(bl.vy);beep(220,.02,"square",.015)}
+    /* paddle: the bounce angle depends on where the ball lands */
+    if(bl.vy>0&&bl.y>=PY-6&&py<PY-6+1&&Math.abs(bl.x-pad.x)<=padW()/2+5){var off=(bl.x-pad.x)/(padW()/2),a=-Math.PI/2+off*1.05+(sinceHit>6?(Math.random()-.5)*.5:0),sp=Math.hypot(bl.vx,bl.vy);
+      bl.vx=Math.cos(a)*sp;bl.vy=Math.sin(a)*sp;bl.y=PY-6;beep(440,.04,"triangle",.04)}
+    for(var i=0;i<bricks.length;i++){var b=bricks[i];if(b.dead)continue;
+      if(bl.x+4>b.x&&bl.x-4<b.x+BW&&bl.y+4>b.y&&bl.y-4<b.y+BH){hitBrick(b,bl);
+        if(burn<=0){var fromSide=px+4<=b.x||px-4>=b.x+BW;if(fromSide)bl.vx=-bl.vx;else bl.vy=-bl.vy}break}}
+    if(bl.y>H+10)bl.dead=1});
+  balls=balls.filter(function(b){return !b.dead});
+  if(!balls.length){lives--;shake=1;beep(150,.3,"sawtooth",.05,70);fx.push({x:W/2,y:H*.55,t:0,txt:lives>0?"BALL LOST":"",col:C.fud,big:1});hud();
+    if(lives<=0){end();return}serve()}
+  bricks=bricks.filter(function(b){return !b.dead});
+  if(!bricks.length){score+=10*lvl;lvl++;fx.push({x:W/2,y:H*.55,t:0,txt:"LEVEL "+lvl+"  ·  +"+(10*(lvl-1)),col:C.live,big:1});
+    beep(523,.08);setTimeout(function(){beep(659,.08)},90);setTimeout(function(){beep(784,.08)},180);setTimeout(function(){beep(1047,.18)},270);
+    build();drops=[];serve();hud()}
+  /* power-ups fall; catch them with the paddle */
+  drops.forEach(function(d){d.y+=110*dt;if(d.y>PY-8&&d.y<PY+8&&Math.abs(d.x-pad.x)<padW()/2+8){d.dead=1;
+      if(d.t==="burn"){burn=6;fx.push({x:d.x,y:PY-20,t:0,txt:"BURN · 6s",col:C.fud})}
+      else if(d.t==="qearn"){wide=10;fx.push({x:d.x,y:PY-20,t:0,txt:"QEARN · WIDE",col:C.live})}
+      else{var src=balls[0]||{x:pad.x,y:PY-8,vx:0,vy:-speed()};if(stuck){launch();src=balls[0]}var sp=speed();
+        [-.5,.5].forEach(function(o){var a=Math.atan2(src.vy||-1,src.vx||0)+o;balls.push({x:src.x,y:src.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp})});fx.push({x:d.x,y:PY-20,t:0,txt:"MULTI ×3",col:C.ice})}
+      beep(880,.07,"triangle",.05);setTimeout(function(){beep(1320,.12,"triangle",.05)},70)}
+    if(d.y>H+10)d.dead=1});
+  drops=drops.filter(function(d){return !d.dead})}
+
+/* ---- drawing ---- */
+function rr(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath()}
+function drawBrick(g,b){g.save();var a=b.max>1?.45+.55*b.hp/b.max:1;g.globalAlpha=a;g.fillStyle=b.ipo?C.gold:b.col;if(b.ipo){g.shadowColor=C.gold;g.shadowBlur=10}rr(g,b.x,b.y,BW,BH,2);g.fill();g.shadowBlur=0;g.globalAlpha=1;
+  g.fillStyle="rgba(4,7,12,.82)";g.font="600 "+(b.name.length>6?6.6:7.6)+"px 'IBM Plex Mono',monospace";g.textAlign="center";g.textBaseline="middle";g.fillText(b.name,b.x+BW/2,b.y+BH/2+.5);
+  if(b.max>1){g.fillStyle="rgba(4,7,12,.6)";for(var i=0;i<b.hp;i++)g.fillRect(b.x+3+i*5,b.y+2,3,2)}g.restore()}
+function drawDrop(g,d){var col=d.t==="burn"?C.fud:d.t==="qearn"?C.live:C.ice,lab=d.t==="burn"?"BURN":d.t==="qearn"?"QEARN":"×3";g.save();g.fillStyle=col;g.shadowColor=col;g.shadowBlur=12;rr(g,d.x-19,d.y-8,38,16,8);g.fill();g.shadowBlur=0;
+  g.fillStyle=C.void;g.font="700 8px 'Chakra Petch',sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText(lab,d.x,d.y+.5);g.restore()}
+function draw(){var k=cv.width/W;cx.setTransform(k,0,0,k,0,0);cx.translate(shake>0?(Math.random()-.5)*6*shake:0,0);
+  cx.fillStyle=C.panel;cx.fillRect(-10,0,W+20,H);
+  cx.strokeStyle="rgba(24,36,52,.5)";cx.lineWidth=1;for(var gy=104;gy<=H;gy+=30){cx.beginPath();cx.moveTo(0,gy+.5);cx.lineTo(W,gy+.5);cx.stroke()}
+  cx.fillStyle=C.rule;cx.fillRect(0,102,W,2);
+  bricks.forEach(function(b){drawBrick(cx,b)});
+  drops.forEach(function(d){drawDrop(cx,d)});
+  if(pad&&st!=="start"){var w=padW();cx.save();cx.fillStyle=wide>0?C.live:C.ice;cx.shadowColor=cx.fillStyle;cx.shadowBlur=14;rr(cx,pad.x-w/2,PY,w,8,3);cx.fill();cx.restore()}
+  balls.forEach(function(b){cx.save();cx.fillStyle=burn>0?C.fud:C.ice;cx.shadowColor=cx.fillStyle;cx.shadowBlur=burn>0?18:10;cx.fillRect(b.x-4,b.y-4,8,8);cx.restore()});
+  if(st==="play"&&stuck){cx.fillStyle=C.muted;cx.font="500 11px 'IBM Plex Mono',monospace";cx.textAlign="center";cx.fillText("tap to launch",W/2,PY+30)}
+  sparks.forEach(function(p){cx.globalAlpha=Math.max(0,1-p.t);cx.fillStyle=p.col;cx.fillRect(p.x-1.5,p.y-1.5,3,3)});cx.globalAlpha=1;
+  fx.forEach(function(f){cx.save();cx.globalAlpha=Math.max(0,1-f.t);cx.fillStyle=f.col;cx.font=(f.big?"700 24px":"700 13px")+" 'Chakra Petch',sans-serif";cx.textAlign="center";cx.shadowColor=f.col;cx.shadowBlur=10;cx.fillText(f.txt,f.x,f.y-f.t*(f.big?10:24));cx.restore()})}
+
+var last=0;function loop(t){var dt=Math.min(.033,(t-last)/1000||0);last=t;update(dt);draw();requestAnimationFrame(loop)}
+window.addEventListener("resize",fit);
+
+/* legend on the start screen */
+[["b","Contract","+1 per hit point"],["ipo","IPO brick","+5, often drops a bonus"],["burn","Burn","ball goes through everything, 6 s"],["qearn","Qearn","wider paddle, 10 s"],["multi","×3","three balls"]].forEach(function(p){
+  var c=document.createElement("canvas");c.width=60;c.height=60;var g=c.getContext("2d");g.scale(1.2,1.2);
+  if(p[0]==="b")drawBrick(g,{x:3,y:16,hp:1,max:1,col:"#5fb8ff",name:"QX"});else if(p[0]==="ipo")drawBrick(g,{x:3,y:16,hp:1,max:1,ipo:1,col:C.gold,name:"IPO"});else drawDrop(g,{t:p[0],x:25,y:25});
+  var d=document.createElement("span");d.innerHTML="<b>"+p[1]+"</b> · "+p[2];$("legend").appendChild(c);$("legend").appendChild(d)});
+
+/* Epoch: 234 began Wed 7 Oct 2026 12:00 UTC; each epoch lasts 7 days. */
+var E0=Date.UTC(2026,9,7,12,0,0),WEEK=7*864e5;
+function epochInfo(){var now=Date.now(),k=Math.floor((now-E0)/WEEK);return{n:234+k,left:E0+(k+1)*WEEK-now}}
+function fmtLeft(ms){var h=Math.floor(ms/36e5),d=Math.floor(h/24);h%=24;var m=Math.floor(ms%36e5/6e4);return d?d+"d "+h+"h":h+"h "+m+"m"}
+function paintEpoch(){var e=epochInfo();$("epN").textContent=e.n;$("epLeft").textContent="board resets in "+fmtLeft(e.left)}
+paintEpoch();setInterval(paintEpoch,30000);
+
+/* Weekly board on qubicmap.org (one best score per visitor per epoch) */
+var API="/api/game/",G="breaker",BOARD=null,token=null,gameToken=null,lastRes=null,passed={},shareText="";
+function getBoard(){return fetch(API+"board?g="+G,{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(j){if(j)BOARD=j;return j}).catch(function(){return null})}
+function newToken(){token=null;fetch(API+"start?g="+G,{method:"POST"}).then(function(r){return r.json()}).then(function(j){token=j.token}).catch(function(){})}
+function lead(b){var t=b&&b.top&&b.top[0];$("sLead").textContent=t?"Leader this epoch: "+t.name+" · "+t.score:""}
+getBoard().then(lead);
+function rivals(){var L=(BOARD&&BOARD.ladder)||[],out=[];L.forEach(function(r){if(!r[2])out.push({name:r[0],score:r[1]})});out.sort(function(a,b){return a.score-b.score});return out}
+function nextRival(){var R=rivals();for(var i=0;i<R.length;i++)if(R[i].score>=score)return R[i];return null}
+function paintNext(){var el=$("hNext");el.textContent="";if(st!=="play")return;var r=nextRival();
+  if(r){el.append("NEXT ");var b=document.createElement("b");b.textContent=r.name+" · "+r.score;el.appendChild(b)}else if(rivals().length)el.textContent="YOU LEAD THE EPOCH"}
+function checkPassed(){var beat=rivals().filter(function(r){return r.score<score&&!passed[r.name+r.score]});
+  if(beat.length&&st==="play"){beat.forEach(function(r){passed[r.name+r.score]=1});var top=beat[beat.length-1];
+    fx.push({x:W/2,y:H*.17+26,t:0,txt:"PASSED "+top.name+(beat.length>1?" +"+(beat.length-1):""),col:C.warn,big:1});beep(1320,.09,"square",.04);setTimeout(function(){beep(1760,.12,"square",.04)},90)}
+  paintNext()}
+function preRank(s){if(!BOARD)return "";var t=BOARD.top,r=1;t.forEach(function(x){if(x.score>=s)r++});
+  return t.length<10||s>t[9].score?"That puts you around #"+r+" this epoch":"Top 10 this epoch needs "+(t[9].score+1)}
+function submit(name,show){var s=Number($("oScore").textContent)||0,tk=gameToken;
+  if(!tk){$("oRank").textContent="Score not saved: no connection";return}
+  $("oRank").textContent="Saving…";
+  fetch(API+"score",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({g:G,token:tk,score:s,name:name})})
+  .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
+  .then(function(x){if(!x.ok){$("oRank").textContent=x.j.error==="pick another name"?"That name is not allowed, pick another one":"Score not saved: "+(x.j.error||"error");return}
+    BOARD=x.j;var me=x.j.me;lastRes={rank:me&&me.score<=s?me.rank:0,players:x.j.players};
+    $("oRank").textContent=me?(me.score>s?"Your best this epoch stays "+me.score+" · #"+me.rank:"Saved as "+me.name+" · #"+me.rank+" this epoch"):"Saved";
+    if(show)showBoard()})
+  .catch(function(){$("oRank").textContent="Score not saved: no connection"})}
+function row(ol,rank,name,sc,cls){var li=document.createElement("li");if(cls)li.className=cls;
+  li.innerHTML='<span class="k"></span><span class="n"></span><span class="s"></span>';
+  li.querySelector(".k").textContent=rank;li.querySelector(".n").textContent=name;li.querySelector(".s").textContent=sc;ol.appendChild(li)}
+function render(b){var ol=$("olBoard");ol.textContent="";$("olChamps").textContent="";
+  $("bTitle").textContent="Epoch "+(b?b.epoch:epochInfo().n)+" board";
+  if(!b){row(ol,"–","Board unavailable right now","","ex");$("bPlayers").textContent="";return}
+  if(!b.top.length)row(ol,"–","No scores yet. Be the first.","","ex");
+  b.top.forEach(function(x,i){row(ol,i+1,x.name,x.score,b.me&&b.me.rank===i+1?"me":"")});
+  if(b.me&&b.me.rank>10){row(ol,"…","","","ex");row(ol,b.me.rank,b.me.name,b.me.score,"me")}
+  $("bPlayers").textContent=b.players+(b.players===1?" player":" players")+" this epoch";
+  var oc=$("olChamps"),ch=b.champions||[];
+  if(!ch.length){var d=new Date(b.endsAt);row(oc,"♛","First champion crowned "+d.toUTCString().slice(0,11)+", 12:00 UTC","","ex")}
+  ch.forEach(function(x){row(oc,"♛","Epoch "+x.epoch+" · "+x.name,x.score,"")});lead(b)}
+function hideAll(){document.querySelector(".hud").style.visibility="";["ovStart","ovOver","ovBoard"].forEach(function(id){$(id).hidden=true})}
+function showBoard(){hideAll();st="board";document.querySelector(".hud").style.visibility="hidden";render(BOARD);$("ovBoard").hidden=false;getBoard().then(function(j){if(j&&st==="board")render(j)})}
+$("fName").addEventListener("submit",function(e){e.preventDefault();var n=$("iName").value.trim().replace(/\s+/g," ").slice(0,16);
+  if(!n){$("iName").focus();return}store.set("fq_name",n);submit(n,true)});
+$("bBoard").onclick=showBoard;$("bBack").onclick=function(){start()};
+
+/* Share */
+$("aShare").addEventListener("click",function(e){if(!/iPhone|iPad|iPod/.test(navigator.userAgent))return;e.preventDefault();
+  var web=this.href,m=web.split("text=")[1]||"",gone=false;
+  var off=function(){if(document.hidden)gone=true};document.addEventListener("visibilitychange",off);
+  setTimeout(function(){document.removeEventListener("visibilitychange",off);if(!gone&&!document.hidden)window.location.href=web},1500);
+  window.location.href="twitter://post?message="+m});
+function scoreCard(){var cw=1200,ch=675,k=document.createElement("canvas");k.width=cw;k.height=ch;var g=k.getContext("2d");
+  g.fillStyle=C.void;g.fillRect(0,0,cw,ch);g.strokeStyle="rgba(24,36,52,.7)";g.lineWidth=1;for(var gx=0;gx<=cw;gx+=60){g.beginPath();g.moveTo(gx+.5,0);g.lineTo(gx+.5,ch);g.stroke()}for(var gy=0;gy<=ch;gy+=60){g.beginPath();g.moveTo(0,gy+.5);g.lineTo(cw,gy+.5);g.stroke()}
+  var D="'Chakra Petch',system-ui,sans-serif",M="'IBM Plex Mono',monospace",ep=epochInfo().n,sc=Number($("oScore").textContent)||0;
+  g.font="700 50px "+D;g.fillStyle=C.ink;g.letterSpacing="6px";g.fillText("EPOCH",80,128);g.strokeStyle=C.ice;g.lineWidth=1.5;g.strokeText("BREAKER",80+g.measureText("EPOCH ").width,128);
+  g.font="400 22px "+M;g.fillStyle=C.muted;g.letterSpacing="4px";g.fillText("$QUBIC · EPOCH "+ep+"  ·  REACHED LEVEL "+lvl+(lastRes&&lastRes.rank?"  ·  #"+lastRes.rank+" OF "+lastRes.players:""),82,168);
+  g.letterSpacing="0px";g.font="400 30px "+M;g.fillStyle=C.muted;g.fillText("SCORE",80,330);
+  g.font="700 220px "+D;g.fillStyle=C.ink;g.shadowColor="rgba(207,230,255,.35)";g.shadowBlur=30;g.fillText(String(sc),72,520);g.shadowBlur=0;
+  var nm=store.get("fq_name","");if(nm){g.font="500 34px "+M;g.fillStyle=C.live;g.fillText(nm,84,580)}
+  g.save();g.translate(700,90);g.scale(2,2);for(var r=0;r<5;r++)for(var c=0;c<5;c++){if((r*5+c)%7===3)continue;drawBrick(g,{x:c*(BW+GAP),y:r*(BH+GAP),hp:1,max:1,ipo:r===1&&c===2,col:ROWCOL[r],name:r===1&&c===2?"IPO":NAMES[(r*5+c)%NAMES.length]})}g.restore();
+  g.textAlign="right";g.font="600 30px "+D;g.fillStyle=C.warn;g.letterSpacing="4px";g.fillText("CAN YOU BREAK MORE?",cw-80,520);
+  g.font="500 34px "+M;g.fillStyle=C.ink;g.letterSpacing="0px";g.fillText("qubicmap.org/breaker",cw-80,580);return k}
+$("bShare").addEventListener("click",function(){var btn=this,k=scoreCard(),txt=shareText+" https://qubicmap.org/breaker";
+  k.toBlob(function(bl){if(!bl)return;var f;try{f=new File([bl],"epoch-breaker-"+$("oScore").textContent+".png",{type:"image/png"})}catch(e){}
+    if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],text:txt}).catch(function(){});return}
+    var u=URL.createObjectURL(bl),a=document.createElement("a");a.href=u;a.download="epoch-breaker-"+$("oScore").textContent+".png";document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(u)},4000);btn.textContent="Image saved ✓";setTimeout(function(){btn.textContent="Share score card"},2500)},"image/png")});
+
+
+fit();build();requestAnimationFrame(loop);
+})();
+</script>
+</body></html>

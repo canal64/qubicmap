@@ -2,7 +2,7 @@
 //   GET  /api/likes          -> { counts: {project: n}, week: {project: n} }   (cached 60 s)
 //   POST /api/like {id, on}  -> { count }
 //   POST /api/suggest {kind, name, url, note, contact} -> { ok }   (project proposals and problem reports)
-//   (game routes take ?g=flappy|whack|quorum, or g in the score body; flappy is the default)
+//   (game routes take ?g=flappy|whack|quorum|breaker, or g in the score body; flappy is the default)
 //   GET  /api/game/board     -> { epoch, endsAt, players, top: [{name, score}], me, ladder: [[name, score, isMe]], champions: [{epoch, name, score}] }   (Flappy Qubic, one board per Qubic epoch)
 //   POST /api/game/start     -> { token }   (signed start time, used to reject impossible scores)
 //   POST /api/game/score {token, score, name} -> { rank, best, top }
@@ -34,6 +34,7 @@ const MAX_SCORE = 2000;
 const GAMES = {
   flappy: { table: "scores", maxMs: 45 * 60 * 1000, ok: (score, took) => took >= 1000 + score * 800 },          // a gap takes at least ~0.9 s
   whack: { table: "whack_scores", maxMs: 5 * 60 * 1000, ok: (score, took) => took >= 25000 && score <= (took / 1000) * 15 }, // 30 s rounds
+  breaker: { table: "breaker_scores", maxMs: 60 * 60 * 1000, ok: (score, took) => took >= 8000 && score <= 30 + (took / 1000) * 10 }, // bricks plus epoch bonuses
   quorum: { table: "quorum_scores", maxMs: 60 * 60 * 1000, ok: (score, took) => took >= 10000 && score <= 10 + (took / 1000) * 6 }, // ~3 kills a second at most
 };
 const gameOf = (v) => (Object.prototype.hasOwnProperty.call(GAMES, v) ? v : "flappy");

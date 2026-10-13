@@ -18,7 +18,7 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
 .intro b{color:var(--ink);font-weight:500}
 .games{display:grid;grid-template-columns:1fr;gap:14px}
 @media (min-width:640px){.games{grid-template-columns:1fr 1fr}}
-@media (min-width:900px){.wrap{max-width:1100px}.games{grid-template-columns:1fr 1fr 1fr}}
+
 .game{display:flex;flex-direction:column;gap:12px;border:1px solid var(--rule);background:var(--panel);padding:18px;text-decoration:none;color:inherit;min-width:0}
 .game:hover{border-color:var(--ice)}
 .game:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
@@ -35,7 +35,7 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
 <div class="wrap">
   <div class="back"><a href="/">← Qubic Ecosystem Map</a></div>
   <h1>Qubic <span>Arcade</span></h1>
-  <p class="intro">Three quick games. Each has its own board for epoch <b id="ep">—</b>, which resets every Wednesday at 12:00 UTC with the Qubic epoch. Board resets in <b id="left">—</b>.</p>
+  <p class="intro">Four quick games. Each has its own board for epoch <b id="ep">—</b>, which resets every Wednesday at 12:00 UTC with the Qubic epoch. Board resets in <b id="left">—</b>.</p>
   <div class="games">
     <a class="game" href="/play">
       <canvas id="cFlappy" width="640" height="360" aria-hidden="true"></canvas>
@@ -58,6 +58,13 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
       <div class="meta"><span id="lQuorum">Leader: …</span><span id="pQuorum"></span></div>
       <span class="go">▶ Play</span>
     </a>
+    <a class="game" href="/breaker">
+      <canvas id="cBreaker" width="640" height="360" aria-hidden="true"></canvas>
+      <h2>Epoch <span style="color:transparent;-webkit-text-stroke:1px var(--ice)">Breaker</span></h2>
+      <p>Every brick is a Qubic contract. Clear the wall to reach the next level.</p>
+      <div class="meta"><span id="lBreaker">Leader: …</span><span id="pBreaker"></span></div>
+      <span class="go">▶ Play</span>
+    </a>
   </div>
   <p class="foot">Free, no account. Only your name, your best score per epoch and an anonymous visitor code are stored.</p>
 </div>
@@ -69,9 +76,9 @@ $("ep").textContent=234+k;$("left").textContent=(h>=24?Math.floor(h/24)+"d "+(h%
 function load(g,L,P){fetch("/api/game/board?g="+g,{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(b){
   if(!b){$(L).textContent="";return}var t=b.top[0];$(L).innerHTML="";$(L).append("Leader: ");var e=document.createElement("b");e.textContent=t?t.name+" · "+t.score:"nobody yet";$(L).appendChild(e);
   $(P).textContent=b.players+(b.players===1?" player":" players")}).catch(function(){$(L).textContent=""})}
-load("flappy","lFlappy","pFlappy");load("whack","lWhack","pWhack");load("quorum","lQuorum","pQuorum");
+load("flappy","lFlappy","pFlappy");load("whack","lWhack","pWhack");load("quorum","lQuorum","pQuorum");load("breaker","lBreaker","pBreaker");
 /* small looping previews */
-var f=$("cFlappy").getContext("2d"),w=$("cWhack").getContext("2d"),q=$("cQuorum").getContext("2d"),t0=performance.now(),still=matchMedia("(prefers-reduced-motion: reduce)").matches;
+var f=$("cFlappy").getContext("2d"),w=$("cWhack").getContext("2d"),q=$("cQuorum").getContext("2d"),bk=$("cBreaker").getContext("2d"),t0=performance.now(),still=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function rr(g,x,y,W,H,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+W,y,x+W,y+H,r);g.arcTo(x+W,y+H,x,y+H,r);g.arcTo(x,y+H,x,y,r);g.arcTo(x,y,x+W,y,r);g.closePath();g.fill()}
 function frame(now){var t=still?2:(now-t0)/1000;
   f.fillStyle="#0a1019";f.fillRect(0,0,640,360);
@@ -90,6 +97,9 @@ function frame(now){var t=still?2:(now-t0)/1000;
   for(var e=0;e<4;e++){var ex=80+e*150+Math.sin(t*1.5+e)*30,ey=((t*40+e*70)%200)+10;q.fillStyle=e===2?"#d23b6b":"#ff5b5b";q.shadowColor=q.fillStyle;q.shadowBlur=10;q.beginPath();q.ellipse(ex,ey,e===2?24:15,e===2?16:10,0,0,7);q.fill();q.shadowBlur=0}
   var sx=320+Math.sin(t*1.2)*140;q.fillStyle="#cfe6ff";q.shadowColor="#cfe6ff";q.shadowBlur=14;rr(q,sx-13,196,11,24,2);rr(q,sx+2,188,11,32,2);q.shadowBlur=0;
   for(var b=0;b<4;b++){q.fillRect(sx-1,180-((t*400+b*45)%180),2,10)}
+  bk.fillStyle="#0a1019";bk.fillRect(0,0,640,360);var RC=["#ff5b5b","#f08a72","#f1bb5c","#62d6a0","#5fb8ff"],NM=["QX","QEARN","QSWAP","QBOND","MSVAULT","QBAY","QDRAW","CCF","QUTIL","RANDOM"];
+  for(var br=0;br<4;br++)for(var bc=0;bc<8;bc++){if((br*8+bc+Math.floor(t*1.5))%9===0)continue;bk.fillStyle=RC[br];rr(bk,40+bc*72,40+br*30,66,24,3);bk.fillStyle="rgba(4,7,12,.8)";bk.font="600 11px 'IBM Plex Mono',monospace";bk.textAlign="center";bk.textBaseline="middle";bk.fillText(NM[(br*8+bc)%NM.length],73+bc*72,53+br*30)}
+  var bx=320+Math.sin(t*1.7)*240,by=230-Math.abs(Math.sin(t*2.2))*90,px2=320+Math.sin(t*1.7-.3)*200;bk.fillStyle="#cfe6ff";bk.shadowColor="#cfe6ff";bk.shadowBlur=14;bk.fillRect(bx-7,by-7,14,14);rr(bk,px2-55,310,110,12,4);bk.shadowBlur=0;
   if(!still)requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
 })();
