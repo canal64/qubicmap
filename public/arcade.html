@@ -1,0 +1,84 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Qubic Arcade</title>
+<meta name="description" content="Qubic Arcade on the Qubic Ecosystem Map: Flappy Qubic and Whack-a-FUD, with weekly boards that reset every Qubic epoch.">
+<link rel="canonical" href="https://qubicmap.org/arcade"><meta property="og:type" content="website"><meta property="og:title" content="Qubic Arcade"><meta property="og:description" content="Two quick games, one weekly board each, reset every epoch."><meta property="og:url" content="https://qubicmap.org/arcade"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#04070c">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<style>
+/* Layout: a short header and one card per game, stacked on phones, side by side from 640px. Same dark look as qubicmap.org. */
+:root{--void:#04070c;--panel:#0a1019;--rule:#182434;--ink:#dfe9f3;--muted:#7f93a8;--ice:#cfe6ff;--live:#62d6a0;--warn:#f1bb5c;--fud:#ff5b5b;
+  --display:"Chakra Petch","Eurostile",system-ui,sans-serif;--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;color-scheme:dark}
+body{margin:0;background:var(--void);color:var(--ink);font:15px/1.5 var(--sans);padding-inline:16px;padding-block:28px}
+.wrap{max-width:880px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.back{font:12px var(--mono);color:var(--muted)}
+.back a{color:inherit;text-underline-offset:3px}
+h1{margin:0;font:700 clamp(30px,7vw,52px)/1 var(--display);letter-spacing:.06em;text-transform:uppercase}
+h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
+.intro{margin:0;color:var(--muted);max-width:60ch}
+.intro b{color:var(--ink);font-weight:500}
+.games{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:640px){.games{grid-template-columns:1fr 1fr}}
+.game{display:flex;flex-direction:column;gap:12px;border:1px solid var(--rule);background:var(--panel);padding:18px;text-decoration:none;color:inherit;min-width:0}
+.game:hover{border-color:var(--ice)}
+.game:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.game canvas{width:100%;aspect-ratio:16/9;display:block;background:var(--void);border:1px solid var(--rule)}
+.game h2{margin:0;font:700 22px var(--display);letter-spacing:.08em;text-transform:uppercase}
+.game h2 em{font-style:normal;color:var(--fud)}
+.game p{margin:0;color:var(--muted)}
+.meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font:12px var(--mono);color:var(--muted)}
+.meta b{color:var(--warn);font-weight:500}
+.go{align-self:flex-start;font:600 12px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--live);border:1px solid color-mix(in srgb,var(--live) 55%,transparent);padding:8px 14px}
+.foot{font:12px var(--mono);color:var(--muted)}
+</style>
+</head><body>
+<div class="wrap">
+  <div class="back"><a href="/">← Qubic Ecosystem Map</a></div>
+  <h1>Qubic <span>Arcade</span></h1>
+  <p class="intro">Two quick games. Each has its own board for epoch <b id="ep">—</b>, which resets every Wednesday at 12:00 UTC with the Qubic epoch. Board resets in <b id="left">—</b>.</p>
+  <div class="games">
+    <a class="game" href="/play">
+      <canvas id="cFlappy" width="640" height="360" aria-hidden="true"></canvas>
+      <h2>Flappy Qubic</h2>
+      <p>Fly the Qubic bars through the gaps. Every gap you clear is one tick.</p>
+      <div class="meta"><span id="lFlappy">Leader: …</span><span id="pFlappy"></span></div>
+      <span class="go">▶ Play</span>
+    </a>
+    <a class="game" href="/whack">
+      <canvas id="cWhack" width="640" height="360" aria-hidden="true"></canvas>
+      <h2>Whack-a-<em>FUD</em></h2>
+      <p>Crush the FUD, bugs and red candles in 30 seconds. Never hit Qubic.</p>
+      <div class="meta"><span id="lWhack">Leader: …</span><span id="pWhack"></span></div>
+      <span class="go">▶ Play</span>
+    </a>
+  </div>
+  <p class="foot">Free, no account. Only your name, your best score per epoch and an anonymous visitor code are stored.</p>
+</div>
+<script>
+(function(){
+var $=function(id){return document.getElementById(id)};
+var E0=Date.UTC(2026,9,7,12,0,0),WEEK=7*864e5,k=Math.floor((Date.now()-E0)/WEEK),left=E0+(k+1)*WEEK-Date.now(),h=Math.floor(left/36e5);
+$("ep").textContent=234+k;$("left").textContent=(h>=24?Math.floor(h/24)+"d "+(h%24)+"h":h+"h "+Math.floor(left%36e5/6e4)+"m");
+function load(g,L,P){fetch("/api/game/board?g="+g,{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(b){
+  if(!b){$(L).textContent="";return}var t=b.top[0];$(L).innerHTML="";$(L).append("Leader: ");var e=document.createElement("b");e.textContent=t?t.name+" · "+t.score:"nobody yet";$(L).appendChild(e);
+  $(P).textContent=b.players+(b.players===1?" player":" players")}).catch(function(){$(L).textContent=""})}
+load("flappy","lFlappy","pFlappy");load("whack","lWhack","pWhack");
+/* small looping previews */
+var f=$("cFlappy").getContext("2d"),w=$("cWhack").getContext("2d"),t0=performance.now(),still=matchMedia("(prefers-reduced-motion: reduce)").matches;
+function rr(g,x,y,W,H,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+W,y,x+W,y+H,r);g.arcTo(x+W,y+H,x,y+H,r);g.arcTo(x,y+H,x,y,r);g.arcTo(x,y,x+W,y,r);g.closePath();g.fill()}
+function frame(now){var t=still?2:(now-t0)/1000;
+  f.fillStyle="#0a1019";f.fillRect(0,0,640,360);
+  for(var i=0;i<4;i++){var x=((i*200-t*120)%800+800)%800-100,gy=90+((i*73)%120);f.fillStyle="#2b5684";f.fillRect(x,0,60,gy);f.fillRect(x,gy+140,60,360-gy-140);f.fillStyle="#62d6a0";f.fillRect(x-3,gy-6,66,6);f.fillRect(x-3,gy+140,66,6)}
+  var by=170+Math.sin(t*3)*40;f.save();f.translate(200,by);f.rotate(Math.cos(t*3)*.3);f.fillStyle="#cfe6ff";f.shadowColor="#cfe6ff";f.shadowBlur=16;rr(f,-15,-26,13,38,2);rr(f,2,-26,13,51,2);f.restore();
+  w.fillStyle="#0a1019";w.fillRect(0,0,640,360);
+  for(var r=0;r<2;r++)for(var c=0;c<3;c++){var cx=120+c*200,cy=150+r*150,ph=(t*1.3+c*.7+r*1.9)%3,up=ph<1?Math.sin(ph*Math.PI):0;
+    w.fillStyle="#020409";w.beginPath();w.ellipse(cx,cy,64,18,0,0,7);w.fill();w.strokeStyle="rgba(207,230,255,.22)";w.stroke();
+    if(up>0){w.save();w.beginPath();w.rect(cx-90,cy-140,180,140);w.clip();var yy=cy+(1-up)*70;
+      if((c+r)%3===1){w.fillStyle="#cfe6ff";w.shadowColor="#cfe6ff";w.shadowBlur=14;rr(w,cx-16,yy-62,13,40,2);rr(w,cx+1,yy-62,13,54,2)}
+      else{w.fillStyle="#ff5b5b";w.shadowColor="#ff5b5b";w.shadowBlur=14;w.beginPath();w.ellipse(cx,yy-34,40,28,0,0,7);w.fill();w.shadowBlur=0;w.fillStyle="#2a0606";w.font="700 22px 'Chakra Petch',sans-serif";w.textAlign="center";w.textBaseline="middle";w.fillText("FUD",cx,yy-33)}
+      w.restore()}
+    w.fillStyle="#0a1019";w.fillRect(cx-80,cy+1,160,40)}
+  if(!still)requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+})();
+</script>
+</body></html>

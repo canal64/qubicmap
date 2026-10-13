@@ -14,3 +14,7 @@ CREATE TABLE IF NOT EXISTS links (slug TEXT PRIMARY KEY, url TEXT NOT NULL, ok I
 -- Flappy Qubic: best score per visitor per Qubic epoch (weekly board).
 CREATE TABLE IF NOT EXISTS scores (epoch INTEGER NOT NULL, voter TEXT NOT NULL, name TEXT NOT NULL, score INTEGER NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (epoch, voter));
 CREATE INDEX IF NOT EXISTS scores_rank ON scores (epoch, score DESC);
+
+-- Whack-a-FUD: best score per visitor per Qubic epoch.
+CREATE TABLE IF NOT EXISTS whack_scores (epoch INTEGER NOT NULL, voter TEXT NOT NULL, name TEXT NOT NULL, score INTEGER NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (epoch, voter));
+CREATE INDEX IF NOT EXISTS whack_rank ON whack_scores (epoch, score DESC);
