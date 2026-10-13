@@ -2,7 +2,7 @@
 //   GET  /api/likes          -> { counts: {project: n}, week: {project: n} }   (cached 60 s)
 //   POST /api/like {id, on}  -> { count }
 //   POST /api/suggest {kind, name, url, note, contact} -> { ok }   (project proposals and problem reports)
-//   GET  /api/game/board     -> { epoch, endsAt, top: [{name, score}], me }   (Flappy Qubic, one board per Qubic epoch)
+//   GET  /api/game/board     -> { epoch, endsAt, players, top: [{name, score}], me, ladder: [[name, score, isMe]], champions: [{epoch, name, score}] }   (Flappy Qubic, one board per Qubic epoch)
 //   POST /api/game/start     -> { token }   (signed start time, used to reject impossible scores)
 //   POST /api/game/score {token, score, name} -> { rank, best, top }
 // One like per project per visitor. A visitor is a salted hash of the IP address; the address is never stored.
@@ -52,7 +52,14 @@ async function board(env, voter) {
     }
   }
   const players = await env.DB.prepare("SELECT count(*) AS c FROM scores WHERE epoch = ?1").bind(ep.n).first();
-  return { epoch: ep.n, endsAt: ep.endsAt, players: players.c, top: top.results, me };
+  // Every score this epoch (for the "rival to beat" markers in the game), own row flagged.
+  const ladder = await env.DB.prepare("SELECT name, score, (voter = ?2) AS me FROM scores WHERE epoch = ?1 ORDER BY score DESC, ts ASC LIMIT 300").bind(ep.n, voter || "").all();
+  // Hall of fame: the winner of each finished epoch.
+  const champs = await env.DB.prepare(
+    "SELECT epoch, name, score FROM (SELECT epoch, name, score, ROW_NUMBER() OVER (PARTITION BY epoch ORDER BY score DESC, ts ASC) AS r FROM scores WHERE epoch < ?1) WHERE r = 1 ORDER BY epoch DESC LIMIT 20"
+  ).bind(ep.n).all();
+  return { epoch: ep.n, endsAt: ep.endsAt, players: players.c, top: top.results, me,
+           ladder: ladder.results.map((r) => [r.name, r.score, r.me ? 1 : 0]), champions: champs.results };
 }
 async function game(url, request, env) {
   if (url.pathname === "/api/game/board" && request.method === "GET") {

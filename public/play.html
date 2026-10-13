@@ -50,6 +50,11 @@ canvas{display:block;width:100%;height:100%}
 .board li.ex .n i{font-style:normal;font-size:10px;letter-spacing:.08em;margin-left:6px;border:1px solid var(--rule);padding:0 4px}
 .board h3{margin:10px 0 4px;font:600 11px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:left}
 .sbtn{background:none;border:0;padding:0;cursor:pointer}
+.hud .nx{flex:1;text-align:center;font:11px var(--mono);color:var(--warn);padding-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hud .nx b{display:inline;font:600 12px var(--mono);color:var(--warn)}
+.lead{color:var(--warn)}
+.champs li .k{color:var(--warn)}
+.ov#ovBoard{justify-content:flex-start;overflow-y:auto;padding-top:28px}
 .share{font:12px var(--mono);color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .foot{max-width:440px;width:100%;font:11.5px var(--mono);color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .foot a{color:inherit;text-decoration:underline;text-underline-offset:3px}
@@ -67,13 +72,14 @@ canvas{display:block;width:100%;height:100%}
 
 <div class="stage" id="stage">
   <canvas id="c" aria-label="Flappy Qubic game"></canvas>
-  <div class="hud"><div>TICK<b id="hTick">0</b></div><div class="r">BEST<b id="hBest">0</b></div></div>
+  <div class="hud"><div>TICK<b id="hTick">0</b></div><div class="nx" id="hNext"></div><div class="r">BEST<b id="hBest">0</b></div></div>
 
   <div class="ov" id="ovStart">
     <h2>Fly the Qubic bars<br>through the gaps</h2>
     <p>Tap, click or press Space to flap. Every gap you clear is one tick.</p>
     <button class="btn" id="bStart">Play</button>
     <span class="sub">The weekly board resets with each epoch.</span>
+    <span class="sub lead" id="sLead"></span>
   </div>
 
   <div class="ov" id="ovOver" hidden>
@@ -89,13 +95,14 @@ canvas{display:block;width:100%;height:100%}
       <button class="btn" id="bAgain">Play again</button>
       <button class="btn ghost" id="bBoard">Board</button>
     </div>
-    <div class="row"><a class="share" id="aShare" target="_blank" rel="noopener" href="https://x.com/intent/post">Post my score on X ↗</a><button class="share sbtn" id="bShare" type="button" hidden>Other apps…</button></div>
+    <div class="row"><a class="share" id="aShare" target="_blank" rel="noopener" href="https://x.com/intent/post">Post my score on X ↗</a><button class="share sbtn" id="bShare" type="button">Share score card</button></div>
   </div>
 
   <div class="ov" id="ovBoard" hidden>
     <h2 id="bTitle">Epoch board</h2>
     <div class="board"><h3>Top 10 this epoch</h3><ol id="olBoard"></ol></div>
     <span class="sub" id="bPlayers"></span>
+    <div class="board champs"><h3>Champions</h3><ol id="olChamps"></ol></div>
     <button class="btn" id="bBack">Play</button>
   </div>
 </div>
@@ -131,9 +138,10 @@ $("hBest").textContent=best;
 
 for(var i=0;i<70;i++)dots.push({x:Math.random()*W,y:Math.random(),z:.3+Math.random()*.7});
 
-function reset(){bird={x:W*.3,y:H*.45,v:0,a:0};pipes=[];tick=0;speed=SPD0;t0=0;$("hTick").textContent=0;spawn(W+60)}
+var spawned=0,toast=null,passed={};
+function reset(){bird={x:W*.3,y:H*.45,v:0,a:0};pipes=[];tick=0;spawned=0;toast=null;passed={};speed=SPD0;t0=0;$("hTick").textContent=0;spawn(W+60)}
 function gapFor(){return Math.max(GAPMIN,GAP0-tick*1.6)}
-function spawn(x){var g=gapFor(),m=70,y=m+Math.random()*(H-2*m-g);pipes.push({x:x,y:y,g:g,done:false})}
+function spawn(x){var g=gapFor(),m=70,y=m+Math.random()*(H-2*m-g);pipes.push({x:x,y:y,g:g,done:false,n:++spawned})}
 
 /* Sound */
 var ac=null,sound=store.get("fq_sound",true);
@@ -147,12 +155,12 @@ function unlock(){try{if(navigator.audioSession)navigator.audioSession.type="pla
 function beep(f,d,type,vol){if(!sound)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state!=="running")ac.resume();var o=ac.createOscillator(),g=ac.createGain();o.type=type||"square";o.frequency.value=f;g.gain.value=vol||.04;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
 
 function flap(){if(st==="play"){bird.v=FLAP;beep(660,.08)}}
-function start(){hide();reset();st="play";newToken();flap()}
-function hide(){["ovStart","ovOver","ovBoard"].forEach(function(id){$(id).hidden=true})}
+function start(){hide();reset();st="play";newToken();paintNext();flap()}
+function hide(){document.querySelector(".hud").style.visibility="";["ovStart","ovOver","ovBoard"].forEach(function(id){$(id).hidden=true})}
 
-function die(){st="over";deadAt=performance.now();flash=1;beep(140,.35,"sawtooth",.06);
+function die(){st="over";$("hNext").textContent="";deadAt=performance.now();flash=1;beep(140,.35,"sawtooth",.06);
   var rec=tick>best;if(rec){best=tick;store.set("fq_best",best);$("hBest").textContent=best}
-  $("oScore").textContent=tick;$("oRec").hidden=!rec;
+  $("oScore").textContent=tick;lastRes=null;$("oRec").hidden=!rec;
   var nm=store.get("fq_name","");$("iName").value=nm;$("fName").hidden=tick===0;
   $("oRank").textContent=tick>0?preRank(tick):"";gameToken=token;
   if(tick>0&&nm)submit(nm,false);
@@ -161,10 +169,20 @@ function die(){st="over";deadAt=performance.now();flash=1;beep(140,.35,"sawtooth
   setTimeout(function(){$("ovOver").hidden=false},350)}
 
 /* Weekly board, stored on qubicmap.org (one best score per visitor per epoch) */
-var API="/api/game/",BOARD=null,token=null,gameToken=null;
+var API="/api/game/",BOARD=null,token=null,gameToken=null,lastRes=null;
 function getBoard(){return fetch(API+"board",{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(j){if(j)BOARD=j;return j}).catch(function(){return null})}
 function newToken(){token=null;fetch(API+"start",{method:"POST"}).then(function(r){return r.json()}).then(function(j){token=j.token}).catch(function(){})}
-getBoard();
+getBoard().then(lead);
+function lead(b){var t=b&&b.top&&b.top[0];$("sLead").textContent=t?"Leader this epoch: "+t.name+" · "+t.score:""}
+/* Rivals: the players just above you on this epoch's board. To beat someone on R ticks you need R+1. */
+function rivals(){var L=(BOARD&&BOARD.ladder)||[],out=[];L.forEach(function(r){if(!r[2])out.push({name:r[0],score:r[1]})});
+  out.sort(function(a,b){return a.score-b.score});return out}
+function myBest(){var b=(BOARD&&BOARD.me&&BOARD.me.score)||0;return Math.max(b,best||0)}
+function nextRival(){var R=rivals();for(var i=0;i<R.length;i++)if(R[i].score>=tick)return R[i];return null}
+function paintNext(){var r=nextRival();var el=$("hNext");el.textContent="";
+  if(st!=="play"){return}
+  if(r){el.append("NEXT ");var b=document.createElement("b");b.textContent=r.name+" · "+r.score;el.appendChild(b)}
+  else if(rivals().length)el.textContent="YOU LEAD THE EPOCH"}
 function preRank(s){if(!BOARD)return "";var t=BOARD.top,r=1;t.forEach(function(x){if(x.score>=s)r++});
   return t.length<10||s>t[9].score?"That puts you around #"+r+" this epoch":"Top 10 this epoch needs "+(t[9].score+1)}
 function submit(name,show){var s=tick,tk=gameToken;
@@ -173,21 +191,24 @@ function submit(name,show){var s=tick,tk=gameToken;
   fetch(API+"score",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tk,score:s,name:name})})
   .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j}})})
   .then(function(x){if(!x.ok){$("oRank").textContent=x.j.error==="pick another name"?"That name is not allowed, pick another one":"Score not saved: "+(x.j.error||"error");return}
-    BOARD=x.j;var me=x.j.me;
+    BOARD=x.j;var me=x.j.me;lastRes={rank:me&&me.score<=s?me.rank:0,players:x.j.players};
     $("oRank").textContent=me?(me.score>s?"Your best this epoch stays "+me.score+" · #"+me.rank:"Saved as "+me.name+" · #"+me.rank+" this epoch"):"Saved";
     if(show)showBoard()})
   .catch(function(){$("oRank").textContent="Score not saved: no connection"})}
 function row(ol,rank,name,score,cls){var li=document.createElement("li");if(cls)li.className=cls;
   li.innerHTML='<span class="k"></span><span class="n"></span><span class="s"></span>';
   li.querySelector(".k").textContent=rank;li.querySelector(".n").textContent=name;li.querySelector(".s").textContent=score;ol.appendChild(li)}
-function render(b){var ol=$("olBoard");ol.textContent="";
+function render(b){var ol=$("olBoard");ol.textContent="";$("olChamps").textContent="";
   $("bTitle").textContent="Epoch "+(b?b.epoch:epochInfo().n)+" board";
   if(!b){row(ol,"–","Board unavailable right now","","ex");$("bPlayers").textContent="";return}
   if(!b.top.length)row(ol,"–","No scores yet. Be the first.","","ex");
   b.top.forEach(function(x,i){row(ol,i+1,x.name,x.score,b.me&&b.me.rank===i+1?"me":"")});
   if(b.me&&b.me.rank>10){row(ol,"…","","","ex");row(ol,b.me.rank,b.me.name,b.me.score,"me")}
-  $("bPlayers").textContent=b.players+(b.players===1?" player":" players")+" this epoch"}
-function showBoard(){hide();st="board";render(BOARD);$("ovBoard").hidden=false;getBoard().then(function(j){if(j&&st==="board")render(j)})}
+  $("bPlayers").textContent=b.players+(b.players===1?" player":" players")+" this epoch";
+  var oc=$("olChamps");oc.textContent="";var ch=b.champions||[];
+  if(!ch.length){var d=new Date(b.endsAt);row(oc,"♛","First champion crowned "+d.toUTCString().slice(0,11)+", 12:00 UTC","","ex")}
+  ch.forEach(function(x){row(oc,"♛","Epoch "+x.epoch+" · "+x.name,x.score,"")});lead(b)}
+function showBoard(){hide();st="board";document.querySelector(".hud").style.visibility="hidden";render(BOARD);$("ovBoard").hidden=false;getBoard().then(function(j){if(j&&st==="board")render(j)})}
 
 $("fName").addEventListener("submit",function(e){e.preventDefault();var n=$("iName").value.trim().replace(/\s+/g," ").slice(0,16);
   if(!n){$("iName").focus();return}store.set("fq_name",n);submit(n,true)});
@@ -195,14 +216,31 @@ $("bStart").onclick=start;$("bAgain").onclick=start;$("bBack").onclick=start;$("
 
 /* Share: "Post my score on X" is a plain link to X (opens the X app on phones); "Other apps…" opens the phone's share sheet */
 var shareText="";
-if(navigator.share)$("bShare").hidden=false;
 /* iPhone: open the X app straight to a new post; if the app does not answer, fall back to x.com */
 $("aShare").addEventListener("click",function(e){if(!/iPhone|iPad|iPod/.test(navigator.userAgent))return;e.preventDefault();
   var web=this.href,m=web.split("text=")[1]||"",gone=false;
   var off=function(){if(document.hidden)gone=true};document.addEventListener("visibilitychange",off);
   setTimeout(function(){document.removeEventListener("visibilitychange",off);if(!gone&&!document.hidden)window.location.href=web},1500);
   window.location.href="twitter://post?message="+m});
-$("bShare").addEventListener("click",function(){navigator.share({text:shareText+" https://qubicmap.org/play"}).catch(function(){})});
+/* Score card: a 1200x675 image of the score, shared through the phone's share sheet (X, Telegram…) or downloaded on desktop */
+function scoreCard(){var cw=1200,ch=675,k=document.createElement("canvas");k.width=cw;k.height=ch;var g=k.getContext("2d");
+  g.fillStyle=C.void;g.fillRect(0,0,cw,ch);g.strokeStyle="rgba(24,36,52,.7)";g.lineWidth=1;for(var gx=0;gx<=cw;gx+=60){g.beginPath();g.moveTo(gx+.5,0);g.lineTo(gx+.5,ch);g.stroke()}for(var gy=0;gy<=ch;gy+=60){g.beginPath();g.moveTo(0,gy+.5);g.lineTo(cw,gy+.5);g.stroke()}
+  var D="'Chakra Petch',system-ui,sans-serif",M="'IBM Plex Mono',monospace",ep=epochInfo().n,sc=Number($("oScore").textContent)||0;
+  g.save();g.fillStyle=C.ice;g.shadowColor=C.ice;g.shadowBlur=20;function r(x,y,w,h){g.beginPath();g.rect(x,y,w,h);g.fill()}r(80,80,21,63);r(108,80,21,84);g.restore();
+  g.font="700 44px "+D;g.fillStyle="#dfe9f3";g.textBaseline="alphabetic";g.letterSpacing="6px";g.fillText("FLAPPY",160,128);g.strokeStyle=C.ice;g.lineWidth=1.5;g.strokeText("$QUBIC",160+g.measureText("FLAPPY ").width,128);
+  g.font="400 22px "+M;g.fillStyle=C.muted;g.letterSpacing="4px";g.fillText("EPOCH "+ep+(lastRes&&lastRes.rank?"  ·  #"+lastRes.rank+" OF "+lastRes.players:""),162,162);
+  g.letterSpacing="0px";g.font="400 30px "+M;g.fillStyle=C.muted;g.fillText("TICK",80,330);
+  g.font="700 220px "+D;g.fillStyle="#dfe9f3";g.shadowColor="rgba(207,230,255,.35)";g.shadowBlur=30;g.fillText(String(sc),72,520);g.shadowBlur=0;
+  var nm=store.get("fq_name","");if(nm){g.font="500 34px "+M;g.fillStyle=C.live;g.fillText(nm,84,580)}
+  for(var i=0;i<4;i++){var px=cw-430+i*95,py=70+((i*97)%150);g.fillStyle="#2b5684";g.fillRect(px,0,44,py);g.fillRect(px,py+130,44,440-py-130);g.fillStyle=C.live;g.fillRect(px-3,py-6,50,6);g.fillRect(px-3,py+130,50,6)}
+  g.textAlign="right";g.font="600 30px "+D;g.fillStyle=C.warn;g.letterSpacing="4px";g.fillText("CAN YOU BEAT IT?",cw-80,520);
+  g.font="500 34px "+M;g.fillStyle="#dfe9f3";g.letterSpacing="0px";g.fillText("qubicmap.org/play",cw-80,580);
+  return k}
+$("bShare").addEventListener("click",function(){var btn=this,k=scoreCard(),txt=shareText+" https://qubicmap.org/play";
+  k.toBlob(function(bl){if(!bl)return;var f;try{f=new File([bl],"flappy-qubic-tick-"+$("oScore").textContent+".png",{type:"image/png"})}catch(e){}
+    if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],text:txt}).catch(function(){});return}
+    var u=URL.createObjectURL(bl),a=document.createElement("a");a.href=u;a.download="flappy-qubic-tick-"+$("oScore").textContent+".png";document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(u)},4000);btn.textContent="Image saved ✓";setTimeout(function(){btn.textContent="Share score card"},2500)},"image/png")});
 /* Input: tap anywhere on the stage, or Space / Up */
 $("stage").addEventListener("pointerdown",function(e){if(e.target.closest("button,input,a,form"))return;
   if(st==="play")flap();else if(st==="over"&&performance.now()-deadAt>450)start();else if(st==="start")start()});
@@ -218,11 +256,20 @@ function pillar(x,y,h,top){var g=cx.createLinearGradient(x,0,x+PW,0);g.addColorS
   cx.fillStyle=g;cx.fillRect(x,y,PW,h);cx.fillStyle=C.live;cx.globalAlpha=.85;cx.fillRect(x-3,top?y+h-6:y,PW+6,6);cx.globalAlpha=1;
   cx.strokeStyle="rgba(207,230,255,.08)";cx.lineWidth=1;for(var k=10;k<PW;k+=12){cx.beginPath();cx.moveTo(x+k+.5,y);cx.lineTo(x+k+.5,y+h);cx.stroke()}}
 
+function marker(lx,label,col){cx.save();cx.strokeStyle=col;cx.globalAlpha=.75;cx.lineWidth=1.5;cx.setLineDash([6,6]);cx.beginPath();cx.moveTo(lx,0);cx.lineTo(lx,H);cx.stroke();cx.setLineDash([]);
+  cx.globalAlpha=1;cx.font="500 10px 'IBM Plex Mono',monospace";var w=cx.measureText(label).width+10;cx.fillStyle="rgba(4,7,12,.85)";cx.fillRect(lx-w/2,H-34,w,18);
+  cx.fillStyle=col;cx.textAlign="center";cx.fillText(label,lx,H-21);cx.restore()}
 function draw(){var s=cv.width/W;cx.setTransform(s,0,0,s,0,0);
   cx.fillStyle=C.panel;cx.fillRect(0,0,W,H);
   dots.forEach(function(d){cx.fillStyle="rgba(207,230,255,"+(.08+.18*d.z)+")";cx.fillRect(d.x,d.y*H,1.6*d.z+.4,1.6*d.z+.4)});
   pipes.forEach(function(p){pillar(p.x,0,p.y,true);pillar(p.x,p.y+p.g,H-p.y-p.g,false)});
   cx.fillStyle=C.rule;cx.fillRect(0,H-2,W,2);
+  if(st==="play"){var nr=nextRival(),mb=myBest();
+    pipes.forEach(function(p){var lx=p.x+PW+14;
+      if(nr&&p.n===nr.score+1)marker(lx,nr.name+" · "+nr.score,C.warn);
+      else if(mb>0&&p.n===mb+1&&!(nr&&nr.score===mb))marker(lx,"YOUR BEST · "+mb,C.live)})}
+  if(toast&&performance.now()<toast.until){var k=(toast.until-performance.now())/1300;cx.save();cx.globalAlpha=Math.min(1,k*2.5);
+    cx.font="700 20px 'Chakra Petch',system-ui,sans-serif";cx.textAlign="center";cx.fillStyle=toast.c;cx.shadowColor=toast.c;cx.shadowBlur=12;cx.fillText(toast.t,W/2,H*.22);cx.restore()}
   if(bird)bars(bird.x,bird.y,1,bird.a,st==="play"?14:4);
   if(flash>0){cx.fillStyle="rgba(240,138,114,"+(flash*.35)+")";cx.fillRect(0,0,W,H)}}
 
@@ -241,7 +288,11 @@ function update(dt){
   if(bird.y+hy>H-2)return die();
   for(var i=0;i<pipes.length;i++){var p=pipes[i];
     if(bird.x+hx>p.x&&bird.x-hx<p.x+PW&&(bird.y-hy<p.y||bird.y+hy>p.y+p.g))return die();
-    if(!p.done&&p.x+PW<bird.x-hx){p.done=true;tick++;$("hTick").textContent=tick;beep(990,.06,"triangle",.035)}}}
+    if(!p.done&&p.x+PW<bird.x-hx){p.done=true;tick++;$("hTick").textContent=tick;beep(990,.06,"triangle",.035);
+      var beat=rivals().filter(function(r){return r.score===tick-1&&!passed[r.name+r.score]});
+      if(beat.length){beat.forEach(function(r){passed[r.name+r.score]=1});toast={t:"PASSED "+beat[0].name+(beat.length>1?" +"+(beat.length-1):""),c:C.warn,until:performance.now()+1300};beep(1320,.09,"square",.04);setTimeout(function(){beep(1760,.12,"square",.04)},90)}
+      else if(tick===myBest()+1&&myBest()>0&&!passed.me){passed.me=1;toast={t:"NEW PERSONAL BEST",c:C.live,until:performance.now()+1300};beep(1568,.15,"triangle",.05)}
+      paintNext()}}}
 function loop(t){var dt=Math.min(.05,(t-last)/1000||0);last=t;acc+=dt;
   while(acc>=STEP){update(STEP);acc-=STEP}
   if(flash>0)flash=Math.max(0,flash-dt*2.5);
