@@ -18,6 +18,7 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
 .intro b{color:var(--ink);font-weight:500}
 .games{display:grid;grid-template-columns:1fr;gap:14px}
 @media (min-width:640px){.games{grid-template-columns:1fr 1fr}}
+@media (min-width:900px){.wrap{max-width:1100px}.games{grid-template-columns:1fr 1fr 1fr}}
 .game{display:flex;flex-direction:column;gap:12px;border:1px solid var(--rule);background:var(--panel);padding:18px;text-decoration:none;color:inherit;min-width:0}
 .game:hover{border-color:var(--ice)}
 .game:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
@@ -34,7 +35,7 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
 <div class="wrap">
   <div class="back"><a href="/">← Qubic Ecosystem Map</a></div>
   <h1>Qubic <span>Arcade</span></h1>
-  <p class="intro">Two quick games. Each has its own board for epoch <b id="ep">—</b>, which resets every Wednesday at 12:00 UTC with the Qubic epoch. Board resets in <b id="left">—</b>.</p>
+  <p class="intro">Three quick games. Each has its own board for epoch <b id="ep">—</b>, which resets every Wednesday at 12:00 UTC with the Qubic epoch. Board resets in <b id="left">—</b>.</p>
   <div class="games">
     <a class="game" href="/play">
       <canvas id="cFlappy" width="640" height="360" aria-hidden="true"></canvas>
@@ -50,6 +51,13 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
       <div class="meta"><span id="lWhack">Leader: …</span><span id="pWhack"></span></div>
       <span class="go">▶ Play</span>
     </a>
+    <a class="game" href="/quorum">
+      <canvas id="cQuorum" width="640" height="360" aria-hidden="true"></canvas>
+      <h2>Quorum <span style="color:transparent;-webkit-text-stroke:1px var(--ice)">Defender</span></h2>
+      <p>Protect the 676 Computors. If fewer than 451 survive, the quorum falls.</p>
+      <div class="meta"><span id="lQuorum">Leader: …</span><span id="pQuorum"></span></div>
+      <span class="go">▶ Play</span>
+    </a>
   </div>
   <p class="foot">Free, no account. Only your name, your best score per epoch and an anonymous visitor code are stored.</p>
 </div>
@@ -61,9 +69,9 @@ $("ep").textContent=234+k;$("left").textContent=(h>=24?Math.floor(h/24)+"d "+(h%
 function load(g,L,P){fetch("/api/game/board?g="+g,{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(b){
   if(!b){$(L).textContent="";return}var t=b.top[0];$(L).innerHTML="";$(L).append("Leader: ");var e=document.createElement("b");e.textContent=t?t.name+" · "+t.score:"nobody yet";$(L).appendChild(e);
   $(P).textContent=b.players+(b.players===1?" player":" players")}).catch(function(){$(L).textContent=""})}
-load("flappy","lFlappy","pFlappy");load("whack","lWhack","pWhack");
+load("flappy","lFlappy","pFlappy");load("whack","lWhack","pWhack");load("quorum","lQuorum","pQuorum");
 /* small looping previews */
-var f=$("cFlappy").getContext("2d"),w=$("cWhack").getContext("2d"),t0=performance.now(),still=matchMedia("(prefers-reduced-motion: reduce)").matches;
+var f=$("cFlappy").getContext("2d"),w=$("cWhack").getContext("2d"),q=$("cQuorum").getContext("2d"),t0=performance.now(),still=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function rr(g,x,y,W,H,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+W,y,x+W,y+H,r);g.arcTo(x+W,y+H,x,y+H,r);g.arcTo(x,y+H,x,y,r);g.arcTo(x,y,x+W,y,r);g.closePath();g.fill()}
 function frame(now){var t=still?2:(now-t0)/1000;
   f.fillStyle="#0a1019";f.fillRect(0,0,640,360);
@@ -77,6 +85,11 @@ function frame(now){var t=still?2:(now-t0)/1000;
       else{w.fillStyle="#ff5b5b";w.shadowColor="#ff5b5b";w.shadowBlur=14;w.beginPath();w.ellipse(cx,yy-34,40,28,0,0,7);w.fill();w.shadowBlur=0;w.fillStyle="#2a0606";w.font="700 22px 'Chakra Petch',sans-serif";w.textAlign="center";w.textBaseline="middle";w.fillText("FUD",cx,yy-33)}
       w.restore()}
     w.fillStyle="#0a1019";w.fillRect(cx-80,cy+1,160,40)}
+  q.fillStyle="#0a1019";q.fillRect(0,0,640,360);
+  for(var i=0;i<676;i++){var cc=i%52,rw=Math.floor(i/52),dead=((cc*7+rw*13)%23===0)||(Math.abs(cc-20)<4&&rw<3);q.fillStyle=dead?"#141c26":"rgba(98,214,160,.85)";q.fillRect(28+cc*11.2,236+rw*8.6,9,7)}
+  for(var e=0;e<4;e++){var ex=80+e*150+Math.sin(t*1.5+e)*30,ey=((t*40+e*70)%200)+10;q.fillStyle=e===2?"#d23b6b":"#ff5b5b";q.shadowColor=q.fillStyle;q.shadowBlur=10;q.beginPath();q.ellipse(ex,ey,e===2?24:15,e===2?16:10,0,0,7);q.fill();q.shadowBlur=0}
+  var sx=320+Math.sin(t*1.2)*140;q.fillStyle="#cfe6ff";q.shadowColor="#cfe6ff";q.shadowBlur=14;rr(q,sx-13,196,11,24,2);rr(q,sx+2,188,11,32,2);q.shadowBlur=0;
+  for(var b=0;b<4;b++){q.fillRect(sx-1,180-((t*400+b*45)%180),2,10)}
   if(!still)requestAnimationFrame(frame)}
 requestAnimationFrame(frame);
 })();

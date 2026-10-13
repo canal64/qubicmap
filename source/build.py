@@ -28,7 +28,7 @@ head=('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="vi
 out=head+body+'</body></html>'
 for p in ['/home/claude/index.html','/home/claude/qubic-map/public/index.html']: open(p,'w').write(out)
 open('/home/claude/qubic-map/public/robots.txt','w').write('User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: %ssitemap.xml\n'%URL)
-open('/home/claude/qubic-map/public/sitemap.xml','w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>%s</loc><lastmod>%s</lastmod></url><url><loc>%sarcade</loc><lastmod>2026-10-13</lastmod></url><url><loc>%splay</loc><lastmod>2026-10-13</lastmod></url><url><loc>%swhack</loc><lastmod>2026-10-13</lastmod></url></urlset>\n'%(URL,datetime.date(2026,10,11).isoformat(),URL,URL,URL))
+open('/home/claude/qubic-map/public/sitemap.xml','w').write('<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>%s</loc><lastmod>%s</lastmod></url><url><loc>%sarcade</loc><lastmod>2026-10-13</lastmod></url><url><loc>%splay</loc><lastmod>2026-10-13</lastmod></url><url><loc>%swhack</loc><lastmod>2026-10-13</lastmod></url><url><loc>%squorum</loc><lastmod>2026-10-13</lastmod></url></urlset>\n'%(URL,datetime.date(2026,10,11).isoformat(),URL,URL,URL,URL))
 print(len(out),len(E))
 
 import re as _re, os as _os

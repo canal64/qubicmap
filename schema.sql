@@ -18,3 +18,7 @@ CREATE INDEX IF NOT EXISTS scores_rank ON scores (epoch, score DESC);
 -- Whack-a-FUD: best score per visitor per Qubic epoch.
 CREATE TABLE IF NOT EXISTS whack_scores (epoch INTEGER NOT NULL, voter TEXT NOT NULL, name TEXT NOT NULL, score INTEGER NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (epoch, voter));
 CREATE INDEX IF NOT EXISTS whack_rank ON whack_scores (epoch, score DESC);
+
+-- Quorum Defender: best score per visitor per Qubic epoch.
+CREATE TABLE IF NOT EXISTS quorum_scores (epoch INTEGER NOT NULL, voter TEXT NOT NULL, name TEXT NOT NULL, score INTEGER NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (epoch, voter));
+CREATE INDEX IF NOT EXISTS quorum_rank ON quorum_scores (epoch, score DESC);
