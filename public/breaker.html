@@ -65,6 +65,7 @@ canvas{display:block;width:100%;height:100%}
 .sbtn{background:none;border:0;padding:0;cursor:pointer}
 .share{font:12px var(--mono);color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .foot a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+#stage{touch-action:none}
 </style>
 </head><body>
 <div class="top">
@@ -149,7 +150,7 @@ function build(){bricks=[];var rows=Math.min(6,3+lvl),k=(lvl*5)%NAMES.length;
 function speed(){return 250+lvl*22}
 function serve(){balls=[{x:pad.x,y:PY-8,vx:0,vy:0}];stuck=true}
 function launch(){if(!stuck||st!=="play")return;stuck=false;var a=-Math.PI/2+(Math.random()-.5)*.6;balls[0].vx=Math.cos(a)*speed();balls[0].vy=Math.sin(a)*speed();beep(660,.06)}
-function padW(){return wide>0?92:60}
+function padW(){return wide>0?110:76}
 
 function start(){hideAll();passed={};newToken();score=0;lvl=1;lives=3;broken=0;burn=0;wide=0;drops=[];sparks=[];fx=[];pad={x:W/2,tx:W/2};build();serve();st="play";hud();paintNext();
   fx.push({x:W/2,y:H*.55,t:0,txt:"LEVEL 1",col:C.warn,big:1});beep(392,.08);setTimeout(function(){beep(523,.08)},90);setTimeout(function(){beep(784,.14)},180)}
@@ -164,9 +165,12 @@ function end(){st="over";
 
 /* Controls: drag or move to steer the paddle, tap to launch */
 var stage=$("stage");
-function steer(e){if(st!=="play")return;var r=cv.getBoundingClientRect();pad.tx=(e.clientX-r.left)/r.width*W}
-stage.addEventListener("pointerdown",function(e){if(e.target.closest("button,input,a,form"))return;steer(e);launch()});
-stage.addEventListener("pointermove",function(e){if(e.pointerType==="mouse"||e.buttons||e.pressure>0)steer(e)});
+/* Touch: relative drag, so the finger can be anywhere and never hides the pad. Mouse: follows the pointer. */
+var drag=null;function gx(e){var r=cv.getBoundingClientRect();return (e.clientX-r.left)/r.width*W}
+function steer(e){if(st!=="play")return;if(e.pointerType==="mouse"){pad.tx=gx(e);return}if(drag)pad.tx=drag.p+(gx(e)-drag.x)*1.25}
+stage.addEventListener("pointerdown",function(e){if(e.target.closest("button,input,a,form"))return;if(st==="play"&&e.pointerType!=="mouse")drag={x:gx(e),p:pad.tx};steer(e);launch()});
+stage.addEventListener("pointermove",function(e){if(e.pointerType==="mouse"||drag)steer(e)});
+["pointerup","pointercancel"].forEach(function(ev){stage.addEventListener(ev,function(){drag=null})});
 var keys={};document.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;keys[e.code]=1;
   if(e.code==="Space"||e.code==="ArrowUp"){e.preventDefault();if(st==="play")launch();else if(st!=="board")start()}});
 document.addEventListener("keyup",function(e){keys[e.code]=0});
@@ -190,7 +194,7 @@ function update(dt){
   if(st!=="play")return;
   if(burn>0)burn-=dt;if(wide>0)wide-=dt;if(!stuck)sinceHit+=dt;
   if(keys.ArrowLeft||keys.KeyA)pad.tx-=320*dt;if(keys.ArrowRight||keys.KeyD)pad.tx+=320*dt;
-  var hw=padW()/2;pad.tx=Math.max(hw,Math.min(W-hw,pad.tx));pad.x+=(pad.tx-pad.x)*Math.min(1,dt*18);
+  var hw=padW()/2;pad.tx=Math.max(hw,Math.min(W-hw,pad.tx));pad.x+=(pad.tx-pad.x)*Math.min(1,dt*32);
   if(stuck){balls[0].x=pad.x;balls[0].y=PY-8}
   /* sub-steps keep fast balls from tunnelling through bricks */
   var steps=3,sd=dt/steps;
@@ -234,7 +238,7 @@ function draw(){var k=cv.width/W;cx.setTransform(k,0,0,k,0,0);cx.translate(shake
   cx.fillStyle=C.rule;cx.fillRect(0,102,W,2);
   bricks.forEach(function(b){drawBrick(cx,b)});
   drops.forEach(function(d){drawDrop(cx,d)});
-  if(pad&&st!=="start"){var w=padW();cx.save();cx.fillStyle=wide>0?C.live:C.ice;cx.shadowColor=cx.fillStyle;cx.shadowBlur=14;rr(cx,pad.x-w/2,PY,w,8,3);cx.fill();cx.restore()}
+  if(pad&&st!=="start"){var w=padW();cx.save();cx.fillStyle=wide>0?C.live:C.ice;cx.shadowColor=cx.fillStyle;cx.shadowBlur=14;rr(cx,pad.x-w/2,PY,w,12,4);cx.fill();cx.restore()}
   balls.forEach(function(b){cx.save();cx.fillStyle=burn>0?C.fud:C.ice;cx.shadowColor=cx.fillStyle;cx.shadowBlur=burn>0?18:10;cx.fillRect(b.x-4,b.y-4,8,8);cx.restore()});
   if(st==="play"&&stuck){cx.fillStyle=C.muted;cx.font="500 11px 'IBM Plex Mono',monospace";cx.textAlign="center";cx.fillText("tap to launch",W/2,PY+30)}
   sparks.forEach(function(p){cx.globalAlpha=Math.max(0,1-p.t);cx.fillStyle=p.col;cx.fillRect(p.x-1.5,p.y-1.5,3,3)});cx.globalAlpha=1;

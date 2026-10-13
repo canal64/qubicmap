@@ -65,6 +65,7 @@ canvas{display:block;width:100%;height:100%}
 .sbtn{background:none;border:0;padding:0;cursor:pointer}
 .share{font:12px var(--mono);color:var(--muted);text-decoration:underline;text-underline-offset:3px}
 .foot a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+#stage{touch-action:none}
 </style>
 </head><body>
 <div class="top">
@@ -176,9 +177,12 @@ function drop(x,y){if(Math.random()<.11){var t=Math.random()<.55?"patch":"rapid"
 
 /* Controls: drag or move the pointer to steer; fire is automatic */
 var stage=$("stage");
-function steer(e){if(st!=="play")return;var r=cv.getBoundingClientRect();ship.tx=Math.max(14,Math.min(W-14,(e.clientX-r.left)/r.width*W))}
-stage.addEventListener("pointerdown",function(e){if(e.target.closest("button,input,a,form"))return;steer(e)});
-stage.addEventListener("pointermove",function(e){if(e.pointerType==="mouse"||e.buttons||e.pressure>0)steer(e)});
+/* Touch: relative drag, so the finger can be anywhere and never hides the ship. Mouse: follows the pointer. */
+var drag=null;function gx(e){var r=cv.getBoundingClientRect();return (e.clientX-r.left)/r.width*W}
+function steer(e){if(st!=="play")return;var x=e.pointerType==="mouse"?gx(e):drag?drag.p+(gx(e)-drag.x)*1.25:ship.tx;ship.tx=Math.max(14,Math.min(W-14,x))}
+stage.addEventListener("pointerdown",function(e){if(e.target.closest("button,input,a,form"))return;if(st==="play"&&e.pointerType!=="mouse")drag={x:gx(e),p:ship.tx};steer(e)});
+stage.addEventListener("pointermove",function(e){if(e.pointerType==="mouse"||drag)steer(e)});
+["pointerup","pointercancel"].forEach(function(ev){stage.addEventListener(ev,function(){drag=null})});
 var keys={};document.addEventListener("keydown",function(e){if(e.target.tagName==="INPUT")return;keys[e.code]=1;
   if((e.code==="Space"||e.code==="Enter")&&st!=="play"&&st!=="board"){e.preventDefault();start()}});
 document.addEventListener("keyup",function(e){keys[e.code]=0});
@@ -193,7 +197,7 @@ function update(dt){
   elapsed+=dt;var nw=1+Math.floor(elapsed/20);if(nw!==wave){wave=nw;fx.push({x:W/2,y:H*.3,t:0,txt:"WAVE "+wave,col:C.warn,big:1});beep(659,.1);setTimeout(function(){beep(988,.16)},110);hud()}
   /* ship */
   if(keys.ArrowLeft||keys.KeyA)ship.tx=Math.max(14,ship.tx-260*dt);if(keys.ArrowRight||keys.KeyD)ship.tx=Math.min(W-14,ship.tx+260*dt);
-  ship.x+=(ship.tx-ship.x)*Math.min(1,dt*14);
+  ship.x+=(ship.tx-ship.x)*Math.min(1,dt*28);
   if(rapid>0)rapid-=dt;fireT-=dt;if(fireT<=0){fireT=rapid>0?.075:.2;var sy=GY-34;shots.push({x:ship.x-4,y:sy},{x:ship.x+5,y:sy});if(rapid<=0)shots.length-=1;beep(rapid>0?1200:900,.03,"square",.012)}
   shots.forEach(function(s){s.y-=520*dt});shots=shots.filter(function(s){return s.y>-10&&!s.dead});
   /* spawn */
