@@ -108,9 +108,13 @@ async function findLogo(site) {
 
 // mShots answers with a "generating" placeholder (a GIF or a tiny image) until the capture is ready.
 async function findShot(site) {
-  const b = await getBytes(shotUrl(site), MAX_SHOT, 12000);
+  let r;
+  try { r = await fetch(shotUrl(site), { redirect: "follow", headers: { "User-Agent": UA, Accept: "image/*" }, signal: AbortSignal.timeout(12000) }); }
+  catch (e) { return { fail: "fetch error" }; }
+  const b = r.ok ? await r.arrayBuffer() : (r.body && (await r.body.cancel().catch(() => {})), null);
   const s = b && sniff(b);
-  if (!s || s.type !== "jpg" || b.byteLength < 12000 || s.w < 300) return null;
+  if (!s || s.type !== "jpg" || b.byteLength < 12000 || s.w < 300 || b.byteLength > MAX_SHOT)
+    return { fail: "http " + r.status + " " + (s ? s.type + " w" + s.w : "?") + " " + (b ? b.byteLength : 0) + "B" };
   return { data: b, ct: "image/jpeg" };
 }
 
@@ -133,9 +137,9 @@ export async function mediaBatch(env, force) {
     const [shot, logo] = await Promise.all([x.needShot ? findShot(x.url) : null, x.needLogo ? findLogo(x.url) : null]);
     if (!x.same) await env.DB.prepare("INSERT INTO media (slug, url) VALUES (?1, ?2) ON CONFLICT(slug) DO UPDATE SET url = ?2, shot = NULL, shot_ts = NULL, shot_try = 0, logo = NULL, logo_ts = NULL, logo_try = 0").bind(x.slug, x.url).run();
     const st = [];
-    if (x.needShot) st.push(shot
+    if (x.needShot) st.push(shot && shot.data
       ? env.DB.prepare("UPDATE media SET shot = ?2, shot_ct = ?3, shot_ts = ?4, shot_try = ?4 WHERE slug = ?1").bind(x.slug, shot.data, shot.ct, now)
-      : env.DB.prepare("UPDATE media SET shot_try = ?2 WHERE slug = ?1").bind(x.slug, now));
+      : env.DB.prepare("UPDATE media SET shot_try = ?2, shot_ct = CASE WHEN shot IS NULL THEN ?3 ELSE shot_ct END WHERE slug = ?1").bind(x.slug, now, "fail: " + ((shot && shot.fail) || "")));
     if (x.needLogo) st.push(logo
       ? env.DB.prepare("UPDATE media SET logo = ?2, logo_ct = ?3, logo_src = ?4, logo_ts = ?5, logo_try = ?5 WHERE slug = ?1").bind(x.slug, logo.data, logo.ct, logo.src, now)
       : env.DB.prepare("UPDATE media SET logo_try = ?2 WHERE slug = ?1").bind(x.slug, now));
