@@ -3,6 +3,7 @@
 // Any failure here falls back to serving the page untouched.
 
 import LIST from "../lib/links.js";
+import { mediaBatch, mediaIndex } from "./media.js";
 
 const DAY = 86400000;
 const NEWS_URL = "https://qubic.org/blog-grid";
@@ -148,6 +149,20 @@ async function links(request, env, waitUntil) {
   return out;
 }
 
+// Which tiles have a site preview and a logo yet; refreshes a few sites in the background.
+async function media(request, env, waitUntil) {
+  waitUntil(mediaBatch(env).catch(() => {}));
+  const origin = new URL(request.url).origin;
+  const cache = typeof caches !== "undefined" && caches.default;
+  const key = new Request(origin + "/api/media-cache");
+  const hit = cache && (await cache.match(key));
+  if (hit) return await hit.json();
+  const out = await mediaIndex(env);
+  if (cache)
+    waitUntil(cache.put(key, new Response(JSON.stringify(out), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } })));
+  return out;
+}
+
 const safe = (v) => JSON.stringify(v).replace(/</g, "\\u003c").replace(/[\u2028\u2029]/g, "");
 
 export async function onRequest(context) {
@@ -155,15 +170,17 @@ export async function onRequest(context) {
   const res = await next();
   try {
     if (request.method !== "GET" || !(res.headers.get("content-type") || "").includes("text/html")) return res;
-    const [l, n, k] = await Promise.all([
+    const [l, n, k, m] = await Promise.all([
       likes(request, env, waitUntil).catch(() => null),
       news(request, env, waitUntil).catch(() => null),
       links(request, env, waitUntil).catch(() => null),
+      media(request, env, waitUntil).catch(() => null),
     ]);
     let script = "";
     if (l) script += "window.__LIKES=" + safe(l) + ";";
     if (n && n.length) script += "window.__NEWS=" + safe(n) + ";";
     if (k && Object.keys(k).length) script += "window.__LINKS=" + safe(k) + ";";
+    if (m && Object.keys(m).length) script += "window.__MEDIA=" + safe(m) + ";";
     if (!script) return res;
     const out = new HTMLRewriter()
       .on("head", { element(el) { el.append("<script>" + script + "</script>", { html: true }); } })

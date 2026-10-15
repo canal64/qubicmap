@@ -26,3 +26,6 @@ CREATE INDEX IF NOT EXISTS quorum_rank ON quorum_scores (epoch, score DESC);
 -- Epoch Breaker: best score per visitor per Qubic epoch.
 CREATE TABLE IF NOT EXISTS breaker_scores (epoch INTEGER NOT NULL, voter TEXT NOT NULL, name TEXT NOT NULL, score INTEGER NOT NULL, ts INTEGER NOT NULL, PRIMARY KEY (epoch, voter));
 CREATE INDEX IF NOT EXISTS breaker_rank ON breaker_scores (epoch, score DESC);
+
+-- Site previews (mShots) and logos for the tiles, served from /m/s/<slug>.jpg and /m/l/<slug>.
+CREATE TABLE IF NOT EXISTS media (slug TEXT PRIMARY KEY, url TEXT, shot BLOB, shot_ct TEXT, shot_ts INTEGER, shot_try INTEGER DEFAULT 0, logo BLOB, logo_ct TEXT, logo_src TEXT, logo_ts INTEGER, logo_try INTEGER DEFAULT 0);
