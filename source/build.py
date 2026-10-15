@@ -38,3 +38,9 @@ _L=[[_slug(e[1]),e[4]] for e in E if not any(h in e[4].split('/')[2] for h in _S
 _os.makedirs('/home/claude/qubic-map/lib',exist_ok=True)
 open('/home/claude/qubic-map/lib/links.js','w').write('// Generated from the page data: [slug, url] of every listed site that can be checked.\nexport default '+json.dumps(_L,ensure_ascii=False)+';\n')
 print('links',len(_L))
+# Sites that get a preview and a logo: same as above, but sites that only refuse our link checks
+# (qubic.church) are still captured; social profiles never are.
+_MSKIP=('x.com','twitter.com','youtube.com','youtu.be','discord.gg','discord.com','t.me','join.qubic.org')
+_M=[[_slug(e[1]),e[4]] for e in E if not any(h in e[4].split('/')[2] for h in _MSKIP)]
+open('/home/claude/qubic-map/lib/media.js','w').write('// Generated from the page data: [slug, url] of every listed site that gets a preview and a logo.\nexport default '+json.dumps(_M,ensure_ascii=False)+';\n')
+print('media',len(_M))

@@ -4,7 +4,7 @@
 // from qubicmap.org, so visitors never load anything from a third party. A tile keeps its sigil
 // until its preview or logo exists.
 
-import LIST from "../lib/links.js";
+import LIST from "../lib/media.js";
 
 const DAY = 86400000;
 const RUN_EVERY = 90000;            // at most one refresh batch every 90 s (cron every 2 min, plus visits)
