@@ -357,7 +357,9 @@ function popular(){return E.filter(function(e){return(WEEK[slug(e[1])]||0)>=2}).
 /* Site preview and logo, when the server has them; the sigil underneath stays as the fallback. */
 /* Logos set by hand (public/logos/<slug>.png): they win over the automatic ones. */
 var FIXLOGO={"qmine-qrwa":1,"qxboard":1,"qfront":1,"quhub":1,"qubic-portal":1},DARKLOGO={"qxboard":1,"qfront":1,"quhub":1,"qubic-portal":1};
-function mediaHTML(e){var k=slug(e[1]),m=MEDIA[k]||[0,0];if(!m[0]&&!m[1]&&!FIXLOGO[k])return "";var h="";
+/* Captures that show an error page instead of the site: keep the sigil. */
+var NOSHOT={"safetrade":1,"digifinex":1};
+function mediaHTML(e){var k=slug(e[1]),m=(MEDIA[k]||[0,0]).slice();if(NOSHOT[k])m[0]=0;if(!m[0]&&!m[1]&&!FIXLOGO[k])return "";var h="";
   if(m[0])h+='<div class="shot" style="--d:-'+((k.length*7.3)%16).toFixed(1)+'s"><img src="/m/s/'+k+'.jpg?v='+m[0]+'" alt="" loading="lazy" decoding="async" onload="shotLoaded(this)" onerror="this.parentNode.remove()"></div>';
   if(m[1]||FIXLOGO[k])h+='<img class="logo'+(DARKLOGO[k]?' dk':'')+'" src="'+(FIXLOGO[k]?'/logos/'+k+'.png?v='+FIXLOGO[k]:'/m/l/'+k+'?v='+m[1])+'" alt="" loading="lazy" decoding="async" onload="this.closest(\'.art\').classList.add(\'lg\')" onerror="this.remove()">';
   return h}
