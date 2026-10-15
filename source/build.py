@@ -34,13 +34,16 @@ print(len(out),len(E))
 import re as _re, os as _os
 def _slug(n): return _re.sub(r'^-|-$','',_re.sub(r'[^a-z0-9]+','-',n.lower()))
 _SKIP=('qubic.church','x.com','twitter.com','youtube.com','youtu.be','discord.gg','discord.com','t.me','join.qubic.org')
-_L=[[_slug(e[1]),e[4]] for e in E if not any(h in e[4].split('/')[2] for h in _SKIP)]
+def _hit(u,hosts):
+    h=u.split('/')[2].lower()
+    return any(h==x or h.endswith('.'+x) for x in hosts)
+_L=[[_slug(e[1]),e[4]] for e in E if not _hit(e[4],_SKIP)]
 _os.makedirs('/home/claude/qubic-map/lib',exist_ok=True)
 open('/home/claude/qubic-map/lib/links.js','w').write('// Generated from the page data: [slug, url] of every listed site that can be checked.\nexport default '+json.dumps(_L,ensure_ascii=False)+';\n')
 print('links',len(_L))
 # Sites that get a preview and a logo: same as above, but sites that only refuse our link checks
 # (qubic.church) are still captured; social profiles never are.
 _MSKIP=('x.com','twitter.com','youtube.com','youtu.be','discord.gg','discord.com','t.me','join.qubic.org')
-_M=[[_slug(e[1]),e[4]] for e in E if not any(h in e[4].split('/')[2] for h in _MSKIP)]
+_M=[[_slug(e[1]),e[4]] for e in E if not _hit(e[4],_MSKIP)]
 open('/home/claude/qubic-map/lib/media.js','w').write('// Generated from the page data: [slug, url] of every listed site that gets a preview and a logo.\nexport default '+json.dumps(_M,ensure_ascii=False)+';\n')
 print('media',len(_M))
