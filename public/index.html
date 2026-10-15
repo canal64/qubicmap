@@ -183,6 +183,10 @@ footer{font:12.5px var(--mono);color:var(--muted);display:flex;flex-direction:co
 .art.lg h3{left:52px}
 .tile.on .art .logo{transform:scale(1.08);box-shadow:0 0 0 2px hsl(var(--h) 70% 60%),0 4px 18px hsl(var(--h) 80% 55% / .45)}
 @media (prefers-reduced-motion:reduce){.art .shot img{animation:none}.shot,.art .logo{transition:none}}
+.art{container-type:inline-size}
+.art h3{font-size:clamp(11px,7cqi,17px);overflow-wrap:break-word;word-break:normal;hyphens:none}
+.art.lg h3{left:calc(14px + clamp(26px,14cqi,34px));right:50px}
+.art .logo{width:clamp(26px,14cqi,34px);height:clamp(26px,14cqi,34px)}
 </style>
 
 <div class="wrap">
