@@ -6,6 +6,7 @@ const list = JSON.parse(process.env.LIST || "[]");
 mkdirSync(out, { recursive: true });
 const items = [];
 for (const m of list) {
+  if (items.length >= 5) break;
   const f = `${dir}/${m.id}.json`;
   if (!existsSync(f)) { console.log("missing", m.rank, m.id.slice(0, 8)); continue; }
   const d = JSON.parse(readFileSync(f, "utf8"));

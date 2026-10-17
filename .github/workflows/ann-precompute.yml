@@ -1,4 +1,4 @@
-# Every day, rebuilds the networks of the 5 top miners (scan + replay checked against the chain)
+# Every day, rebuilds the networks of the top miners (7 tried, best 5 kept) (scan + replay checked against the chain)
 # and publishes them as public/ann/data/*.json, so qubicmap.org/ann shows them instantly.
 name: ann-precompute
 on:
@@ -33,7 +33,7 @@ jobs:
             (async () => {
               let j = await get("");
               if (!epochs.includes(j.epoch)) j = await get("?epoch=" + Math.max(...epochs));
-              const list = (j.items || []).slice(0, 5).map((x, i) => ({ rank: i + 1, id: x.id, epoch: x.epoch, score: x.score }));
+              const list = (j.items || []).slice(0, 7).map((x, i) => ({ rank: i + 1, id: x.id, epoch: x.epoch, score: x.score }));
               if (!list.length) throw new Error("no featured miners");
               console.log(list);
               require("fs").appendFileSync(process.env.GITHUB_OUTPUT, "list=" + JSON.stringify(list) + "\n");

@@ -135,7 +135,7 @@ async function annFeatured(env, waitUntil, origin, want) {
         }
         if (best.size >= 3) break;
       }
-      const list = [...best.values()].sort((a, b) => a.score - b.score).slice(0, 5);
+      const list = [...best.values()].sort((a, b) => a.score - b.score).slice(0, 8);
       if (list.length) {
         out = { epoch: list[0].epoch, items: list };
         await env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES (?3, ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind(JSON.stringify(out), Date.now(), kk).run();
