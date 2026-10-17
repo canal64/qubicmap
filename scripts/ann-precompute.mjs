@@ -56,7 +56,7 @@ const data = await page.evaluate(() => {
   });
   const sols = path.map(x => { const s = JSON.parse(JSON.stringify(x.s)); if (s.log) { delete s.log.pubkey; if (s.log.nonce === s.nonce) delete s.log.nonce; } return s; });
   const all = [...treeData.nodes.values()];
-  return { v: 2, id: curId, epoch: curEpoch.epoch, initialTick: curEpoch.initialTick, built: new Date().toISOString(),
+  return { v: 3, id: curId, epoch: curEpoch.epoch, ctl: [ANN_CTRL, ANN_OUT], initialTick: curEpoch.initialTick, built: new Date().toISOString(),
     sizes: [root.ann.links.length, root.ann.init.length, root.ann.lut.length], root: flat(root.ann), sols, steps,
     tree: { solutions: all.length, accepted: all.filter(n => n.accepted).length } };
 });

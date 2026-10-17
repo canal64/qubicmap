@@ -147,7 +147,10 @@
     stopPlay(); G("showAnnView")(false);
     phase = "pre"; say("Loading the rebuilt network…", 0.3);
     fetch("/ann/data/" + n.id + ".json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
-      if (d.v !== 2) throw new Error("format");
+      if (d.v !== 3 || !d.ctl) throw new Error("format");
+      // control and output neurons depend on the epoch: the live replay learns them from its worker
+      setG("ANN_CTRL", d.ctl[0]); setG("ANN_OUT", d.ctl[1]);
+      var co = G("circleOrders"); if (co) co.clear();
       var sz = d.sizes, F = d.root.slice();
       var toAnn = function (F) { return { links: Int32Array.from(F.slice(0, sz[0])), init: Uint8Array.from(F.slice(sz[0], sz[0] + sz[1])), lut: Uint8Array.from(F.slice(sz[0] + sz[1])) }; };
       $("ident").value = d.id; $("epochIn").value = d.epoch;
