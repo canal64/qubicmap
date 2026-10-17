@@ -147,6 +147,7 @@
     stopPlay(); G("showAnnView")(false);
     phase = "pre"; say("Loading the rebuilt network…", 0.3);
     fetch("/ann/data/" + n.id + ".json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      if (d.v !== 2) throw new Error("format");
       var sz = d.sizes, F = d.root.slice();
       var toAnn = function (F) { return { links: Int32Array.from(F.slice(0, sz[0])), init: Uint8Array.from(F.slice(sz[0], sz[0] + sz[1])), lut: Uint8Array.from(F.slice(sz[0] + sz[1])) }; };
       $("ident").value = d.id; $("epochIn").value = d.epoch;
@@ -155,8 +156,15 @@
       d.sols.forEach(function (s) { if (s.log) { s.log.pubkey = pk; if (s.log.nonce == null) s.log.nonce = s.nonce; } });
       var cache = G("annCache");
       cache.set("root:" + d.id + ":" + d.epoch, { ann: toAnn(F), shift: 0, error: null });
+      var B64 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
       d.steps.forEach(function (st, i) {
-        for (var j = 0; j < st.d.length; j += 2) F[st.d[j]] = st.d[j + 1];
+        // see scripts/ann-precompute.mjs: gap varint (A-Z continuation, a-z end) + value char
+        for (var j = 0, last = -1; j < st.d.length;) {
+          var g = 0, sh = 0, c = st.d.charCodeAt(j++);
+          while (c < 97) { g |= (c - 65) << sh; sh += 5; c = st.d.charCodeAt(j++); }
+          g |= (c - 97) << sh; last += g + 1;
+          F[last] = B64.indexOf(st.d[j++]);
+        }
         cache.set(d.sols[i].key, { ann: toAnn(F), shift: st.sh, error: st.e, flips: st.f ? { imp: st.f[0], wor: st.f[1], inert: st.f[2] } : null, chainError: d.sols[i].log.score });
       });
       var t = G("buildTree")(d.sols);

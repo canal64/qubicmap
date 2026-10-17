@@ -40,15 +40,23 @@ const data = await page.evaluate(() => {
   const path = annState.path, root = annCache.get(rootKey());
   let prev = flat(root.ann);
   const steps = path.map(x => {
-    const c = annCache.get(x.key), cur = flat(c.ann), d = [];
-    for (let i = 0; i < cur.length; i++) if (cur[i] !== prev[i]) d.push(i, cur[i]);
+    // changed cells as text: per change, the gap since the previous changed index (base-32 varint,
+    // chars 'a'.. with continuation 'A'..) followed by the new value (one char of B64, values < 64)
+    const c = annCache.get(x.key), cur = flat(c.ann), B64 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_";
+    let d = "", last = -1;
+    for (let i = 0; i < cur.length; i++) if (cur[i] !== prev[i]) {
+      if (cur[i] < 0 || cur[i] > 63) throw new Error("value out of range");
+      let g = i - last - 1; last = i;
+      while (g >= 32) { d += String.fromCharCode(65 + (g & 31)); g >>= 5; }
+      d += String.fromCharCode(97 + g) + B64[cur[i]];
+    }
     prev = cur;
     if (c.error !== x.s.log.score) throw new Error("mismatch at " + x.key);
     return { e: c.error, sh: c.shift, f: c.flips ? [c.flips.imp, c.flips.wor, c.flips.inert] : null, d };
   });
   const sols = path.map(x => { const s = JSON.parse(JSON.stringify(x.s)); if (s.log) { delete s.log.pubkey; if (s.log.nonce === s.nonce) delete s.log.nonce; } return s; });
   const all = [...treeData.nodes.values()];
-  return { v: 1, id: curId, epoch: curEpoch.epoch, initialTick: curEpoch.initialTick, built: new Date().toISOString(),
+  return { v: 2, id: curId, epoch: curEpoch.epoch, initialTick: curEpoch.initialTick, built: new Date().toISOString(),
     sizes: [root.ann.links.length, root.ann.init.length, root.ann.lut.length], root: flat(root.ann), sols, steps,
     tree: { solutions: all.length, accepted: all.filter(n => n.accepted).length } };
 });
@@ -58,4 +66,4 @@ await writeFile(join(OUT, ID + ".json"), json);
 console.log(`saved ${ID.slice(0, 8)}… epoch ${data.epoch}: ${data.steps.length} steps, ${(json.length / 1024).toFixed(0)} KB`);
 await b.close(); srv.close(); process.exit(0);
 
-async function die(m) { console.log("FAIL", m); await b.close(); srv.close(); process.exit(1); }
+async function die(m) { console.log("::error::FAIL " + m); await b.close(); srv.close(); process.exit(1); }
