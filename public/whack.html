@@ -148,9 +148,16 @@ $("fBest").textContent=best;
 var ac=null,sound=store.get("fq_sound",true);
 $("bSound").textContent="Sound: "+(sound?"on":"off");
 $("bSound").onclick=function(){sound=!sound;store.set("fq_sound",sound);this.textContent="Sound: "+(sound?"on":"off")};
+/* Audio: one context, re-created when iOS leaves it "interrupted" (after the keyboard, a call, another app or a few games) */
 function unlock(){try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
-  try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();if(ac.state!=="running")ac.resume()}catch(e){}}
-["pointerdown","keydown"].forEach(function(ev){document.addEventListener(ev,unlock,true)});
+  var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  try{if(ac&&(ac.state==="closed"||ac.state==="interrupted")){if(ac.state!=="closed"){try{var q=ac.close();if(q&&q.catch)q.catch(function(){})}catch(e){}}ac=null}
+    ac=ac||new AC();var a=ac;
+    if(a.state!=="running"){var p=a.resume();if(p&&p.catch)p.catch(function(){});
+      setTimeout(function(){if(ac===a&&a.state!=="running"){try{var q=a.close();if(q&&q.catch)q.catch(function(){})}catch(e){}ac=new AC();try{var r=ac.resume();if(r&&r.catch)r.catch(function(){})}catch(e){}}},300)}
+    var b=a.createBuffer(1,1,22050),s=a.createBufferSource();s.buffer=b;s.connect(a.destination);s.start(0)}catch(e){}}
+["pointerdown","touchend","keydown","click"].forEach(function(ev){document.addEventListener(ev,unlock,true)});
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&ac&&ac.state!=="running"){try{ac.resume()}catch(e){}}});
 function beep(f,d,type,vol,slide){if(!sound||!ac)return;try{var o=ac.createOscillator(),g=ac.createGain();o.type=type||"square";o.frequency.value=f;if(slide)o.frequency.exponentialRampToValueAtTime(slide,ac.currentTime+d);g.gain.value=vol||.05;g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
 
 function mult(){return Math.min(4,1+Math.floor(combo/5))}
