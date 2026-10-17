@@ -35,7 +35,7 @@
 
   var credit = document.createElement("div");
   credit.id = "qmCredit";
-  credit.innerHTML = 'Viewer by <a href="https://github.com/krypdkat/bpp9kviewer" target="_blank" rel="noopener">dkat</a>, adapted for qubicmap.org with his permission · <a href="https://krypdkat.github.io/bpp9kviewer/" target="_blank" rel="noopener">original ↗</a>';
+  credit.innerHTML = 'Viewer by <a href="https://github.com/krypdkat/bpp9kviewer" target="_blank" rel="noopener">dkat</a>, adapted for qubicmap.org with his permission · <a href="https://krypdkat.github.io/bpp9kviewer/" target="_blank" rel="noopener">original ↗</a> · Top miners: <a href="https://annexplorer.jetskipool.ai/" target="_blank" rel="noopener">JetskiPool ANN Explorer</a> · Chain data: bob.qubic.global';
   document.body.appendChild(credit);
 
   $("qmAbout").onclick = function () { var e = $("qmExplain"); e.hidden = !e.hidden; this.setAttribute("aria-expanded", String(!e.hidden)); };
@@ -144,7 +144,7 @@
   function chips(j) {
     var L = (j && j.items) || [];
     if (!L.length) { $("qmPickEp").textContent = "none listed yet: use Advanced to enter an identity"; return; }
-    $("qmPickEp").textContent = "best verified solutions · epoch " + j.epoch;
+    $("qmPickEp").innerHTML = "best verified solutions · epoch " + (+j.epoch) + ' · source <a href="https://annexplorer.jetskipool.ai/solutions?offset=0&epoch=' + (+j.epoch) + '" target="_blank" rel="noopener">JetskiPool ANN Explorer ↗</a>';
     L.slice(0, 5).forEach(function (n, i) {
       var b = document.createElement("button");
       b.type = "button"; b.title = n.id; b.setAttribute("aria-pressed", "false");
