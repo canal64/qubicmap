@@ -1,0 +1,53 @@
+/* qubicmap.org layer on top of dkat's bpp9k viewer: top bar, simple mode, phone layout. */
+html.qm body { height: 100vh; height: 100dvh; }
+html.qm:not(.qm-off) body > header { display: none; }
+html.qm.qm-adv body > header { display: flex; }
+#qmBar { flex: 0 0 auto; background: #0a1019; border-bottom: 1px solid #182434; font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; color: #dfe9f3; }
+.qm-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 8px 14px; }
+.qm-row + .qm-row { padding-top: 0; }
+#qmBar h1 { margin: 0 auto 0 0; font: 700 17px/1.2 system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+#qmBar h1 span { color: #62d6a0; }
+#qmBar a { color: #cfe6ff; text-underline-offset: 3px; }
+.qm-home { font: 12px ui-monospace, Menlo, monospace; text-decoration: none; border: 1px solid #182434; padding: 5px 9px; border-radius: 4px; }
+#qmBar button { font: 12px ui-monospace, Menlo, monospace; color: #dfe9f3; background: #101a28; border: 1px solid #22344b; padding: 6px 10px; border-radius: 4px; cursor: pointer; }
+#qmBar button[aria-pressed="true"], #qmBar button[aria-expanded="true"] { border-color: #62d6a0; color: #62d6a0; }
+#qmBar button:focus-visible, .qm-home:focus-visible { outline: 2px solid #f1bb5c; outline-offset: 2px; }
+.qm-pick b { font: 600 11px ui-monospace, Menlo, monospace; letter-spacing: .1em; text-transform: uppercase; }
+.qm-pick button span { color: #7f93a8; }
+.qm-dim { color: #7f93a8; font-size: 12px; }
+#qmExplain { padding: 0 14px 10px; max-width: 80ch; }
+#qmExplain p { margin: 0 0 6px; }
+.qm-grad { display: inline-block; width: 60px; height: 8px; border-radius: 2px; vertical-align: middle; background: linear-gradient(90deg, #2b5cff, #7b6dd6, #ff3b2f); }
+#qmCredit { flex: 0 0 auto; padding: 5px 14px; font: 11px ui-monospace, Menlo, monospace; color: #7f93a8; background: #0a1019; border-top: 1px solid #182434; }
+#qmCredit a { color: #cfe6ff; }
+/* status pill over the drawing */
+#qmPill { position: absolute; z-index: 5; left: 50%; bottom: 12px; transform: translateX(-50%); width: min(92%, 520px); background: rgba(10, 16, 25, .94); border: 1px solid #22344b; border-radius: 8px; padding: 9px 12px; font: 12.5px/1.4 system-ui, sans-serif; color: #dfe9f3; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); pointer-events: none; }
+#qmPill.ok { border-color: #2d6b4f; }
+.qm-bar { margin-top: 7px; height: 4px; background: #182434; border-radius: 2px; overflow: hidden; }
+.qm-bar i { display: block; height: 100%; width: 0; background: #62d6a0; transition: width .4s ease; }
+#qmSheet { display: none; }
+html.qm #stats:empty { display: none; }
+/* simple mode: hide the expert-only widgets until Advanced is on */
+html.qm:not(.qm-adv) #status { display: none; }
+#annView #annBar .hint:last-of-type { font-size: 11px; }
+
+@media (max-width: 820px) {
+  html.qm main { flex-direction: column; }
+  html.qm #left { flex: 1 1 auto; min-height: 0; border-right: 0; }
+  html.qm #right { width: 100%; min-width: 0; flex: 0 0 auto; max-height: 0; padding: 0 12px; overflow: auto; border-top: 1px solid #2a3242; transition: max-height .25s ease; }
+  html.qm.qm-sheet #right { max-height: 45vh; max-height: 45dvh; padding: 8px 12px; }
+  html.qm #qmSheet { display: block; width: 100%; font: 12px ui-monospace, Menlo, monospace; color: #cfe6ff; background: #0a1019; border: 0; border-top: 1px solid #182434; padding: 7px; cursor: pointer; }
+  html.qm #legend { display: none; }
+  html.qm #stats { font-size: 11px; max-width: calc(100% - 20px); }
+  html.qm #annBar { gap: 6px; padding: 6px 8px; }
+  html.qm #annBar > .hint:last-child, html.qm #annBar label.hint { display: none; }
+  html.qm #annBar button { padding: 8px 12px; }
+  html.qm #annSlider { min-width: 90px; }
+  html.qm #annInfo { font-size: 11px; flex-basis: 100%; order: 9; }
+  html.qm #svg, html.qm #annSvg { touch-action: none; }
+  html.qm header input#ident { width: 100%; }
+  #qmBar h1 { font-size: 15px; }
+  .qm-row { padding: 7px 10px; }
+  #qmAdv { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .qm-bar i, html.qm #right { transition: none; } }

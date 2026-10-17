@@ -1,54 +1,1463 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Qubic ANN Explorer</title>
-<meta name="description" content="See the artificial neural networks Qubic miners find for Aigarth: open a top solution, view its neurons layer by layer, replay and modify it. Viewer built by dkat, hosted on the Qubic Ecosystem Map.">
-<link rel="canonical" href="https://qubicmap.org/ann"><meta property="og:type" content="website"><meta property="og:title" content="Qubic ANN Explorer"><meta property="og:description" content="Explore the neural networks found by Qubic miners, layer by layer."><meta property="og:url" content="https://qubicmap.org/ann"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#04070c">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Qubic ANN Explorer · see the neural networks Qubic miners find</title>
+<meta name="description" content="Watch a top Qubic miner's artificial neural network being rebuilt step by step from on-chain data, every score checked against the chain. Viewer by dkat, on the Qubic Ecosystem Map.">
+<link rel="canonical" href="https://qubicmap.org/ann"><meta property="og:type" content="website"><meta property="og:title" content="Qubic ANN Explorer"><meta property="og:description" content="The neural networks Qubic miners find for Aigarth, rebuilt live from the chain."><meta property="og:url" content="https://qubicmap.org/ann"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#0a1019">
+<meta name="qm-upstream" content="69e10a3021d7e418000152920d21d7a4e67ed6ed">
+<link rel="stylesheet" href="/ann/qm.css?v=mvc4qypl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-/* Layout: slim header with credit, then the viewer filling the rest of the screen. Same dark look as qubicmap.org. */
-:root{--void:#04070c;--panel:#0a1019;--rule:#182434;--ink:#dfe9f3;--muted:#7f93a8;--ice:#cfe6ff;--live:#62d6a0;--warn:#f1bb5c;
-  --display:"Chakra Petch",system-ui,sans-serif;--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
-html,body{height:100%}
-body{margin:0;background:var(--void);color:var(--ink);font:14px/1.5 var(--sans);display:flex;flex-direction:column}
-header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;justify-content:space-between;padding-inline:16px;padding-block:12px;border-bottom:1px solid var(--rule)}
-.l{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;min-width:0}
-h1{margin:0;font:700 20px var(--display);letter-spacing:.1em;text-transform:uppercase}
-h1 span{color:transparent;-webkit-text-stroke:1px var(--ice)}
-.sub{margin:0;color:var(--muted);font-size:13px;max-width:70ch}
-.r{display:flex;gap:14px;align-items:center;font:12px var(--mono);color:var(--muted);flex-wrap:wrap}
-.r a{color:var(--ice);text-underline-offset:3px}
-.r b{color:var(--warn);font-weight:500}
-a:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
-.pick{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding-inline:16px;padding-block:10px;border-bottom:1px solid var(--rule);font:12px var(--mono);color:var(--muted)}
-.pick b{color:var(--ink);font-weight:500;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
-.pick button{font:12px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);padding:6px 10px;cursor:pointer}
-.pick button[aria-pressed="true"]{border-color:var(--live);color:var(--live)}
-.pick button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
-.pick .tip{flex-basis:100%;color:var(--muted)}
-.frame{flex:1;min-height:70vh;position:relative}
-iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--panel)}
-</style></head><body>
+  :root { --bg:#0f1218; --panel:#171c26; --line:#2a3242; --fg:#dde3ee; --dim:#8a94a6; --acc:#5aa9ff; --ok:#4cd28a; --bad:#ff6b6b; --warn:#f2c14e; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font:13px/1.4 ui-monospace,Menlo,Consolas,monospace; height:100vh; display:flex; flex-direction:column; }
+  header { display:flex; gap:8px; align-items:center; padding:8px 12px; background:var(--panel); border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  header input { background:#0b0e14; color:var(--fg); border:1px solid var(--line); padding:6px 8px; font:inherit; }
+  #bob { width:230px; } #ident { width:520px; letter-spacing:.5px; }
+  button { background:#22304a; color:var(--fg); border:1px solid #365079; padding:6px 10px; font:inherit; cursor:pointer; }
+  button:hover { background:#2b3d5e; } button:disabled { opacity:.5; cursor:default; }
+  #status { color:var(--dim); flex-basis:100%; white-space:pre-wrap; }
+  main { flex:1; display:flex; min-height:0; }
+  #left { flex:1; overflow:auto; padding:8px 12px; border-right:1px solid var(--line); }
+  #right { width:46%; min-width:380px; overflow:auto; padding:10px 14px; }
+  #stats { color:var(--dim); margin-bottom:8px; }
+  #left { padding:0; overflow:hidden; position:relative; }
+  #stats { position:absolute; left:10px; top:8px; z-index:2; background:rgba(23,28,38,.85); padding:4px 8px; border-radius:4px; }
+  #legend { position:absolute; left:10px; bottom:8px; z-index:2; color:var(--dim); background:rgba(23,28,38,.85); padding:4px 8px; border-radius:4px; }
+  svg { width:100%; height:100%; cursor:grab; display:block; } svg.drag { cursor:grabbing; }
+  .node rect { fill:#1b2431; stroke:#4f7bbf; stroke-width:1.5; rx:4; }
+  .node text { fill:var(--fg); text-anchor:middle; pointer-events:none; }
+  .node .sc { font-size:13px; font-weight:bold; } .node .lk { font-size:9px; fill:var(--dim); }
+  .node.rej rect { stroke:var(--bad); stroke-dasharray:4 3; fill:#2a1a1a; } .node.rej .sc { fill:var(--bad); }
+  .node.best rect { stroke:var(--warn); stroke-width:3; fill:#3a3010; } .node.best .sc { fill:var(--warn); }
+  .node.root rect { fill:#22304a; stroke:var(--acc); } 
+  .node.sel rect { stroke:#fff; stroke-width:3; }
+  .node:hover rect { filter:brightness(1.3); }
+  .edge { stroke:#3d4b63; stroke-width:1.5; fill:none; } .edge.rej { stroke:#6b3a3a; stroke-dasharray:4 3; }
+  table { border-collapse:collapse; width:100%; }
+  td { padding:3px 6px; vertical-align:top; border-bottom:1px solid var(--line); word-break:break-all; }
+  td:first-child { color:var(--dim); white-space:nowrap; width:150px; }
+  h3 { margin:6px 0 8px; font-size:14px; } .ok { color:var(--ok); } .bad { color:var(--bad); }
+  a { color:var(--acc); } .hint { color:var(--dim); margin-bottom:8px; }
+  code { background:#0b0e14; padding:2px 5px; border-radius:3px; user-select:all; }
+  [hidden] { display:none !important; }
+  #annView { position:absolute; inset:0; display:flex; flex-direction:column; background:var(--bg); }
+  #annBar { display:flex; gap:8px; align-items:center; padding:6px 10px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+  #annBar select, #annBar input[type=number] { background:#0b0e14; color:var(--fg); border:1px solid var(--line); padding:4px 6px; font:inherit; }
+  #annSlider { flex:1; min-width:120px; }
+  #annSvg { flex:1 1 auto; width:100%; height:auto; min-height:0; display:block; cursor:grab; }
+  #annBar { flex:0 0 auto; background:var(--panel); }
+  .aedge { fill:none; stroke-width:1.2; } .aedge.rr { stroke:#6f86ad; } .aedge.rc { stroke:#3a4558; stroke-width:.8; } .aedge.cc { stroke:#6f86ad; }
+  .aedge.shared { stroke:var(--bad); stroke-width:2; } .aedge.ein { stroke:var(--warn); stroke-width:2.2; } .aedge.eout { stroke:#3fd0e0; stroke-width:2.2; } .aedge.dup { stroke:var(--bad); stroke-dasharray:3 2; stroke-width:2; }
+  .annd text { fill:#fff; font-size:10px; text-anchor:middle; dominant-baseline:central; pointer-events:none; font-weight:bold; }
+  .annd circle { stroke:#0b0e14; stroke-width:1.5; cursor:pointer; } .annd.changed circle { stroke:#fff; stroke-width:2.5; } .annd.sel circle { stroke:var(--warn); stroke-width:3.5; }
+  .aband { fill:#141924; stroke:#232b3a; } .albl { fill:var(--dim); font-size:11px; }
+  .agrad { display:inline-block; width:90px; height:10px; vertical-align:middle; background:linear-gradient(90deg,#2b5cff,#7b6dd6,#ff3b2f); border-radius:2px; }
+  .alut { display:grid; grid-template-columns:repeat(9, 1fr); gap:2px; margin-top:4px; }
+  .alut div { text-align:center; padding:3px 0; border-radius:2px; font-size:11px; }
+  .alut .v0 { background:#203550; } .alut .v1 { background:#245a3a; } .alut .v2 { background:#5a2424; } .alut .chg { outline:2px solid #fff; } .alut .pv { color:var(--dim); font-size:10px; }
+  #tempChart { display:block; margin-top:4px; width:100%; height:auto; cursor:default; } #tempChart .tbar { cursor:pointer; } #tempChart .tbar:hover path { filter:brightness(1.3); }
+  .tgrid { stroke:var(--line); stroke-width:1; } .taxis { stroke:var(--dim); stroke-width:1; } .tlab { fill:var(--dim); font-size:11px; } .tref { stroke:var(--fg); stroke-width:1; stroke-dasharray:4 3; stroke-opacity:.6; }
+  .cedge { stroke:#4a5876; stroke-width:.8; fill:none; } .cedge.ro { stroke:#6f86ad; }
+  .aedge.unread, .cedge.unread, #annVp.hov .cedge.unread.in { stroke-opacity:.15; stroke-width:.6; }
+  #annVp.hov .cedge { stroke-opacity:.08; } #annVp.hov .cedge.in { stroke:var(--warn); stroke-opacity:1; stroke-width:2.4; }
+  #annVp.hov .annd { opacity:.35; } #annVp.hov .annd.hov, #annVp.hov .annd.inp { opacity:1; }
+  .annd.inp circle { stroke:var(--warn); stroke-width:3; }
+  .edbox { border:1px solid var(--warn); border-radius:4px; padding:8px; margin:8px 0; }
+  .edlist { margin:6px 0; padding-left:18px; } .edlist a { color:var(--bad); }
+  .alut .editable { cursor:pointer; } .alut .editable:hover { filter:brightness(1.4); } .alut .ped { outline:2px solid var(--warn); }
+  .eplbl { color:var(--dim); } .eplbl input { margin-left:4px; }
+  #pasteDlg { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:10; display:flex; align-items:center; justify-content:center; }
+  .pdbox { background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:14px; width:min(900px, 94vw); display:flex; flex-direction:column; gap:8px; }
+  #pasteText { width:100%; height:50vh; background:#0b0e14; color:var(--fg); border:1px solid var(--line); font:12px ui-monospace,monospace; padding:8px; }
+  .annbtn { margin-top:10px; width:100%; padding:8px; font-weight:bold; }
+</style>
+</head>
+<body>
 <header>
-  <div class="l">
-    <h1>Qubic <span>ANN Explorer</span></h1>
-    <p class="sub">The neural networks Qubic miners find for Aigarth. Pick a solution, open the leaf, and see its neurons layer by layer.</p>
-  </div>
-  <div class="r">
-    <span>Viewer by <b>dkat</b></span>
-    <a href="https://krypdkat.github.io/bpp9kviewer/" target="_blank" rel="noopener">Open full screen ↗</a>
-    <a href="/">← Ecosystem Map</a>
-  </div>
+  <input id="bob" value="https://bob.qubic.global" title="bob base URL">
+  <input id="ident" placeholder="Identity (60 chars)" spellcheck="false">
+  <label class="eplbl">Epoch <input id="epochIn" type="number" list="epochList" placeholder="current" title="epoch to load; empty = current epoch" style="width:100px"></label><datalist id="epochList"></datalist>
+  <button id="load">Load tree</button>
+  <button id="refresh" title="Ignore cached scan position and rescan whole epoch">Rescan</button>
+  <button id="fit">Fit view</button>
+  <button id="pasteBtn" title="show a tree from pasted JSON (miner-local solutions)">Paste JSON</button>
+  <div id="status">Enter an identity and press Load.</div>
 </header>
-<div class="pick" id="pick" hidden><b>Featured networks</b><span id="pickEp"></span><span class="tip">Loading a network takes a few seconds: the viewer rebuilds it from the chain. Then tap a leaf of the tree and choose "Visualize ANN" to see its neurons.</span></div>
-<div class="frame"><iframe data-src="https://krypdkat.github.io/bpp9kviewer/" title="bpp9k ANN viewer by dkat" loading="eager" referrerpolicy="no-referrer" allow="clipboard-write"></iframe></div>
-<script>
-(function(){var V="https://krypdkat.github.io/bpp9kviewer/",fr=document.querySelector("iframe"),pk=document.getElementById("pick");
-function plain(){if(!fr.src)fr.src=V}
-fetch("/api/ann/featured").then(function(r){return r.json()}).then(function(j){var L=(j&&j.items)||[];if(!L.length)return;
-  document.getElementById("pickEp").textContent="best verified solutions, epoch "+j.epoch;
-  L.slice(0,4).forEach(function(n,i){var b=document.createElement("button");b.type="button";b.textContent="#"+(i+1)+" · "+n.id.slice(0,6)+"… · score "+n.score;b.title=n.id;
-    b.onclick=function(){[].forEach.call(pk.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");fr.src=V+"?n="+(i+1)+"#"+n.id+"/"+n.epoch};
-    pk.insertBefore(b,pk.querySelector(".tip"));if(i===0)b.click()});
-  pk.hidden=false}).catch(plain).then(function(){setTimeout(plain,50)})})();
+<div id="pasteDlg" hidden><div class="pdbox">
+  <b>Paste a tree as JSON</b>
+  <div class="hint">Format: <code>{"solutions":[{"pubkey","nonces":[...],"miningSeed","anchorTickDigest","anchorTick","finalScore","maxDepth"}]}</code>. Nonces run root-first; solutions that share a prefix are merged into one tree.</div>
+  <textarea id="pasteText" spellcheck="false" placeholder='{"solutions":[...]}'></textarea>
+  <div id="pasteErr" class="bad"></div>
+  <button id="pasteLoad">Show tree</button> <button id="pasteCancel">Cancel</button>
+</div></div>
+<main>
+  <div id="left"><div id="stats"></div><svg id="svg"><g id="vp"></g></svg>
+    <div id="annView" hidden>
+      <div id="annBar">
+        <button id="annPrev" title="previous step (left arrow)">◀</button>
+        <button id="annNext" title="next step (right arrow)">▶</button>
+        <input type="range" id="annSlider" min="0" max="0" value="0">
+        <span id="annInfo"></span>
+        <label class="hint">heat <select id="annHeat"><option value="rate">value change rate (runtime)</option><option value="cum">edits so far</option><option value="win">edits in last N steps</option></select></label>
+        <label class="hint">N <input type="number" id="annWin" value="10" min="1" style="width:52px"></label>
+        <button id="annFitBtn">Fit</button>
+        <button id="annMode" title="switch between level tree and circle layout">Circle view</button>
+        <span class="hint">cold <span class="agrad"></span> hot | white ring = changed this step | arrow = data flow into the reader; selected neuron: yellow in, cyan out | red = shared link, dashed = duplicated input</span>
+      </div>
+      <svg id="annSvg"><g id="annVp"></g></svg>
+    </div>
+    <div id="legend">square = solution: [s=shift lower bound] error / mode(S start, W wiring, T LUTs) L K depth &nbsp;|&nbsp; yellow = best &nbsp;|&nbsp; red dashed = rejected &nbsp;|&nbsp; wheel zoom, drag pan, click = details</div></div>
+  <div id="right"><div class="hint">Click a node to see its solution data.</div></div>
+</main>
+<script id="annWorkerSrc" type="text/plain">
+'use strict';
+// JS port of the bpp9000 ant scorer (scalar path of core score_bpp9000.h) plus KangarooTwelve.
+// Runs in a Web Worker in the page; also loadable in node for testing (module.exports at the end).
+
+// ---------- Keccak-p[1600, 12] on 25 lanes as (lo, hi) uint32 pairs ----------
+const RC = (() => { // round constants for rounds 12..23 as [lo, hi]
+  const all = ['0000000000000001','0000000000008082','800000000000808A','8000000080008000','000000000000808B','0000000080000001',
+    '8000000080008081','8000000000008009','000000000000008A','0000000000000088','0000000080008009','000000008000000A',
+    '000000008000808B','800000000000008B','8000000000008089','8000000000008003','8000000000008002','8000000000000080',
+    '000000000000800A','800000008000000A','8000000080008081','8000000000008080','0000000080000001','8000000080008008'];
+  return all.slice(12).map(h => [parseInt(h.slice(8), 16) >>> 0, parseInt(h.slice(0, 8), 16) >>> 0]);
+})();
+const RHO = [0, 1, 62, 28, 27, 36, 44, 6, 55, 20, 3, 10, 43, 25, 39, 41, 45, 15, 21, 8, 18, 2, 61, 56, 14];
+const PI = (() => { const p = new Array(25); for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) p[x + 5 * y] = y + 5 * ((2 * x + 3 * y) % 5); return p; })();
+const BC = new Uint32Array(10), B = new Uint32Array(50);
+// s: Uint32Array(50), lane i = (s[2i] lo, s[2i+1] hi)
+function keccakP12(s) {
+  for (let r = 0; r < 12; r++) {
+    for (let x = 0; x < 5; x++) {
+      BC[2 * x] = s[2 * x] ^ s[2 * x + 10] ^ s[2 * x + 20] ^ s[2 * x + 30] ^ s[2 * x + 40];
+      BC[2 * x + 1] = s[2 * x + 1] ^ s[2 * x + 11] ^ s[2 * x + 21] ^ s[2 * x + 31] ^ s[2 * x + 41];
+    }
+    for (let x = 0; x < 5; x++) {
+      const a = (x + 4) % 5, b = (x + 1) % 5;
+      const lo = BC[2 * b], hi = BC[2 * b + 1];
+      const dlo = BC[2 * a] ^ ((lo << 1) | (hi >>> 31)), dhi = BC[2 * a + 1] ^ ((hi << 1) | (lo >>> 31));
+      for (let y = 0; y < 25; y += 5) { s[2 * (x + y)] ^= dlo; s[2 * (x + y) + 1] ^= dhi; }
+    }
+    for (let i = 0; i < 25; i++) { // rho + pi into B
+      const lo = s[2 * i], hi = s[2 * i + 1], n = RHO[i], d = PI[i];
+      if (n === 0) { B[2 * d] = lo; B[2 * d + 1] = hi; }
+      else if (n < 32) { B[2 * d] = (lo << n) | (hi >>> (32 - n)); B[2 * d + 1] = (hi << n) | (lo >>> (32 - n)); }
+      else if (n === 32) { B[2 * d] = hi; B[2 * d + 1] = lo; }
+      else { const m = n - 32; B[2 * d] = (hi << m) | (lo >>> (32 - m)); B[2 * d + 1] = (lo << m) | (hi >>> (32 - m)); }
+    }
+    for (let y = 0; y < 25; y += 5) for (let x = 0; x < 5; x++) { // chi
+      const i = x + y, j = (x + 1) % 5 + y, k = (x + 2) % 5 + y;
+      s[2 * i] = B[2 * i] ^ (~B[2 * j] & B[2 * k]);
+      s[2 * i + 1] = B[2 * i + 1] ^ (~B[2 * j + 1] & B[2 * k + 1]);
+    }
+    s[0] ^= RC[r][0]; s[1] ^= RC[r][1];
+  }
+}
+
+// ---------- TurboSHAKE128 / KangarooTwelve (empty customization) ----------
+function turboShake(msg, domain, outLen) {
+  const st = new Uint32Array(50), sb = new Uint8Array(st.buffer), RATE = 168;
+  let off = 0;
+  while (msg.length - off >= RATE) { for (let i = 0; i < RATE; i++) sb[i] ^= msg[off + i]; keccakP12(st); off += RATE; }
+  const rem = msg.length - off;
+  for (let i = 0; i < rem; i++) sb[i] ^= msg[off + i];
+  sb[rem] ^= domain; sb[RATE - 1] ^= 0x80; keccakP12(st);
+  const out = new Uint8Array(outLen); let o = 0;
+  for (;;) { const n = Math.min(RATE, outLen - o); out.set(sb.subarray(0, n), o); o += n; if (o >= outLen) break; keccakP12(st); }
+  return out;
+}
+function lengthEncode(x) { const b = []; while (x > 0) { b.unshift(x & 255); x = Math.floor(x / 256); } b.push(b.length); return b; }
+function k12(msg, outLen = 32) {
+  const S = new Uint8Array(msg.length + 1); S.set(msg); S[msg.length] = 0; // M || C(empty) || length_encode(0)
+  const CH = 8192;
+  if (S.length <= CH) return turboShake(S, 0x07, outLen);
+  const n = Math.ceil((S.length - CH) / CH);
+  const node = new Uint8Array(CH + 8 + 32 * n + lengthEncode(n).length + 2);
+  node.set(S.subarray(0, CH)); node[CH] = 0x03;
+  let p = CH + 8;
+  for (let i = 0; i < n; i++) { node.set(turboShake(S.subarray(CH * (i + 1), Math.min(S.length, CH * (i + 2))), 0x0B, 32), p); p += 32; }
+  for (const b of lengthEncode(n)) node[p++] = b;
+  node[p++] = 0xFF; node[p++] = 0xFF;
+  return turboShake(node, 0x06, outLen);
+}
+
+// ---------- random2 pool (score_common.h), sampled ----------
+// The pool is a chain of Keccak-p12 states (200 bytes each, 512 MB total). random2 reads u64 words at
+// positions that depend only on its 32-byte seed, so we list every word a replay needs, stream the
+// chain once, and keep only those words.
+const POOL_VEC_SIZE = (2 ** 32 + 64) / 8;
+const POOL_BYTES = Math.ceil(POOL_VEC_SIZE / 200) * 200;
+function seedWords(seed32) { const x = new Uint32Array(8); for (let i = 0; i < 8; i++) x[i] = seed32[4 * i] | (seed32[4 * i + 1] << 8) | (seed32[4 * i + 2] << 16) | (seed32[4 * i + 3] << 24); return x; }
+// u64 word indices random2(seed) reads for outU64 output words (both base and base + 1)
+function random2Positions(seed32, outU64, into) {
+  const x = seedWords(seed32);
+  for (let j = 0; j < outU64 / 8; j++) for (let i = 0; i < 8; i++) {
+    const base = x[i] >>> 6; into.push(base, base + 1);
+    x[i] = (Math.imul(x[i], 1664525) + 1013904223) >>> 0;
+  }
+}
+class PoolSample {
+  constructor() { this.idx = new Uint32Array(0); this.val = new Uint32Array(0); }
+  // positions: array of u64 indices; streams the chain from seed and keeps those words
+  static build(poolSeed32, positions, onProgress) {
+    const uniq = Uint32Array.from(new Set(positions)).sort();
+    const ps = new PoolSample(); ps.idx = uniq; ps.val = new Uint32Array(uniq.length * 2);
+    const st = new Uint32Array(50), sb = new Uint8Array(st.buffer); sb.set(poolSeed32);
+    const blocks = POOL_BYTES / 200; let p = 0;
+    for (let k = 0; k < blocks && p < uniq.length; k++) {
+      keccakP12(st);
+      const lo = k * 25, hi = lo + 25; // a block holds u64 words [25k, 25k + 25)
+      while (p < uniq.length && uniq[p] < hi) { const w = uniq[p] - lo; ps.val[2 * p] = st[2 * w]; ps.val[2 * p + 1] = st[2 * w + 1]; p++; }
+      if (onProgress && (k & 0x3FFFF) === 0) onProgress(k / blocks);
+    }
+    return ps;
+  }
+  find(i) { let a = 0, b = this.idx.length - 1; while (a <= b) { const m = (a + b) >> 1, v = this.idx[m]; if (v === i) return m; if (v < i) a = m + 1; else b = m - 1; } throw new Error('pool word ' + i + ' not sampled'); }
+}
+// output: Uint32Array of u64 pairs (lo, hi); pool: PoolSample
+function random2(seed32, pool, outU32) {
+  const x = seedWords(seed32);
+  const segments = outU32.length / 16;
+  for (let j = 0; j < segments; j++) for (let i = 0; i < 8; i++) {
+    const base = x[i] >>> 6, m = x[i] & 63;
+    const pa = pool.find(base), pb = pa + 1 < pool.idx.length && pool.idx[pa + 1] === base + 1 ? pa + 1 : pool.find(base + 1);
+    const a0 = pool.val[2 * pa], a1 = pool.val[2 * pa + 1], b0 = pool.val[2 * pb], b1 = pool.val[2 * pb + 1];
+    let lo, hi;
+    if (m === 0) { lo = a0; hi = a1; }
+    else if (m < 32) { lo = (a0 >>> m) | (a1 << (32 - m)); hi = (a1 >>> m) | (b0 << (32 - m)); }
+    else if (m === 32) { lo = a1; hi = b0; }
+    else { const q = m - 32; lo = (a1 >>> q) | (b0 << (32 - q)); hi = (b0 >>> q) | (b1 << (32 - q)); }
+    const o = (j * 8 + i) * 2; outU32[o] = lo; outU32[o + 1] = hi;
+    x[i] = (Math.imul(x[i], 1664525) + 1013904223) >>> 0;
+  }
+}
+// every seed hash a chain replay feeds random2, with its output size in u64 words
+function chainSeedHashes(epochSeed32, pubkey, steps) { // steps: [{nonce, anchor}]
+  const list = [[k12(epochSeed32), 8], [k12(pubkey), 3328 / 8]];
+  for (const s of steps) { const c = new Uint8Array(96); c.set(pubkey); c.set(s.nonce, 32); c[32] = c[33] = c[34] = 0; c.set(s.anchor, 64); list.push([k12(c), MUT * MAXCH]); }
+  return list;
+}
+function samplePool(epochSeed32, pubkey, steps, onProgress) {
+  const pos = [];
+  for (const [h, n] of chainSeedHashes(epochSeed32, pubkey, steps)) random2Positions(h, n, pos);
+  return PoolSample.build(epochSeed32, pos, onProgress);
+}
+
+// ---------- scorer (production params: P=64, K=3, window 8760, seq 8928, shiftCap 168) ----------
+const P = 64, NL = 192, LUT = 27, WIN = 8760, SEQ = 8928, MAXT = 100000, SHIFT_CAP = 168;
+const MUT = 1000, MAXCH = 10, INF = 0xFFFFFFFF;
+const P32MOD = (m) => 4294967296 % m;
+function u64mod(lo, hi, m) { return ((hi % m) * P32MOD(m) + lo % m) % m; }
+
+function parseTargets(taskBytes) {
+  const dv = new DataView(taskBytes.buffer, taskBytes.byteOffset);
+  const N = dv.getUint32(8, true), M = dv.getUint32(12, true), pop = dv.getUint32(24, true), K = dv.getUint32(28, true);
+  const topo = (N + M + 1 + pop * K) * 4, inB = Math.ceil(N / 5), outB = Math.ceil(M / 5);
+  const data = 96 + topo, t = new Uint8Array(SEQ);
+  for (let i = 0; i < SEQ; i++) t[i] = taskBytes[data + i * (inB + outB) + inB] % 3;
+  return t;
+}
+
+class Scorer {
+  constructor(pool, targets, seed32, adv) {
+    this.pool = pool;
+    this.targets = targets;
+    this.adv = adv;
+    const mat = new Uint32Array(16); random2(k12(seed32), this.pool, mat);
+    this.control = mat[0] & 63; let out = mat[2] & 63; if (out === this.control) out = (out + 1) & 63; this.output = out;
+    this.links = new Int32Array(NL); this.init = new Uint8Array(P); this.lut = new Uint8Array(P * LUT);
+    this.pLinks = new Int32Array(NL); this.pInit = new Uint8Array(P); this.pLut = new Uint8Array(P * LUT);
+    this.bLinks = new Int32Array(NL); this.bInit = new Uint8Array(P); this.bLut = new Uint8Array(P * LUT);
+    this.seeds = new Uint32Array(MUT * MAXCH * 2);
+    this.cur = new Uint8Array(P); this.prev = new Uint8Array(P);
+    this.shift = 0;
+  }
+  // ANN: { links: Int32Array(192), init: Uint8Array(64), lut: Uint8Array(1728) }
+  rootANN(pubkey) {
+    const mat = new Uint32Array(3328 / 4); random2(k12(pubkey), this.pool, mat);
+    const b = new Uint8Array(mat.buffer);
+    const ann = { links: new Int32Array(NL), init: new Uint8Array(P), lut: new Uint8Array(P * LUT) };
+    for (let i = 0; i < P * LUT; i++) ann.lut[i] = b[i] % 3;
+    for (let n = 0; n < P; n++) ann.init[n] = b[1728 + n] % 3;
+    for (let i = 0; i < NL; i++) ann.links[i] = mat[(1792 >>> 2) + 2 * i] & 63;
+    return ann;
+  }
+  score() {
+    const links = this.links, lut = this.lut, tgt = this.targets, ctl = this.control, outN = this.output;
+    let cur = this.cur, prev = this.prev;
+    cur.set(this.init);
+    let failures = 0, counter = 0, ticks = 0;
+    const need = this.shift + WIN, sh = this.shift;
+    while (counter < need) {
+      if (++ticks >= MAXT) return INF;
+      const t = prev; prev = cur; cur = t;
+      for (let n = 0, l = 0; n < P; n++, l += 3) cur[n] = lut[n * 27 + prev[links[l]] + 3 * prev[links[l + 1]] + 9 * prev[links[l + 2]]];
+      if (cur[ctl] !== 2) { if (counter >= sh && cur[outN] !== tgt[counter]) failures++; counter++; }
+    }
+    return failures;
+  }
+  advanceShift() {
+    for (;;) {
+      const e = this.score();
+      if (e > this.adv || this.shift === SHIFT_CAP) return { error: e, shift: this.shift };
+      this.shift++;
+    }
+  }
+  mutate(mode, s, i) {
+    const k = (s * MAXCH + i) * 2, lo = this.seeds[k], hi = this.seeds[k + 1];
+    if (mode === 1) { const n = (lo >>> 1) & 63; this.init[n] = (this.init[n] + 1 + (lo & 1)) % 3; }
+    else if (mode === 2) {
+      const slot = u64mod(lo, hi, NL), r12 = u64mod(lo, hi, NL * 64);
+      let target = Math.floor((r12 - slot) / NL) % 64;
+      const prevT = this.links[slot];
+      while (target === prevT) target = (target + 1) % 64;
+      this.links[slot] = target;
+    } else if (mode === 3) {
+      const shLo = (lo >>> 1) | ((hi & 1) << 31), shHi = hi >>> 1;
+      const idx = u64mod(shLo >>> 0, shHi, P * LUT);
+      this.lut[idx] = (this.lut[idx] + 1 + (lo & 1)) % 3;
+    }
+  }
+  // returns { error, shift, ann, flips: {imp, wor, inert} }
+  child(parent, parentShift, pubkey, nonce, anchor) {
+    const L = nonce[1] & 15, mode = (nonce[1] >> 4) & 3, K = nonce[2];
+    if (nonce[0] !== 1 || L < 1 || L > MAXCH || mode < 1 || mode > 3 || (nonce[1] & 0xC0)) return null;
+    this.links.set(parent.links); this.init.set(parent.init); this.lut.set(parent.lut);
+    const comb = new Uint8Array(96); comb.set(pubkey); comb.set(nonce, 32); comb[32] = comb[33] = comb[34] = 0; comb.set(anchor, 64);
+    random2(k12(comb), this.pool, this.seeds);
+    this.shift = parentShift;
+    const better = (a, b) => a.shift !== b.shift ? a.shift > b.shift : a.error < b.error;
+    const valid = r => r.error !== INF;
+    let cur = this.advanceShift(), best = cur;
+    this.bLinks.set(this.links); this.bInit.set(this.init); this.bLut.set(this.lut);
+    const flips = { imp: 0, wor: 0, inert: 0 };
+    for (let s = 0; s < MUT; s++) {
+      this.pLinks.set(this.links); this.pInit.set(this.init); this.pLut.set(this.lut);
+      const prevShift = this.shift;
+      for (let i = 0; i < L; i++) this.mutate(mode, s, i);
+      const r = this.advanceShift();
+      if (!valid(r) || better(cur, r)) flips.wor++; else if (better(r, cur)) flips.imp++; else flips.inert++;
+      const ok = s < K ? (valid(r) && r.error >= cur.error) : (valid(r) && !better(cur, r));
+      if (ok) cur = r;
+      else { this.links.set(this.pLinks); this.init.set(this.pInit); this.lut.set(this.pLut); this.shift = prevShift; }
+      if (s >= K && valid(cur) && !better(best, cur)) { best = cur; this.bLinks.set(this.links); this.bInit.set(this.init); this.bLut.set(this.lut); }
+    }
+    this.shift = best.shift;
+    return { error: best.error, shift: best.shift, flips,
+      ann: { links: Int32Array.from(this.bLinks), init: Uint8Array.from(this.bInit), lut: Uint8Array.from(this.bLut) } };
+  }
+}
+
+// ---------- identity <-> pubkey ----------
+function identityToPubkey(id) {
+  const b = new Uint8Array(32);
+  for (let i = 0; i < 4; i++) {
+    let v = 0n;
+    for (let j = 13; j >= 0; j--) v = v * 26n + BigInt(id.toUpperCase().charCodeAt(i * 14 + j) - 65);
+    for (let k = 0; k < 8; k++) { b[i * 8 + k] = Number(v & 255n); v >>= 8n; }
+  }
+  return b;
+}
+
+// ---------- TickData reconstruction for the anchor digest ----------
+// td: bob /tick tickdata; txIdx: map digest(identity string) -> transactionIndex
+function tickDataBytes(td, txIndexOf) {
+  const buf = new Uint8Array(8 + 8 + 32 + 4096 * 32 + 8 * 1024 + 64), dv = new DataView(buf.buffer);
+  dv.setUint16(0, td.computorIndex, true); dv.setUint16(2, td.epoch, true); dv.setUint32(4, td.tick, true);
+  dv.setUint16(8, td.millisecond, true); buf[10] = td.second; buf[11] = td.minute; buf[12] = td.hour; buf[13] = td.day; buf[14] = td.month; buf[15] = td.year;
+  buf.set(identityToPubkey(td.timelock), 16);
+  for (const h of td.transactionDigests) buf.set(identityToPubkey(h), 48 + 32 * txIndexOf[h]);
+  const fees = td.contractFees === 0 ? null : td.contractFees, fo = 48 + 4096 * 32;
+  if (fees) for (let i = 0; i < 1024; i++) dv.setBigInt64(fo + 8 * i, BigInt(fees[i]), true);
+  for (let i = 0; i < 64; i++) buf[fo + 8192 + i] = parseInt(td.signature.substr(2 * i, 2), 16);
+  return buf;
+}
+function anchorDigest(tick, tickData) {
+  const pre = new Uint8Array(36); new DataView(pre.buffer).setUint32(0, tick, true);
+  pre.set(k12(tickData), 4);
+  return k12(pre);
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { keccakP12, k12, turboShake, samplePool, PoolSample, random2, Scorer, parseTargets, identityToPubkey, tickDataBytes, anchorDigest, POOL_BYTES };
+
+// ---------- worker entry ----------
+if (typeof self !== 'undefined' && typeof window === 'undefined') self.onmessage = e => {
+  const m = e.data;
+  try {
+    const hex = h => Uint8Array.from(h.match(/../g), x => parseInt(x, 16));
+    const seed = m.seedHex ? hex(m.seedHex) : identityToPubkey(m.seed), pk = m.pubkeyHex ? hex(m.pubkeyHex) : identityToPubkey(m.identity);
+    const targets = Uint8Array.from(m.targets, c => c.charCodeAt(0) - 48);
+    const dig = {};
+    for (const t in m.anchors) dig[t] = anchorDigest(+t, tickDataBytes(m.anchors[t].td, m.anchors[t].idx));
+    const steps = m.steps.map(s => ({ nonce: hex(s.nonce), anchor: s.anchorHex ? hex(s.anchorHex) : dig[s.anchorTick] }));
+    const pool = samplePool(seed, pk, steps, f => self.postMessage({ type: 'pool', f }));
+    const sc = new Scorer(pool, targets, seed, m.adv);
+    self.postMessage({ type: 'meta', control: sc.control, output: sc.output });
+    let ann, shift;
+    if (m.parent) { ann = m.parent.ann; shift = m.parent.shift; }
+    else { ann = sc.rootANN(pk); shift = 0; self.postMessage({ type: 'root', ann }); }
+    steps.forEach((s, i) => {
+      const r = sc.child(ann, shift, pk, s.nonce, s.anchor);
+      if (!r) throw new Error('non-canonical nonce at step ' + (i + 1));
+      self.postMessage({ type: 'node', i, error: r.error, shift: r.shift, flips: r.flips, ann: r.ann });
+      ann = r.ann; shift = r.shift;
+    });
+    self.postMessage({ type: 'done' });
+  } catch (err) { self.postMessage({ type: 'error', message: err.message }); }
+};
+
 </script>
-</body></html>
+<script>
+'use strict';
+const ZERO_ID = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFXIB';
+const ANT_INPUT_TYPE = 12;
+const ANT_MAGIC_HEX = '414e545f534f4c55'; // "ANT_SOLU"
+const ROOT_KEY = '0:4294967295';
+const CACHE_TTL_MS = 7 * 24 * 3600 * 1000;
+const RESULT_NAMES = ['Valid','ValidNotStored','RejectParentNotRegistered','RejectStale','RejectWrongTree',
+  'RejectBelowThreshold','RejectLeParent','RejectMaxChildrenPerParent','RejectTickOutOfRange','RejectReplay',
+  'RejectDedupFull','RejectMinerIndexFull','RejectNonCanonicalNonce'];
+
+const $ = id => document.getElementById(id);
+const setStatus = t => { $('status').textContent = t; };
+
+// ---------- bob access ----------
+let base = '';
+async function getJson(path) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const r = await fetch(base + path);
+      if (!r.ok) throw new Error(`GET ${path} -> ${r.status}`);
+      return await r.json();
+    } catch (e) {
+      if (attempt >= 7) throw e;
+      await new Promise(res => setTimeout(res, Math.min(8000, 400 * 2 ** attempt)));
+    }
+  }
+}
+// POST endpoints trigger a CORS preflight that bob rejects; WebSocket JSON-RPC has no such check.
+// One shared socket, replies matched by id. More sockets overload bob (HTTP 520).
+let wsP = null, wsUrl = '', wsId = 0; const wsWait = new Map();
+function wsOpen() {
+  const url = base.replace(/^http/, 'ws') + '/ws/qubic';
+  if (wsP && wsUrl === url) return wsP;
+  wsUrl = url;
+  const me = wsP = new Promise((resolve, reject) => {
+    const ws = new WebSocket(url);
+    const fail = () => {
+      if (wsP === me) wsP = null;
+      for (const w of wsWait.values()) w.reject(new Error('websocket error'));
+      wsWait.clear(); reject(new Error('websocket error'));
+    };
+    ws.onopen = () => resolve(ws);
+    ws.onmessage = e => {
+      const m = JSON.parse(e.data), w = wsWait.get(m.id);
+      if (!w) return;
+      wsWait.delete(m.id); m.error ? w.reject(new Error(JSON.stringify(m.error))) : w.resolve(m.result);
+    };
+    ws.onerror = fail; ws.onclose = fail;
+  });
+  return me;
+}
+async function rpcWs(method, params) {
+  for (let attempt = 0; ; attempt++) {
+    const id = ++wsId;
+    try {
+      const ws = await wsOpen();
+      return await new Promise((resolve, reject) => {
+        wsWait.set(id, { resolve, reject });
+        ws.send(JSON.stringify({ jsonrpc: '2.0', method, params, id }));
+        setTimeout(() => reject(new Error('websocket timeout')), 60000);
+      });
+    } catch (e) {
+      wsWait.delete(id);
+      if (attempt >= 4) throw e;
+      await new Promise(res => setTimeout(res, 300 * (attempt + 1)));
+    }
+  }
+}
+async function pool(items, n, fn, onDone) {
+  let i = 0; const out = new Array(items.length);
+  await Promise.all(Array.from({ length: n }, async () => {
+    while (i < items.length) { const k = i++; out[k] = await fn(items[k]); if (onDone) onDone(k); }
+  }));
+  return out;
+}
+
+// ---------- parsing ----------
+function identityToPubkeyHex(id) {
+  const bytes = new Uint8Array(32);
+  for (let i = 0; i < 4; i++) {
+    let v = 0n;
+    for (let j = 13; j >= 0; j--) v = v * 26n + BigInt(id.charCodeAt(i * 14 + j) - 65);
+    for (let b = 0; b < 8; b++) { bytes[i * 8 + b] = Number(v & 0xffn); v >>= 8n; }
+  }
+  return hex(bytes);
+}
+const hex = b => Array.from(b, x => x.toString(16).padStart(2, '0')).join('');
+const unhex = h => Uint8Array.from(h.match(/../g), x => parseInt(x, 16));
+const u32le = (b, o) => (b[o] | b[o+1] << 8 | b[o+2] << 16 | b[o+3] << 24) >>> 0;
+
+function parseTxInput(inputHex) { // parentTick, parentIdx, anchorTick, claimedScore, nonce
+  const b = unhex(inputHex);
+  return { parentTick: u32le(b, 0), parentIdx: u32le(b, 4), anchorTick: u32le(b, 8), claimedScore: u32le(b, 12), nonce: hex(b.slice(16, 48)) };
+}
+function parseAntLog(bodyHex) { // AntSolutionLogMessage, 92 bytes
+  const b = unhex(bodyHex);
+  return { pubkey: hex(b.slice(8, 40)), nonce: hex(b.slice(40, 72)), parentTick: u32le(b, 72), parentIdx: u32le(b, 76),
+    anchorTick: u32le(b, 80), score: u32le(b, 84), result: u32le(b, 88) };
+}
+function nonceInfo(n) {
+  const b = unhex(n);
+  return { algo: b[0], L: b[1] & 0x0f, mode: (b[1] >> 4) & 3, K: b[2], seed: hex(b.slice(3)) };
+}
+const MODE_NAMES = ['?', 'start state', 'wiring', 'LUTs'];
+const MODE_SHORT = ['?', 'S', 'W', 'T'];
+
+// ---------- cache ----------
+const cacheKey = (epoch, id) => `ant:${epoch}:${id}`;
+function loadCache(epoch, id) {
+  try {
+    const c = JSON.parse(localStorage.getItem(cacheKey(epoch, id)));
+    if (c && Date.now() - c.ts < CACHE_TTL_MS) return c;
+  } catch (e) {}
+  return null;
+}
+function saveCache(epoch, id, c) {
+  try { localStorage.setItem(cacheKey(epoch, id), JSON.stringify(c)); } catch (e) { console.warn('cache save failed', e); }
+}
+
+// ---------- fetch pipeline ----------
+// One global limiter over every request: bob resets connections beyond ~48 in flight,
+// browsers cap HTTP/1.1 at 6 per host anyway. Flat queue avoids per-tick head-of-line blocking.
+const MAX_INFLIGHT = 32;
+let inflight = 0; const waiters = [];
+async function limited(fn) {
+  if (inflight >= MAX_INFLIGHT) await new Promise(r => waiters.push(r));
+  inflight++;
+  try { return await fn(); } finally { inflight--; const w = waiters.shift(); if (w) w(); }
+}
+const getL = path => limited(() => getJson(path));
+
+async function solutionFromTx(tx, epoch, id) {
+  if (tx.from !== id || tx.inputType !== ANT_INPUT_TYPE) return null;
+  const inp = parseTxInput(tx.inputData);
+  const s = { key: `${tx.tick}:${tx.transactionIndex}`, tick: tx.tick, idx: tx.transactionIndex, txHash: tx.hash, timestamp: tx.timestamp,
+    amount: tx.amount, executed: tx.executed, txStatus: tx.status, logIdFrom: tx.logIdFrom, logIdTo: tx.logIdTo, ...inp, log: null, refunded: false };
+  if (tx.logIdFrom !== undefined && tx.logIdTo >= tx.logIdFrom) {
+    const logs = await getL(`/log/${epoch}/${tx.logIdFrom}/${tx.logIdTo}`);
+    for (const l of logs) {
+      if (l.type === 255 && l.body && l.body.hex && l.body.hex.startsWith(ANT_MAGIC_HEX)) s.log = parseAntLog(l.body.hex);
+      if (l.type === 0 && l.body && l.body.from === ZERO_ID && l.body.to === id && l.body.amount === tx.amount) s.refunded = true;
+    }
+  }
+  return s;
+}
+async function loadIdentity(id, rescan, onProgress) {
+  const st = await getJson('/status');
+  const want = +$('epochIn').value || st.currentProcessingEpoch;
+  let epoch = st.currentProcessingEpoch, fromEpoch = st.initialTick, toTick = st.currentIndexingTick;
+  if (want !== epoch) {
+    const ei = await getJson(`/epochinfo/${want}`);
+    if (!ei.initialTick) throw new Error(`bob has no data for epoch ${want}`);
+    epoch = want; fromEpoch = ei.initialTick; toTick = ei.endTick || ei.lastIndexedTick;
+  }
+  curEpoch = { epoch, initialTick: fromEpoch };
+  let c = rescan ? null : loadCache(epoch, id);
+  if (!c) c = { ts: Date.now(), epoch, scannedTo: fromEpoch - 1, sols: {} };
+  const fromTick = c.scannedTo + 1;
+  const count = () => Object.keys(c.sols).length;
+  onProgress(c.sols);
+  setStatus(`epoch ${epoch}, ticks ${fromEpoch}..${toTick}. cached solutions: ${count()}. scanning ${fromTick}..${toTick} ...`);
+  // bob lists an identity's outgoing transfer txs per window of at most 1000 ticks
+  const ticks = fromTick <= toTick ? await rpcWs('qubic_findLogIds', [{ scIndex: 0, logType: 0, fromTick, toTick, topic1: id, topic2: ZERO_ID, topic3: ZERO_ID }]) : [];
+  // only windows that hold a solution tick
+  const wins = [...new Set(ticks.map(t => fromTick + Math.floor((t - fromTick) / 1000) * 1000))].sort((a, b) => a - b);
+  let done = 0, txLeft = 0; const txJobs = [];
+  const have = new Set(Object.values(c.sols).map(s => s.txHash)); // resume after a failed load
+  const progress = () => setStatus(`epoch ${epoch}, ticks ${fromEpoch}..${toTick}. scanned ${done}/${wins.length} tick windows, ${count()} solutions, ${txLeft} txs pending`);
+  await pool(wins, 8, async t => {
+    const r = await rpcWs('qubic_getQuTransfers', [{ identity: id, fromTick: t, toTick: Math.min(t + 999, toTick) }]);
+    if (!r || !r.out) throw new Error('bob transfer list failed: ' + JSON.stringify(r));
+    const todo = r.out.filter(h => !have.has(h));
+    txLeft += todo.length;
+    for (const h of todo) txJobs.push((async () => {
+      const s = await solutionFromTx(await getL(`/tx/${h}`), epoch, id);
+      if (s) { c.sols[s.key] = s; onProgress(c.sols); }
+      if (--txLeft % 200 === 0) saveCache(epoch, id, c);
+      progress();
+    })());
+    done++; progress();
+  });
+  try { await Promise.all(txJobs); } finally { saveCache(epoch, id, c); }
+  c.scannedTo = toTick;
+  saveCache(epoch, id, c);
+  setStatus(`epoch ${epoch}, ticks ${fromEpoch}..${toTick}. ${count()} solution txs (cached 7 days, rescans only new ticks).`);
+  return { epoch, sols: Object.values(c.sols) };
+}
+
+// ---------- tree ----------
+// Rating order: higher shift first, then lower error. Negative = a is better.
+const errOf = n => n.s && n.s.log && n.s.log.score != null ? n.s.log.score : 1e9;
+const ratingCmp = (a, b) => (b.minShift - a.minShift) || (errOf(a) - errOf(b));
+function buildTree(sols) {
+  const nodes = new Map();
+  for (const s of sols) {
+    const accepted = s.log && (s.log.result === 0 || s.log.result === 1);
+    nodes.set(s.key, { key: s.key, s, accepted, children: [], depth: 0 });
+  }
+  const root = { key: ROOT_KEY, s: null, accepted: true, children: [], depth: 0, isRoot: true };
+  const orphans = [];
+  for (const n of nodes.values()) {
+    const pk = `${n.s.parentTick}:${n.s.parentIdx}`;
+    const p = pk === ROOT_KEY ? root : nodes.get(pk);
+    if (p) p.children.push(n); else { n.orphan = true; orphans.push(n); }
+  }
+  const stack = [root];
+  // Shift is not on-chain; accepted child with error >= parent error must have advanced shift.
+  root.minShift = 0;
+  while (stack.length) {
+    const n = stack.pop();
+    for (const ch of n.children) {
+      ch.depth = n.depth + 1;
+      const pe = n.isRoot ? Infinity : (n.s.log && n.s.log.score != null ? n.s.log.score : Infinity);
+      ch.minShift = ch.s.shift != null ? ch.s.shift : n.minShift + (ch.accepted && ch.s.log && ch.s.log.score != null && ch.s.log.score >= pe ? 1 : 0);
+      stack.push(ch);
+    }
+  }
+  for (const o of orphans) if (o.minShift === undefined) o.minShift = 0;
+  const sortRec = n => { n.children.sort((a, b) => (a.accepted !== b.accepted) ? (a.accepted ? -1 : 1) : ratingCmp(a, b)); n.children.forEach(sortRec); };
+  sortRec(root);
+  return { root, orphans, nodes };
+}
+
+// Progressive render: tree is rebuilt while ticks arrive; pan/zoom and selection survive rebuilds.
+let treeData = null, curId = '', selectedKey = null, curEpoch = null;
+let renderTimer = null, pendingSols = null, autoFit = true; // auto-fit until the user pans or zooms
+function scheduleRender(sols) {
+  pendingSols = sols;
+  if (renderTimer) return;
+  renderTimer = setTimeout(() => { renderTimer = null; treeData = buildTree(Object.values(pendingSols)); renderTree(treeData); }, 300);
+}
+
+// ---------- layout (tidy tree: leaves left to right, parent centred over children) ----------
+const NW = 84, NH = 36, GX = 14, GY = 46;
+function layout(roots) {
+  let cursor = 0, maxY = 0;
+  const place = (n, depth) => {
+    n.y = depth * (NH + GY); maxY = Math.max(maxY, n.y);
+    if (!n.children.length) { n.x = cursor; cursor += NW + GX; return; }
+    for (const ch of n.children) place(ch, depth + 1);
+    n.x = (n.children[0].x + n.children[n.children.length - 1].x) / 2;
+  };
+  for (const r of roots) { place(r, 0); cursor += NW; }
+  return { w: cursor, h: maxY + NH };
+}
+function* walk(n) { yield n; for (const c of n.children) yield* walk(c); }
+
+// ---------- pan / zoom ----------
+const view = { x: 20, y: 20, k: 1 };
+let lastBounds = { w: 1, h: 1 };
+const SVG = 'http://www.w3.org/2000/svg';
+function applyView() { $('vp').setAttribute('transform', `translate(${view.x},${view.y}) scale(${view.k})`); }
+function fitView(bounds) {
+  const r = $('svg').getBoundingClientRect();
+  const k = Math.min(1.5, (r.width - 40) / Math.max(1, bounds.w), (r.height - 60) / Math.max(1, bounds.h));
+  view.k = Math.max(0.02, k); view.x = (r.width - bounds.w * view.k) / 2; view.y = 40; applyView();
+}
+function centerOn(n) {
+  const r = $('svg').getBoundingClientRect();
+  autoFit = false; view.k = Math.max(view.k, 0.8);
+  view.x = r.width / 2 - (n.x + NW / 2) * view.k; view.y = r.height / 2 - (n.y + NH / 2) * view.k; applyView();
+}
+{
+  const svg = $('svg'); let drag = null;
+  svg.addEventListener('wheel', e => {
+    e.preventDefault(); autoFit = false;
+    const f = Math.exp(-e.deltaY * 0.0015), r = svg.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    view.x = mx - (mx - view.x) * f; view.y = my - (my - view.y) * f; view.k *= f; applyView();
+  }, { passive: false });
+  svg.addEventListener('mousedown', e => { autoFit = false; drag = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y }; svg.classList.add('drag'); });
+  window.addEventListener('mousemove', e => { if (!drag) return; view.x = drag.vx + e.clientX - drag.x; view.y = drag.vy + e.clientY - drag.y; applyView(); });
+  window.addEventListener('mouseup', () => { drag = null; svg.classList.remove('drag'); });
+}
+
+// ---------- svg render ----------
+function el(tag, attrs, text) {
+  const e = document.createElementNS(SVG, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+function renderTree(t) {
+  for (const n of t.nodes.values()) if (n.s.shift != null) n.minShift = n.s.shift; // replayed: exact shift
+  const acc = [...t.nodes.values()].filter(n => n.accepted);
+  const best = acc.length ? acc.reduce((a, b) => ratingCmp(b, a) < 0 ? b : a) : null;
+  const maxDepth = Math.max(0, ...acc.map(n => n.depth));
+  $('stats').textContent = `accepted ${acc.length} | rejected ${t.nodes.size - acc.length} | max depth ${maxDepth}` +
+    (best ? ` | best shift>=${best.minShift} error ${best.s.log.score} @ ${best.key}` : '') + (t.orphans.length ? ` | orphans (parent not found) ${t.orphans.length}` : '');
+  const roots = [t.root];
+  if (t.orphans.length) roots.push({ key: 'orphans', isRoot: true, accepted: true, children: t.orphans, depth: 0, label: 'ORPHANS' });
+  const bounds = layout(roots);
+  const edges = el('g', {}), nodes = el('g', {});
+  for (const r of roots) for (const n of walk(r)) {
+    for (const ch of n.children) {
+      const x1 = n.x + NW / 2, y1 = n.y + NH, x2 = ch.x + NW / 2, y2 = ch.y, ym = (y1 + y2) / 2;
+      edges.appendChild(el('path', { class: 'edge' + (ch.accepted ? '' : ' rej'), d: `M${x1},${y1} C${x1},${ym} ${x2},${ym} ${x2},${y2}` }));
+    }
+    const g = el('g', { class: 'node' + (n.isRoot ? ' root' : '') + (n.accepted ? '' : ' rej') + (n === best ? ' best' : '') + (n.key === selectedKey ? ' sel' : ''),
+      transform: `translate(${n.x},${n.y})`, 'data-k': n.key });
+    g.appendChild(el('rect', { width: NW, height: NH }));
+    if (n.isRoot) {
+      g.appendChild(el('text', { class: 'sc', x: NW / 2, y: 23 }, n.label || 'ROOT'));
+    } else {
+      const ni = nonceInfo(n.s.nonce);
+      g.appendChild(el('text', { class: 'sc', x: NW / 2, y: 16 }, (n.minShift ? `s${n.minShift}+ ` : '') + (n.s.log && n.s.log.score != null ? n.s.log.score : '?') + (n.s.badStep ? ' ✗' : '')));
+      g.appendChild(el('text', { class: 'lk', x: NW / 2, y: 30 }, `${MODE_SHORT[ni.mode]} L${ni.L} K${ni.K} d${n.depth}`));
+      g.appendChild(el('title', {}, `${n.key}\nerror ${n.s.log ? n.s.log.score : '?'}  shift >= ${n.minShift}  depth ${n.depth}\nmode ${MODE_NAMES[ni.mode]}  L ${ni.L}  K ${ni.K}\n${n.s.log ? RESULT_NAMES[n.s.log.result] : 'no log'}`));
+    }
+    g.addEventListener('click', e => { e.stopPropagation(); selectKey(n.key, false); });
+    nodes.appendChild(g);
+  }
+  $('vp').replaceChildren(edges, nodes);
+  lastBounds = bounds;
+  if (autoFit) fitView(bounds); else applyView();
+}
+function selectKey(key, scroll) {
+  const n = key === ROOT_KEY ? treeData.root : treeData.nodes.get(key);
+  if (!n) return;
+  selectedKey = key;
+  showDetail(n);
+  document.querySelectorAll('#vp .node.sel').forEach(g => g.classList.remove('sel'));
+  const g = document.querySelector(`#vp .node[data-k="${key}"]`);
+  if (g) g.classList.add('sel');
+  if (scroll) centerOn(n);
+}
+
+// ---------- detail ----------
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+function showDetail(n) {
+  if (n.s && n.s.json) return showJsonDetail(n);
+  const r = $('right');
+  if (n.isRoot) {
+    r.innerHTML = `<h3>${esc(n.label || 'Virtual root')}</h3><div class="hint">${n.label ? 'Solutions whose parentRef was not found among this identity\'s solutions in this epoch.' :
+      'Shared per-epoch root derived from the epoch spectrum digest. Never stored or submitted. Children: ' + n.children.length + '.'}</div>`;
+    return;
+  }
+  const s = n.s, L = s.log, ni = nonceInfo(s.nonce);
+  const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
+  const resName = L ? (RESULT_NAMES[L.result] || String(L.result)) : 'no ANT_SOLU log found';
+  const parentKey = `${s.parentTick}:${s.parentIdx}`;
+  const parent = treeData.nodes.get(parentKey);
+  const kids = n.children.map(c => `<a href="#" data-k="${c.key}">${c.key}</a> (${c.s.log ? c.s.log.score : '?'}${c.accepted ? '' : ', rejected'})`).join('<br>') || '-';
+  r.innerHTML = `<h3>Solution ${esc(s.key)} <span class="${n.accepted ? 'ok' : 'bad'}">${esc(resName)}</span></h3><table>` +
+    row('identity', esc(curId)) +
+    row('pubkey (hex)', L ? L.pubkey : identityToPubkeyHex(curId)) +
+    row('selfRef (tick:index)', `${s.tick}:${s.idx}`) +
+    row('parentRef', parentKey === ROOT_KEY ? `${parentKey} (ROOT)` : (parent ? `<a href="#" data-k="${parentKey}">${parentKey}</a>` : parentKey + ' (not found)')) +
+    row('depth', n.depth + (n.orphan ? ' (orphan, unknown)' : '')) +
+    row('children', kids) +
+    row('error (node computed)', L ? `${L.score}` : '-') +
+    row('shift (inferred)', `&gt;= ${n.minShift} <span class="hint">(not on-chain; +1 each step whose error is not below its parent's)</span>`) +
+    row('claimed error (tx)', `${s.claimedScore}` + (L && L.score !== s.claimedScore ? ' <span class="bad">mismatch</span>' : '')) +
+    row('parent error / shift', parent && parent.s.log ? `${parent.s.log.score} / &gt;= ${parent.minShift}` : (parentKey === ROOT_KEY ? 'root' : '-')) +
+    row('result', esc(resName) + (L ? ` (${L.result})` : '')) +
+    row('anchor tick', `${s.anchorTick} (published ${s.tick - s.anchorTick} ticks after anchor)`) +
+    row('publish tick', `${s.tick}`) +
+    row('timestamp', s.timestamp ? new Date(s.timestamp * 1000).toISOString() : '-') +
+    row('nonce (hex)', s.nonce) +
+    row('nonce algo / mode / L / K', `${ni.algo} / ${ni.mode} (${MODE_NAMES[ni.mode]}) / ${ni.L} / ${ni.K}`) +
+    row('nonce seed (bytes 3..31)', ni.seed) +
+    row('tx hash', esc(s.txHash)) +
+    row('tx executed / status', `${s.executed} / ${esc(s.txStatus)}`) +
+    row('deposit', `${s.amount} QU, refunded: <span class="${s.refunded ? 'ok' : 'bad'}">${s.refunded}</span>`) +
+    row('log ids', `${s.logIdFrom}..${s.logIdTo}`) +
+    row('log pubkey/nonce match tx', L ? String(L.nonce === s.nonce && L.parentTick === s.parentTick && L.parentIdx === s.parentIdx && L.anchorTick === s.anchorTick) : '-') +
+    `</table>` + (n.accepted && !n.orphan ? `<button class="annbtn" id="annGoBtn">Visualize ANN (replay root to this node, ${n.depth} steps)</button>
+      <div class="hint">Replays every step in your browser from on-chain data: about 6 s to sample the epoch pool, then about 2 s per step.</div>` : '');
+  if ($('annGoBtn')) $('annGoBtn').onclick = () => visualizeAnn(n);
+  r.querySelectorAll('a[data-k]').forEach(a => a.onclick = e => { e.preventDefault(); selectKey(a.dataset.k, true); });
+}
+// ---------- mixed content help ----------
+const isMixed = () => location.protocol === 'https:' && /^http:/.test(base);
+function mixedContentHelp(failed) {
+  const site = encodeURIComponent(location.origin);
+  return `<h3 class="${failed ? 'bad' : ''}">${failed ? 'Request blocked: ' : ''}this page is HTTPS, bob is HTTP</h3>
+<div class="hint">Browsers block plain-HTTP requests (mixed content) from an HTTPS page. Bob at <b>${esc(base)}</b> has no HTTPS,
+so you must allow insecure content for this site once. Then press Load again.</div>
+<table>
+<tr><td>Chrome / Brave</td><td>Open this address in a new tab (copy it, chrome:// links cannot be clicked):<br>
+<code>chrome://settings/content/siteDetails?site=${site}</code><br>
+then set <b>Insecure content</b> to <b>Allow</b> and reload this page.<br>
+Or: click the lock/tune icon left of the address bar → Site settings → Insecure content → Allow.</td></tr>
+<tr><td>Edge</td><td><code>edge://settings/content/siteDetails?site=${site}</code> → Insecure content → Allow.</td></tr>
+<tr><td>Firefox</td><td>No per-site switch. Open <code>about:config</code>, set <code>security.mixed_content.block_active_content</code> to <b>false</b> (global, remember to revert).</td></tr>
+<tr><td>Safari</td><td>Not possible. Use Chrome, or open the page over http.</td></tr>
+<tr><td>Alternative</td><td>Enter an https:// bob endpoint in the URL box, or open this page from a plain http:// host.</td></tr>
+</table>`;
+}
+
+// ---------- ANN visualizer: replay a chain in the browser, show the network per step ----------
+// Replay runs the bpp9000 scorer port in a Web Worker on on-chain data only (nonce, anchor tick, epoch seed).
+const annCache = new Map(); // node key -> { ann, shift, error, flips }
+const rootKey = () => annState && annState.rootKeyStr ? annState.rootKeyStr : `root:${curId}:${curEpoch ? curEpoch.epoch : ''}`;
+let annWorker = null, annRun = null, annState = null;
+
+function getAnnWorker() {
+  if (annWorker) return annWorker;
+  const src = document.getElementById('annWorkerSrc').textContent;
+  annWorker = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+  annWorker.onmessage = e => annRun && annRun.onMessage(e.data);
+  return annWorker;
+}
+const b64 = { hexToBytes: h => Uint8Array.from(h.match(/../g), x => parseInt(x, 16)) };
+
+// path from the root to node n, as tree nodes (root excluded)
+function pathTo(n) { const p = []; for (let x = n; x && !x.isRoot; x = treeData.nodes.get(`${x.s.parentTick}:${x.s.parentIdx}`)) p.unshift(x); return p; }
+
+async function epochSeed() {
+  const { epoch, initialTick } = curEpoch;
+  const td = await getJson(`/tick/${initialTick}`);
+  const seeds = [...new Set((td.votes || []).map(v => v.prevSpectrumDigest))];
+  if (seeds.length !== 1) throw new Error(`epoch seed: votes of tick ${initialTick} disagree or are missing`);
+  return { seed: seeds[0], epoch };
+}
+async function anchorInputs(ticks) {
+  const out = {};
+  await pool(ticks, 2, async t => {
+    const td = (await getJson(`/tick/${t}`)).tickdata;
+    const idx = {};
+    await Promise.all(td.transactionDigests.map(async h => { idx[h] = (await getL(`/tx/${h}`)).transactionIndex; }));
+    out[t] = { td, idx };
+  });
+  return out;
+}
+
+async function visualizeAnn(n) {
+  const path = pathTo(n);
+  if (!path.length || path.some(x => !x.accepted)) { setStatus('Only accepted chains can be replayed.'); return; }
+  showAnnView(true);
+  const J = path[0].s.json;
+  annState = { path, step: path.length, done: 0, selected: null, base: null, custom: [], edit: null, mode: annState ? annState.mode : 'tree', keyOf: i => i === 0 ? 'root' : path[i - 1].key,
+    rootKeyStr: J ? `root:${J.pubkeyHex}:${J.seedHex}` : null };
+  // pasted JSON has no epoch: use the Epoch field, else the newest known task
+  const ep = J ? (+$('epochIn').value || ANN_LATEST) : curEpoch.epoch;
+  annTask = EPOCH_TASK[ep] || EPOCH_TASK[ANN_LATEST];
+  circleOrders.clear();
+  // steps already cached are shown at once; replay resumes from the deepest cached ancestor
+  let start = 0; while (start < path.length && annCache.has(path[start].key)) start++;
+  annState.done = start;
+  renderAnn();
+  if (start === path.length && annCache.has(rootKey())) { annStatus(`All ${path.length} steps cached.`); return; }
+  annStatus(J ? 'Replaying from the pasted seed and anchor digest...' : 'Fetching epoch seed and anchor ticks from bob...');
+  try {
+    const todo = path.slice(start);
+    let seed = null, anchors = {};
+    if (!J) {
+      const es = await epochSeed(); seed = es.seed;
+      if (!EPOCH_TASK[es.epoch]) annStatus(`Warning: this page carries the task file for epochs ${ANN_EPOCHS.join(', ')}, not ${es.epoch}; replay will mismatch.`);
+      anchors = await anchorInputs([...new Set(todo.map(x => x.s.anchorTick))]);
+    }
+    const parent = start === 0 ? null : annCache.get(path[start - 1].key);
+    if (annRun) annRun.cancel();
+    const run = annRun = { cancelled: false, cancel() { this.cancelled = true; getAnnWorker().terminate(); annWorker = null; } };
+    run.onMessage = m => {
+      if (run.cancelled || annRun !== run) return;
+      if (m.type === 'meta') { if (m.control !== ANN_CTRL || m.output !== ANN_OUT) { ANN_CTRL = m.control; ANN_OUT = m.output; circleOrders.clear(); for (const v of annCache.values()) delete v.ann._shape; } annState.ctlOut = [m.control, m.output]; }
+      else if (m.type === 'pool') annStatus(`Sampling the epoch random pool (${(m.f * 100).toFixed(0)}%)...`);
+      else if (m.type === 'root') { annCache.set(rootKey(), { ann: m.ann, shift: 0, error: null }); renderAnn(); }
+      else if (m.type === 'node') {
+        const x = todo[m.i], known = x.s.log.score;
+        annCache.set(x.key, { ann: m.ann, shift: m.shift, error: m.error, flips: m.flips, chainError: known });
+        annState.done = start + m.i + 1;
+        if (J) { // fill in the pasted tree: real score, and whether the step beats its parent
+          const par = start + m.i === 0 ? null : annCache.get(path[start + m.i - 1].key);
+          x.s.computed = true; x.s.shift = m.shift; x.s.badStep = par ? !ratingBetter({ error: m.error, shift: m.shift }, { error: par.error, shift: par.shift }) : false;
+          x.s.log.score = m.error;
+        }
+        const mism = known != null && m.error !== known;
+        annStatus(`Replayed ${annState.done}/${path.length} steps` + (mism ? ` - MISMATCH at ${x.key}: replay ${m.error}, ${J ? 'finalScore' : 'chain'} ${known}` : '') + (J && x.s.badStep ? ` - step ${x.key} does not beat its parent` : ''));
+        renderAnn();
+      } else if (m.type === 'done') { annStatus(J ? `Replay done: ${path.length} steps; scores filled into the tree.` : `Replay done: ${path.length} steps, every error checked against the chain.`); annRun = null; }
+      else if (m.type === 'error') annStatus('Replay error: ' + m.message);
+    };
+    getAnnWorker().postMessage({ type: 'run', seed, identity: curId, targets: annTask.targets, adv: annTask.adv, anchors,
+      seedHex: J ? J.seedHex : null, pubkeyHex: J ? J.pubkeyHex : null,
+      parent: parent ? { ann: parent.ann, shift: parent.shift } : null,
+      steps: todo.map(x => ({ nonce: x.s.nonce, anchorTick: x.s.anchorTick, anchorHex: J ? x.s.json.anchorHex : null })) });
+  } catch (e) { annStatus('Error: ' + e.message); console.error(e); }
+}
+function annStatus(t) { const e = $('annStatus'); if (e) e.textContent = t; }
+
+// ---------- shape analysis: effective reads and recurrent clock grouping ----------
+let ANN_CTRL = 26, ANN_OUT = 0; const ANN_FRAME = 8760; // control/output set per epoch by the replay worker
+function cone(links, x, read) { const seen = new Set([x]), st = [x]; while (st.length) { const n = st.pop(); for (let j = 0; j < 3; j++) { if (read && !read[n * 3 + j]) continue; const s = links[n * 3 + j]; if (!seen.has(s)) { seen.add(s); st.push(s); } } } return seen; }
+function analyse(ann) {
+  if (ann._shape && ann._shape.control === ANN_CTRL && ann._shape.output === ANN_OUT) return ann._shape;
+  const { links, init, lut } = ann;
+  const structural = new Set([...cone(links, ANN_CTRL), ...cone(links, ANN_OUT)]);
+  // Keep heat and graded-cell statistics on the first frame.
+  let cur = Uint8Array.from(init), prev = new Uint8Array(64); const vis = new Uint32Array(64 * 27), cells = new Uint8Array(64);
+  let em = 0, ticks = 0, frameTicks = 0; const toggles = new Uint32Array(64), visited = new Uint8Array(64 * 27);
+  while (em < ANN_FRAME + 168 && ticks < 40001) {
+    ticks++; const t = prev; prev = cur; cur = t;
+    const inFrame = em < ANN_FRAME; if (inFrame) frameTicks++;
+    for (let i = 0; i < 64; i++) { const c = prev[links[3 * i]] + 3 * prev[links[3 * i + 1]] + 9 * prev[links[3 * i + 2]]; cells[i] = c; visited[i * 27 + c] = 1; cur[i] = lut[i * 27 + c]; if (inFrame && cur[i] !== prev[i]) toggles[i]++; }
+    if (cur[ANN_CTRL] !== 2) { em++; if (inFrame) for (let i = 0; i < 64; i++) vis[i * 27 + cells[i]]++; }
+  }
+  const structuralFallback = em < ANN_FRAME + 168, read = new Uint8Array(192);
+  if (structuralFallback) read.fill(1);
+  else for (const n of structural) for (let c = 0; c < 27; c++) if (visited[n * 27 + c]) {
+    for (let j = 0, p = 1; j < 3; j++, p *= 3) {
+      const base = n * 27 + c - Math.floor(c / p) % 3 * p;
+      if (lut[base] !== lut[base + p] || lut[base] !== lut[base + 2 * p]) read[n * 3 + j] = 1;
+    }
+  }
+  const controlClock = cone(links, ANN_CTRL, read), live = new Set([...controlClock, ...cone(links, ANN_OUT, read)]);
+  if (!structuralFallback) for (let n = 0; n < 64; n++) if (!live.has(n)) read.fill(0, n * 3, n * 3 + 3);
+  const upstream = new Map([...live].map(n => [n, cone(links, n, read)])), C = new Set(controlClock);
+  for (const n of live) {
+    const inputs = [0, 1, 2].filter(j => read[n * 3 + j]).map(j => links[n * 3 + j]);
+    const recurrent = inputs.some(s => s !== n && upstream.get(s).has(n));
+    const drivenSelf = inputs.includes(n) && inputs.some(s => s !== n);
+    if (recurrent || drivenSelf) for (const s of upstream.get(n)) C.add(s);
+  }
+  const RO = new Set([...live].filter(x => !C.has(x)));
+  const lvl = new Map();
+  if (RO.has(ANN_OUT)) {
+    const pending = [...RO], placed = new Set();
+    lvl.set(ANN_OUT, 0);
+    while (pending.length) {
+      const k = pending.findIndex(s => [...RO].every(n => n === s || placed.has(n) || ![0, 1, 2].some(j => read[n * 3 + j] && links[n * 3 + j] === s)));
+      const n = pending.splice(k, 1)[0]; placed.add(n);
+      for (let j = 0; j < 3; j++) {
+        const s = links[n * 3 + j];
+        if (read[n * 3 + j] && s !== n && RO.has(s)) lvl.set(s, Math.max(lvl.get(s) || 0, lvl.get(n) + 1));
+      }
+    }
+  }
+  const neurons = [];
+  for (let n = 0; n < 64; n++) {
+    const ins = [links[3 * n], links[3 * n + 1], links[3 * n + 2]];
+    let used = 0, minV = Infinity; for (let c = 0; c < 27; c++) { const v = vis[n * 27 + c]; if (v) used++; minV = Math.min(minV, v); }
+    neurons.push({ id: n, role: n === ANN_OUT ? 'output' : C.has(n) ? 'clock' : RO.has(n) ? 'readout' : 'inactive',
+      isOutput: n === ANN_OUT, isControl: n === ANN_CTRL, isClock: C.has(n), isControlClock: controlClock.has(n), isLive: live.has(n),
+      inClock: C.has(n), level: lvl.has(n) ? lvl.get(n) : null, inputs: ins, inputReads: Array.from(read.subarray(n * 3, n * 3 + 3), Boolean), inputRoles: ins.map(s => C.has(s) ? 'clock' : RO.has(s) ? 'readout' : 'inactive'),
+      duplicateInput: new Set(ins).size < 3, cellsVisited: used, minVisits: minV, table: Array.from(lut.subarray(n * 27, n * 27 + 27)).join('') });
+  }
+  const cons = new Map(); for (const n of RO) for (const s of new Set(neurons[n].inputs.filter((s, j) => read[n * 3 + j]))) if (RO.has(s)) cons.set(s, (cons.get(s) || 0) + 1);
+  const lv = []; for (const v of lvl.values()) lv[v] = (lv[v] || 0) + 1;
+  return ann._shape = { control: ANN_CTRL, output: ANN_OUT, controlClock: controlClock.size, structuralFallback, read: Array.from(read, Boolean),
+    rate: Array.from(toggles, v => v / frameTicks), C: C.size, R: RO.size, dead: 64 - live.size, ticksPerFrame: frameTicks, levels: lv.map(x => x || 0),
+    outputTableTwos: Array.from(lut.subarray(ANN_OUT * 27, ANN_OUT * 27 + 27)).filter(v => v === 2).length,
+    twos: (() => { // 2-cells per group: [count, cells]
+      const t = n => { let c = 0; for (let k = 0; k < 27; k++) if (lut[n * 27 + k] === 2) c++; return c; };
+      const sum = ids => [ids.reduce((a, n) => a + t(n), 0), ids.length * 27];
+      const all = [...Array(64).keys()];
+      return { readout: sum(all.filter(n => RO.has(n) && n !== ANN_OUT)), clock: sum(all.filter(n => C.has(n))), dead: sum(all.filter(n => !live.has(n))), total: sum(all) };
+    })(),
+    readoutCells: neurons.filter(x => RO.has(x.id)).reduce((a, x) => a + x.cellsVisited, 0),
+    sharedLinks: [...cons.values()].reduce((a, v) => a + (v > 1 ? v - 1 : 0), 0),
+    duplicates: neurons.filter(x => RO.has(x.id) && x.duplicateInput).length, neurons };
+}
+// per-neuron change count between two networks: re-pointed links + rewritten table cells
+function annDiff(a, b) { const d = new Array(64).fill(0); if (!a) return d; for (let i = 0; i < 192; i++) if (a.links[i] !== b.links[i]) d[i / 3 | 0]++; for (let i = 0; i < 1728; i++) if (a.lut[i] !== b.lut[i]) d[i / 27 | 0]++; for (let i = 0; i < 64; i++) if (a.init[i] !== b.init[i]) d[i]++; return d; }
+
+// ---------- view ----------
+function showAnnView(on) {
+  $('annView').hidden = !on; $('svg').hidden = on; $('legend').hidden = on; $('stats').hidden = on;
+  if (!on && annRun) { annRun.cancel(); annRun = null; }
+}
+const annNet = i => annState.base !== null && i > annState.base ? annState.custom[i - annState.base - 1]
+  : i === 0 ? annCache.get(rootKey()) : annCache.get(annState.path[i - 1].key);
+const seqLen = () => annState.base === null ? annState.path.length : annState.base + annState.custom.length;
+const isArtificial = i => annState.base !== null && i > annState.base;
+const stepLabel = i => isArtificial(i) ? `artificial node ${i - annState.base}` : i ? annState.path[i - 1].key : 'root';
+
+// ---------- network modifier: exact scoring of an edited network ----------
+const SC_WIN = 8760, SC_CAP = 168, SC_MAXT = 100000, SC_THRESHOLD = 4350;
+let scTargets = null, scTargetsOf = null;
+function scoreFrame(ann, shift) {
+  if (scTargetsOf !== annTask) { scTargets = Uint8Array.from(annTask.targets, c => c.charCodeAt(0) - 48); scTargetsOf = annTask; }
+  const { links, init, lut } = ann; let cur = Uint8Array.from(init), prev = new Uint8Array(64);
+  let failures = 0, counter = 0, ticks = 0; const need = shift + SC_WIN;
+  while (counter < need) {
+    if (++ticks >= SC_MAXT) return Infinity;
+    const t = prev; prev = cur; cur = t;
+    for (let n = 0, l = 0; n < 64; n++, l += 3) cur[n] = lut[n * 27 + prev[links[l]] + 3 * prev[links[l + 1]] + 9 * prev[links[l + 2]]];
+    if (cur[ANN_CTRL] !== 2) { if (counter >= shift && cur[ANN_OUT] !== scTargets[counter]) failures++; counter++; }
+  }
+  return failures;
+}
+// same as the scorer's advanceShift: a mastered frame (error <= advance threshold) moves on
+function rateAnn(ann, startShift) { let shift = startShift; for (;;) { const e = scoreFrame(ann, shift); if (e > annTask.adv || shift === SC_CAP) return { error: e, shift }; shift++; } }
+const ratingBetter = (a, b) => a.shift !== b.shift ? a.shift > b.shift : a.error < b.error;
+function netRating(i) { const n = annNet(i); if (n.error === null || n.error === undefined) { const r = rateAnn(n.ann, 0); n.error = r.error; n.shift = r.shift; } return { error: n.error, shift: n.shift }; }
+function editedAnn(base, ed) {
+  const a = { links: Int32Array.from(base.links), init: Uint8Array.from(base.init), lut: Uint8Array.from(base.lut) };
+  for (const k in ed.links) a.links[k] = ed.links[k];
+  for (const k in ed.cells) a.lut[k] = ed.cells[k];
+  return a;
+}
+const editCount = ed => Object.keys(ed.links).length + Object.keys(ed.cells).length;
+function startEdit() { annState.edit = { step: annState.step, mode: 'lut', links: {}, cells: {}, result: null }; renderAnn(); }
+function scoreEdit() {
+  const ed = annState.edit, parent = netRating(ed.step), child = rateAnn(editedAnn(annNet(ed.step).ann, ed), parent.shift);
+  const beats = ratingBetter(child, parent), floor = child.shift > 0 || child.error <= SC_THRESHOLD;
+  ed.result = { parent, child, beats, floor, valid: beats && floor && editCount(ed) > 0 };
+  renderAnn();
+}
+function keepEdit() {
+  const ed = annState.edit; if (!ed.result) scoreEdit();
+  const i = ed.step, r = ed.result;
+  if (annState.base === null || i < annState.base) { annState.base = i; annState.custom = []; }
+  else annState.custom.length = i - annState.base;
+  annState.custom.push({ ann: editedAnn(annNet(i).ann, ed), error: r.child.error, shift: r.child.shift, valid: r.valid, mode: ed.mode, edits: editCount(ed),
+    beats: r.beats, floor: r.floor, parentRating: r.parent });
+  annState.edit = null; annState.step = seqLen(); renderAnn();
+}
+function editBox(i) {
+  const ed = annState.edit;
+  if (!ed) return `<button class="annbtn" id="edStart">Modify this network (create an artificial node)</button>`;
+  const L = [];
+  for (const k in ed.links) { const n = k / 3 | 0, j = k % 3; L.push(`<li>#${n} input ${j}: ${annNet(ed.step).ann.links[k]} → ${ed.links[k]} <a href="#" data-del="l${k}">remove</a></li>`); }
+  for (const k in ed.cells) { const n = k / 27 | 0, c = k % 27; L.push(`<li>#${n} cell ${c}: ${annNet(ed.step).ann.lut[k]} → ${ed.cells[k]} <a href="#" data-del="c${k}">remove</a></li>`); }
+  const r = ed.result, ok = v => `<span class="${v ? 'ok' : 'bad'}">${v ? 'yes' : 'no'}</span>`;
+  return `<div class="edbox"><b>New artificial node from ${esc(stepLabel(ed.step))}</b>
+    <div style="margin:6px 0">mode <select id="edMode"><option value="lut"${ed.mode === 'lut' ? ' selected' : ''}>3 LUT (change table cells)</option><option value="wiring"${ed.mode === 'wiring' ? ' selected' : ''}>2 wiring (re-point inputs)</option></select></div>
+    <div class="hint">${ed.mode === 'lut' ? 'Click a neuron, then click its table cells to cycle 0, 1, 2.' : 'Click a neuron, then pick new sources for its inputs.'} The network on the left is the preview.</div>
+    <ul class="edlist">${L.join('') || '<li class="hint">no changes yet</li>'}</ul>
+    <button id="edScore"${editCount(ed) ? '' : ' disabled'}>Score</button> <button id="edKeep"${editCount(ed) ? '' : ' disabled'}>Keep as node</button> <button id="edCancel">Cancel</button>
+    ${r ? `<table style="margin-top:6px">
+      <tr><td>parent rating</td><td>shift ${r.parent.shift}, error ${r.parent.error}</td></tr>
+      <tr><td>new rating</td><td>shift ${r.child.shift}, error ${r.child.error === Infinity ? 'timeout' : r.child.error}</td></tr>
+      <tr><td>beats parent</td><td>${ok(r.beats)} <span class="hint">(higher shift, or same shift and lower error)</span></td></tr>
+      <tr><td>clears floor</td><td>${ok(r.floor)} <span class="hint">(shift above 0, or error ≤ ${SC_THRESHOLD})</span></td></tr>
+      <tr><td>valid node</td><td><b>${ok(r.valid)}</b></td></tr></table>` : ''}</div>`;
+}
+function wireEditBox() {
+  const ed = annState.edit;
+  if (!ed) { if ($('edStart')) $('edStart').onclick = startEdit; return; }
+  $('edMode').onchange = e => { ed.mode = e.target.value; ed.links = {}; ed.cells = {}; ed.result = null; renderAnn(); };
+  $('edScore').onclick = scoreEdit; $('edKeep').onclick = keepEdit; $('edCancel').onclick = () => { annState.edit = null; renderAnn(); };
+  document.querySelectorAll('.edlist a[data-del]').forEach(a => a.onclick = e => { e.preventDefault(); const k = a.dataset.del; delete (k[0] === 'l' ? ed.links : ed.cells)[k.slice(1)]; ed.result = null; renderAnn(); });
+  document.querySelectorAll('select[data-slot]').forEach(sel => sel.onchange = () => {
+    const k = +sel.dataset.slot, v = +sel.value, orig = annNet(ed.step).ann.links[k];
+    if (v === orig) delete ed.links[k]; else ed.links[k] = v; ed.result = null; renderAnn();
+  });
+  document.querySelectorAll('.alut div[data-cell]').forEach(d => d.onclick = () => {
+    if (ed.mode !== 'lut') return;
+    const k = +d.dataset.cell, orig = annNet(ed.step).ann.lut[k], cur = k in ed.cells ? ed.cells[k] : orig, v = (cur + 1) % 3;
+    if (v === orig) delete ed.cells[k]; else ed.cells[k] = v; ed.result = null; renderAnn();
+  });
+}
+function annHeatColor(t) { t = Math.max(0, Math.min(1, t)); const a = [43, 92, 255], m = [123, 109, 214], b = [255, 59, 47]; const [p, q, u] = t < .5 ? [a, m, t * 2] : [m, b, (t - .5) * 2]; return `rgb(${p.map((v, i) => Math.round(v + (q[i] - v) * u)).join(',')})`; }
+const AR = 13, AGX = 34, AGY = 70;
+function annLayout(sh) {
+  const ns = sh.neurons, pos = {}, kids = {}, byLevel = {};
+  for (const x of ns) if (x.level !== null) (byLevel[x.level] = byLevel[x.level] || []).push(x.id);
+  const levels = Object.keys(byLevel).map(Number).sort((a, b) => a - b);
+  for (const L of levels) for (const id of byLevel[L]) { if (!L) continue; const p = byLevel[L - 1].find(pid => ns[pid].inputs.some((s, j) => s === id && ns[pid].inputReads[j])); (kids[p] = kids[p] || []).push(id); }
+  let cursor = 0;
+  const place = (id, d) => { const ch = kids[id] || []; if (!ch.length) { pos[id] = { x: cursor, y: d * AGY }; cursor += AGX; return; } ch.forEach(c => place(c, d + 1)); pos[id] = { x: (pos[ch[0]].x + pos[ch[ch.length - 1]].x) / 2, y: d * AGY }; };
+  if (ns[ANN_OUT].level === 0) place(ANN_OUT, 0); else { pos[ANN_OUT] = { x: 0, y: 0 }; cursor = AGX; }
+  const treeW = Math.max(cursor, AGX), maxLvl = levels.length ? Math.max(...levels) : 0;
+  const clock = ns.filter(x => x.inClock && !pos[x.id]).map(x => x.id).sort((a, b) => a === ANN_CTRL ? -1 : b === ANN_CTRL ? 1 : a - b);
+  const dead = ns.filter(x => !pos[x.id] && !x.inClock).map(x => x.id);
+  const radius = clock.length > 1 ? Math.max(AGX, clock.length * AGX / (2 * Math.PI)) : 0;
+  const width = Math.max(treeW, 2 * radius + 4 * AGX), ox = (width - treeW) / 2;
+  for (const id in pos) pos[id].x += ox;
+  const cy0 = (maxLvl + 1.6) * AGY;
+  clock.forEach((id, k) => { const angle = -Math.PI / 2 + 2 * Math.PI * k / clock.length; pos[id] = { x: width / 2 + radius * Math.cos(angle), y: cy0 + radius + radius * Math.sin(angle) }; });
+  const clockHeight = 2 * radius + 3 * AGX, dy = cy0 + clockHeight + AGY * .6, dx0 = (width - dead.length * AGX) / 2;
+  dead.forEach((id, k) => pos[id] = { x: dx0 + k * AGX, y: dy });
+  return { pos, width, maxLvl, cy0, clockHeight, dy, deadN: dead.length };
+}
+const annView = { x: 20, y: 20, k: 1, auto: true, bounds: null };
+function annApplyView() { $('annVp').setAttribute('transform', `translate(${annView.x},${annView.y}) scale(${annView.k})`); }
+function annFit() { if (!annView.bounds) return; const r = $('annSvg').getBoundingClientRect(); annView.k = Math.min(2, (r.width - 40) / annView.bounds.w, (r.height - 40) / annView.bounds.h); const o = annView.origin || { x: -AGX, y: -AR }; annView.x = (r.width - annView.bounds.w * annView.k) / 2 - o.x * annView.k; annView.y = 24 - o.y * annView.k; annApplyView(); }
+{
+  const svg = document.getElementById('annSvg'); let drag = null;
+  svg.addEventListener('wheel', e => { e.preventDefault(); annView.auto = false; const f = Math.exp(-e.deltaY * .0015), r = svg.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top; annView.x = mx - (mx - annView.x) * f; annView.y = my - (my - annView.y) * f; annView.k *= f; annApplyView(); }, { passive: false });
+  svg.addEventListener('mousedown', e => { annView.auto = false; drag = { x: e.clientX, y: e.clientY, vx: annView.x, vy: annView.y }; });
+  window.addEventListener('mousemove', e => { if (drag) { annView.x = drag.vx + e.clientX - drag.x; annView.y = drag.vy + e.clientY - drag.y; annApplyView(); } });
+  window.addEventListener('mouseup', () => { drag = null; });
+}
+
+// ---------- circle layout: output in the centre, ring order chosen to minimise chord crossings ----------
+const circleOrders = new Map(); // step -> ring order (array of neuron ids), cached per chain
+function ringEdges(ns) {
+  const set = new Set(), edges = [];
+  for (const x of ns) for (const s of x.inputs) {
+    if (x.id === ANN_OUT || s === ANN_OUT || s === x.id) continue;
+    const a = Math.min(x.id, s), b = Math.max(x.id, s), k = a * 64 + b;
+    if (!set.has(k)) { set.add(k); edges.push([a, b]); }
+  }
+  return edges;
+}
+function orderRing(edges, start) {
+  const ids = start.slice(), N = ids.length, pos = new Int32Array(64);
+  ids.forEach((n, i) => pos[n] = i);
+  const inc = Array.from({ length: 64 }, () => []);
+  edges.forEach((e, i) => { inc[e[0]].push(i); inc[e[1]].push(i); });
+  const cross = (e, f) => {
+    if (e[0] === f[0] || e[0] === f[1] || e[1] === f[0] || e[1] === f[1]) return 0;
+    let a = pos[e[0]], b = pos[e[1]]; if (a > b) [a, b] = [b, a];
+    const c = pos[f[0]], d = pos[f[1]];
+    return ((c > a && c < b) !== (d > a && d < b)) ? 1 : 0;
+  };
+  const local = (u, v) => { // crossings of edges touching u or v
+    let t = 0; const seen = new Set();
+    for (const i of inc[u].concat(inc[v])) { if (seen.has(i)) continue; seen.add(i); for (let j = 0; j < edges.length; j++) if (j !== i && !(seen.has(j) && j < i)) t += cross(edges[i], edges[j]); }
+    return t;
+  };
+  let seed = 12345; const rnd = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296;
+  const iters = start._fresh ? 6000 : 1500;
+  for (let it = 0; it < iters; it++) {
+    const i = (rnd() * N) | 0, j = (rnd() * N) | 0; if (i === j) continue;
+    const u = ids[i], v = ids[j];
+    const before = local(u, v);
+    ids[i] = v; ids[j] = u; pos[v] = i; pos[u] = j;
+    if (local(u, v) > before) { ids[i] = u; ids[j] = v; pos[u] = i; pos[v] = j; }
+  }
+  let total = 0; for (let i = 0; i < edges.length; i++) for (let j = i + 1; j < edges.length; j++) total += cross(edges[i], edges[j]);
+  return { order: ids, crossings: total };
+}
+function circleLayout(sh, step) {
+  if (circleOrders.has(step)) return circleOrders.get(step);
+  const edges = ringEdges(sh.neurons);
+  let start = circleOrders.get(step - 1)?.order || circleOrders.get(step + 1)?.order;
+  if (!start) { // fresh: breadth-first from the output so linked neurons start near each other
+    const seen = new Set([ANN_OUT]), q = [ANN_OUT], ord = [];
+    while (q.length) { const x = q.shift(); for (const s of sh.neurons[x].inputs) if (!seen.has(s)) { seen.add(s); ord.push(s); q.push(s); } }
+    for (let n = 0; n < 64; n++) if (!seen.has(n)) ord.push(n);
+    start = ord; start._fresh = true;
+  }
+  const r = orderRing(edges, start);
+  const RR = Math.max(240, 63 * AGX / (2 * Math.PI)), pos = { [ANN_OUT]: { x: 0, y: 0 } };
+  r.order.forEach((n, i) => { const t = -Math.PI / 2 + 2 * Math.PI * i / r.order.length; pos[n] = { x: RR * Math.cos(t), y: RR * Math.sin(t) }; });
+  const res = { pos, RR, crossings: r.crossings, order: r.order, edges: edges.length };
+  circleOrders.set(step, res);
+  return res;
+}
+function renderCircle(g, sh, step, heat, hmax, stepD, cum) {
+  const L = circleLayout(sh, step), pos = L.pos, ns = sh.neurons, sel = annState.selected;
+  const edges = el('g', {}), nodes = el('g', {});
+  const defs = el('defs', {}); const mk = el('marker', { id: 'carrow', viewBox: '0 0 10 10', refX: 10 + AR, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' });
+  mk.appendChild(el('path', { d: 'M0,0 L10,5 L0,10 z', fill: 'var(--warn)' })); defs.appendChild(mk); g.appendChild(defs);
+  for (const x of ns) for (const [j, s] of x.inputs.entries()) {
+    if (s === x.id) continue;
+    const a = pos[s], b = pos[x.id]; // data flows input -> neuron
+    const ro = x.level !== null && ns[s].level !== null;
+    edges.appendChild(el('line', { class: 'cedge' + (ro ? ' ro' : '') + (x.inputReads[j] ? '' : ' unread'), x1: a.x, y1: a.y, x2: b.x, y2: b.y, 'data-to': x.id, 'data-from': s }));
+  }
+  for (const x of ns) {
+    const p = pos[x.id];
+    const gg = el('g', { class: 'annd' + (stepD[x.id] ? ' changed' : '') + (sel === x.id ? ' sel' : ''), transform: `translate(${p.x},${p.y})`, 'data-n': x.id });
+    gg.appendChild(el('circle', { r: x.id === ANN_OUT || x.id === ANN_CTRL ? AR + 4 : AR, fill: annHeatColor(annState.heat.t(heat[x.id])) }));
+    gg.appendChild(el('text', {}, x.id === ANN_OUT ? 'OUT' : x.id === ANN_CTRL ? 'CTL' : x.id));
+    gg.appendChild(el('title', {}, `#${x.id} ${x.role}${x.level !== null ? ' level ' + x.level : ''}\ninputs ${x.inputs.join(', ')}\nvalue changes on ${(100 * sh.rate[x.id]).toFixed(1)}% of ticks\nedits: this step ${stepD[x.id]}, so far ${cum[x.id]}`));
+    gg.addEventListener('mouseenter', () => hoverNeuron(x.id));
+    gg.addEventListener('mouseleave', () => hoverNeuron(null));
+    gg.addEventListener('click', e => { e.stopPropagation(); annState.selected = sel === x.id ? null : x.id; renderAnn(); });
+    nodes.appendChild(gg);
+  }
+  g.append(edges, nodes);
+  g.appendChild(el('text', { class: 'albl', x: -L.RR, y: -L.RR - 18 }, `${L.edges} links, ${L.crossings} crossings`));
+  annView.bounds = { w: 2 * L.RR + 4 * AGX, h: 2 * L.RR + 4 * AGX };
+  annView.origin = { x: -L.RR - 2 * AGX, y: -L.RR - 2 * AGX };
+}
+function hoverNeuron(n) {
+  const vp = $('annVp');
+  vp.classList.toggle('hov', n !== null);
+  vp.querySelectorAll('.cedge.in').forEach(e => { e.classList.remove('in'); e.removeAttribute('marker-end'); });
+  vp.querySelectorAll('.annd.hov, .annd.inp').forEach(e => e.classList.remove('hov', 'inp'));
+  if (n === null) return;
+  vp.querySelectorAll(`.cedge[data-to="${n}"]`).forEach(e => { e.classList.add('in'); e.setAttribute('marker-end', 'url(#carrow)'); vp.appendChild(e); });
+  const me = vp.querySelector(`.annd[data-n="${n}"]`); if (me) { me.classList.add('hov'); vp.appendChild(me); }
+  vp.querySelectorAll('.cedge.in').forEach(e => { const s = vp.querySelector(`.annd[data-n="${e.dataset.from}"]`); if (s) { s.classList.add('inp'); vp.appendChild(s); } });
+}
+
+function renderAnn() {
+  if (!annState) return;
+  const total = seqLen(), rootOk = annCache.has(rootKey());
+  const avail = !rootOk ? -1 : annState.base !== null && annState.done >= annState.base ? total : Math.min(annState.done, annState.base ?? annState.done);
+  $('annSlider').max = total; $('annSlider').value = annState.step;
+  const i = Math.min(annState.step, Math.max(avail, 0));
+  if (annState.edit && annState.edit.step !== i) annState.edit = null;
+  const baseNet = avail >= 0 ? annNet(i) : null, ed = annState.edit;
+  const net = baseNet && ed && editCount(ed) ? { ann: editedAnn(baseNet.ann, ed), preview: true } : baseNet;
+  $('annInfo').textContent = net ? `step ${i}/${total}  ${stepLabel(i)}` + (net.preview ? '  + edits (preview)' : '') : `waiting for replay (${annState.done}/${annState.path.length})`;
+  if (!net) { $('annVp').replaceChildren(); renderAnnRight(null, i); return; }
+  if (i !== annState.step && annState.step <= avail) annState.step = i;
+  const sh = analyse(net.ann), L = annLayout(sh), pos = L.pos, ns = sh.neurons;
+  // heat: changes accumulated from the root up to this step
+  const cum = new Array(64).fill(0), stepD = net.preview ? annDiff(baseNet.ann, net.ann) : i ? annDiff(annNet(i - 1).ann, net.ann) : new Array(64).fill(0);
+  for (let k = 1; k <= i; k++) annDiff(annNet(k - 1).ann, annNet(k).ann).forEach((v, n) => cum[n] += v);
+  if (net.preview) stepD.forEach((v, n) => cum[n] += v);
+  const mode = $('annHeat').value, Nw = Math.max(1, +$('annWin').value || 10);
+  let heat = mode === 'rate' ? sh.rate : cum;
+  if (mode === 'win') { heat = new Array(64).fill(0); for (let k = Math.max(1, i - Nw + 1); k <= i; k++) annDiff(annNet(k - 1).ann, annNet(k).ann).forEach((v, n) => heat[n] += v); }
+  const hmax = mode === 'rate' ? 1 : Math.max(1, ...heat);
+  // rate: stretch colour over the non-constant neurons' range; constant neurons stay coldest
+  const nz = heat.filter(v => v > 0), lo = Math.min(...nz), hi = Math.max(...nz);
+  const tOf = mode === 'rate' ? (v => v <= 0 ? 0 : hi > lo ? .15 + .85 * (v - lo) / (hi - lo) : 1) : (v => v / hmax);
+  annState.heat = { cum, stepD, cur: heat, t: tOf, rate: mode === 'rate', label: mode === 'rate' ? 'share of ticks where the value changes' : mode === 'win' ? `edits in the last ${Nw} steps` : 'edits so far' };
+  const g = $('annVp'); g.replaceChildren();
+  if (annState.mode === 'circle') {
+    renderCircle(g, sh, i, heat, hmax, stepD, cum);
+    if (annView.auto) annFit(); else annApplyView();
+    renderAnnRight(net, i, sh);
+    return;
+  }
+  annView.origin = null;
+  const defs = el('defs', {});
+  for (const [id, col] of [['arDef', '#6f86ad'], ['arIn', 'var(--warn)'], ['arOut', '#3fd0e0'], ['arBad', 'var(--bad)']]) {
+    const m = el('marker', { id, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto' });
+    m.appendChild(el('path', { d: 'M0,0 L10,5 L0,10 z', fill: col })); defs.appendChild(m);
+  }
+  g.appendChild(defs);
+  g.appendChild(el('rect', { class: 'aband', x: -AGX, y: L.cy0 - 2 * AGX, width: L.width + 2 * AGX, height: L.clockHeight, rx: 6 }));
+  g.appendChild(el('text', { class: 'albl', x: -AGX + 6, y: L.cy0 - 2 * AGX - 6 }, `clock C=${sh.C}`));
+  if (L.deadN) g.appendChild(el('text', { class: 'albl', x: -AGX + 6, y: L.dy - AR - 6 }, `dead ${L.deadN}`));
+  for (let lv = 0; lv < sh.levels.length; lv++) g.appendChild(el('text', { class: 'albl', x: -AGX + 6, y: lv * AGY + 4 }, `L${lv}: ${sh.levels[lv] || 0}`));
+  const consumers = {};
+  for (const x of ns) if (x.level !== null) for (const s of new Set(x.inputs.filter((s, j) => x.inputReads[j]))) if (ns[s].level !== null) (consumers[s] = consumers[s] || []).push(x.id);
+  const edges = el('g', {}), nodes = el('g', {}), sel = annState.selected;
+  for (const x of ns) {
+    const isRO = x.level !== null;
+    const seen = {};
+    for (const [j, s] of x.inputs.entries()) {
+      const a = pos[x.id], b = pos[s]; const dup = seen[s]; seen[s] = true;
+      if (s === x.id) {
+        if (dup || !x.inputReads[j] || (!x.inClock && sel !== x.id)) continue;
+        const r = x.id === ANN_OUT || x.id === ANN_CTRL ? AR + 4 : AR;
+        const d = `M${a.x - r * .7},${a.y - r * .7} C${a.x - 2 * r},${a.y - 3 * r} ${a.x + 2 * r},${a.y - 3 * r} ${a.x + r * .7},${a.y - r * .7}`;
+        edges.appendChild(el('path', { class: 'aedge cc', d, 'marker-end': 'url(#arDef)', 'data-from': s, 'data-to': x.id }));
+        continue;
+      }
+      const sRO = ns[s].level !== null, mine = sel === x.id || sel === s;
+      let cls = isRO ? (sRO ? 'rr' : 'rc') : 'cc';
+      if (x.inputReads[j] && isRO && sRO && consumers[s].length > 1) cls = 'shared';
+      if (dup && isRO) cls = 'dup';
+      if (!isRO && !mine && !(x.inClock && ns[s].inClock && x.inputReads[j])) continue;
+      if (sel === x.id) cls += ' ein'; else if (sel === s) cls += ' eout';
+      if (!x.inputReads[j]) cls += ' unread';
+      // data flows from input b into neuron a: start on b's rim, arrow ends on a's rim
+      const dx = a.x - b.x, dy = a.y - b.y, len = Math.hypot(dx, dy) || 1, ux = dx / len, uy = dy / len;
+      const ra = a === pos[ANN_OUT] || a === pos[ANN_CTRL] ? AR + 4 : AR, rb = b === pos[ANN_OUT] || b === pos[ANN_CTRL] ? AR + 4 : AR;
+      const x1 = b.x + ux * rb, y1 = b.y + uy * rb, x2 = a.x - ux * (ra + 1), y2 = a.y - uy * (ra + 1), ym = (y1 + y2) / 2;
+      // tree links as vertical curves; links between two block neurons bow out as an arc so they skirt the row
+      const inBlock = ns[x.id].level === null && ns[s].level === null, bow = Math.min(.35 * len, 3 * AGX);
+      const d = inBlock ? `M${x1},${y1} Q${(x1 + x2) / 2 - uy * bow},${(y1 + y2) / 2 + ux * bow} ${x2},${y2}`
+        : Math.abs(dy) > AR ? `M${x1},${y1} C${x1},${ym} ${x2},${ym} ${x2},${y2}` : `M${x1},${y1} L${x2},${y2}`;
+      const mk = cls.includes('ein') ? 'arIn' : cls.includes('eout') ? 'arOut' : cls.includes('shared') || cls.includes('dup') ? 'arBad' : 'arDef';
+      edges.appendChild(el('path', { class: 'aedge ' + cls, d, 'marker-end': `url(#${mk})`, 'stroke-opacity': sel === null || mine ? 1 : .25, 'data-from': s, 'data-to': x.id }));
+    }
+  }
+  for (const x of ns) {
+    const p = pos[x.id];
+    const gg = el('g', { class: 'annd' + (stepD[x.id] ? ' changed' : '') + (sel === x.id ? ' sel' : ''), transform: `translate(${p.x},${p.y})`, 'data-n': x.id });
+    gg.appendChild(el('circle', { r: x.id === ANN_OUT || x.id === ANN_CTRL ? AR + 4 : AR, fill: annHeatColor(annState.heat.t(heat[x.id])) }));
+    gg.appendChild(el('text', {}, x.id === ANN_OUT ? 'OUT' : x.id === ANN_CTRL ? 'CTL' : x.id));
+    gg.appendChild(el('title', {}, `#${x.id} ${x.role}${x.level !== null ? ' level ' + x.level : ''}\ninputs ${x.inputs.join(', ')}\ncells ${x.cellsVisited}/27, min visits ${x.minVisits}\nvalue changes on ${(100 * sh.rate[x.id]).toFixed(1)}% of ticks\nedits: this step ${stepD[x.id]}, so far ${cum[x.id]}`));
+    gg.addEventListener('click', e => { e.stopPropagation(); annState.selected = sel === x.id ? null : x.id; renderAnn(); });
+    nodes.appendChild(gg);
+  }
+  g.append(edges, nodes);
+  annView.bounds = { w: L.width + 2 * AGX, h: L.dy + AGX };
+  if (annView.auto) annFit(); else annApplyView();
+  renderAnnRight(net, i, sh);
+}
+function renderAnnRight(net, i, sh) {
+  const row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
+  let h = `<button id="annBack">Back to tree</button><h3>ANN replay: ${esc(annState.path[annState.path.length - 1].key)}</h3><div id="annStatus" class="hint">${esc($('annStatus') ? $('annStatus').textContent : '')}</div>`;
+  if (net && sh) {
+    const art = isArtificial(i), x = i && !art ? annState.path[i - 1] : null, ni = x ? nonceInfo(x.s.nonce) : null, cn = art ? annNet(i) : null;
+    h += editBox(i);
+    h += `<table>` + row('step', art ? `${i} of ${seqLen()}: artificial node ${i - annState.base} (${cn.edits} ${cn.mode} edits)` : i ? `${i} of ${seqLen()}: ${x.key}` : 'root (derived from the pubkey)') +
+      (art ? row('rating', `shift ${cn.shift}, error ${cn.error} (parent: shift ${cn.parentRating.shift}, error ${cn.parentRating.error})`) +
+        row('valid node', cn.valid ? '<span class="ok">yes</span>' : `<span class="bad">no</span> <span class="hint">${cn.beats ? '' : 'does not beat its parent'}${!cn.beats && !cn.floor ? ', ' : ''}${cn.floor ? '' : 'error above the floor at shift 0'}</span>`) : '') +
+      (x ? row('mode / L / K', `${MODE_NAMES[ni.mode]} / ${ni.L} / ${ni.K}`) +
+        row('error replay / chain', `${annNet(i).error} / ${x.s.log.score} ` + (annNet(i).error === x.s.log.score ? '<span class="ok">match</span>' : '<span class="bad">MISMATCH</span>')) +
+        row('walk flips', annNet(i).flips ? `improving ${(annNet(i).flips.imp / 10).toFixed(1)}%, worsening ${(annNet(i).flips.wor / 10).toFixed(1)}%, inert ${(annNet(i).flips.inert / 10).toFixed(1)}%` : '-') : '') +
+      row('clock C / readout R / dead', `${sh.C} / ${sh.R} / ${sh.dead}`) +
+      row('classification', (sh.structuralFallback ? '<span class="bad">structural fallback: fewer than 8928 emissions in 40001 ticks</span>' : 'effective LUT reads over 8928 emissions') + '; clock includes recurrent counters and their dependencies') +
+      row('control cone', `${sh.controlClock} neurons`) +
+      row('levels', sh.levels.join(' / ') || 'none (output neuron is inside the clock)') +
+      row('output table 2s', `<span class="${sh.outputTableTwos ? 'bad' : 'ok'}">${sh.outputTableTwos}</span>`) +
+      row('readout table 2s', `${sh.twos.readout[0]} of ${sh.twos.readout[1]} cells <span class="hint">(readout neurons, output excluded)</span>`) +
+      row('clock table 2s', `${sh.twos.clock[0]} of ${sh.twos.clock[1]} cells <span class="hint">(control included)</span>`) +
+      row('dead table 2s', `${sh.twos.dead[0]} of ${sh.twos.dead[1]} cells`) +
+      row('total table 2s', `${sh.twos.total[0]} of ${sh.twos.total[1]} cells`) +
+      row('shared links', `<span class="${sh.sharedLinks ? 'bad' : 'ok'}">${sh.sharedLinks}</span>`) +
+      row('duplicated inputs', `<span class="${sh.duplicates ? 'bad' : 'ok'}">${sh.duplicates}</span>`) +
+      row('readout cells', `${sh.readoutCells} (27 x R = ${27 * sh.R})`) +
+      row('ticks per frame', sh.ticksPerFrame) +
+      row('hottest', [...Array(64).keys()].sort((a, b) => annState.heat.cur[b] - annState.heat.cur[a]).slice(0, 8).map(n => `${n}(${fmtHeat(annState.heat.cur[n])})`).join(' ')) + `</table>` + tempChart(sh);
+    const s = annState.selected;
+    if (s !== null) {
+      const nn = sh.neurons[s], prev = net.preview ? analyse(annNet(i).ann).neurons[s] : i ? analyse(annNet(i - 1).ann).neurons[s] : null;
+      h += `<h3>Neuron #${s}: ${nn.role}${nn.level !== null ? ', level ' + nn.level : ''}</h3><table>` +
+        row('clock / control / output', `${nn.isClock ? 'yes' : 'no'} / ${nn.isControl ? 'yes' : 'no'} / ${nn.isOutput ? 'yes' : 'no'}`) +
+        row('inputs', nn.inputs.map((v, j) => (annState.edit && annState.edit.mode === 'wiring'
+          ? `<select data-slot="${s * 3 + j}">${[...Array(64).keys()].map(m => `<option value="${m}"${m === v ? ' selected' : ''}>${m}${m === ANN_OUT ? ' OUT' : m === ANN_CTRL ? ' CTL' : ''}</option>`).join('')}</select> `
+          : `<a href="#" data-sel="${v}">#${v}</a> `) + `(${nn.inputRoles[j]}, ${nn.inputReads[j] ? 'read' : 'unread'})${prev && prev.inputs[j] !== v ? ' <span class="bad">was ' + prev.inputs[j] + '</span>' : ''}`).join('<br>')) +
+        row('read by', (() => { const rb = []; for (const y of sh.neurons) y.inputs.forEach((v, j) => { if (v === s && y.inputReads[j]) rb.push(`<a href="#" data-sel="${y.id}">#${y.id}</a> ${y.role} slot ${j}`); }); return rb.length ? rb.join('<br>') : '<span class="hint">nobody: no effective input reads it</span>'; })()) +
+        row('cells used', `${nn.cellsVisited}/27, min visits ${nn.minVisits}`) +
+        row('changes', `this step ${annState.heat.stepD[s]}, so far ${annState.heat.cum[s]}`) +
+        `</table><div class="hint">table, cell = in0 + 3·in1 + 9·in2; white = changed, previous value in ( )</div><div class="alut">` +
+        [...nn.table].map((v, c) => `<div data-cell="${s * 27 + c}" class="v${v}${prev && prev.table[c] !== v ? ' chg' : ''}${annState.edit && (s * 27 + c) in annState.edit.cells ? ' ped' : ''}${annState.edit && annState.edit.mode === 'lut' ? ' editable' : ''}" title="cell ${c}">${v}${prev && prev.table[c] !== v ? `<span class="pv"> (${prev.table[c]})</span>` : ''}</div>`).join('') + `</div>`;
+    } else h += `<div class="hint" style="margin-top:8px">Click a neuron for its links and table.</div>`;
+  }
+  $('right').innerHTML = h;
+  document.querySelectorAll('#tempChart .tbar').forEach(b => b.onclick = () => { const n = +b.dataset.n; annState.selected = annState.selected === n ? null : n; renderAnn(); });
+  wireEditBox();
+  document.querySelectorAll('#right a[data-sel]').forEach(a => a.onclick = e => { e.preventDefault(); annState.selected = +a.dataset.sel; renderAnn(); });
+  $('annBack').onclick = () => { showAnnView(false); if (treeData) renderTree(treeData); if (selectedKey) selectKey(selectedKey, false); };
+}
+// neuron temperature, hottest first; rank on x, no neuron index
+const fmtHeat = v => annState.heat.rate ? `${Math.round(100 * v)}%` : String(v);
+function tempChart(sh) {
+  const h = annState.heat.cur, order = [...Array(64).keys()].sort((a, b) => h[b] - h[a] || a - b);
+  const W = 600, H = 170, ml = 40, mr = 6, mt = 8, mb = 22, pw = W - ml - mr, ph = H - mt - mb;
+  const isRate = annState.heat.rate, max = isRate ? 1 : Math.max(1, h[order[0]]), bw = pw / 64, sel = annState.selected;
+  const y = v => mt + ph - v / max * ph;
+  const ticks = isRate ? [0, .25, .5, .75, 1] : [0, Math.round(max / 2), max].filter((v, i, a) => a.indexOf(v) === i);
+  let g = ticks.map(v => `<line x1="${ml}" x2="${W - mr}" y1="${y(v)}" y2="${y(v)}" class="tgrid"/><text x="${ml - 5}" y="${y(v) + 4}" class="tlab" text-anchor="end">${fmtHeat(v)}</text>`).join('');
+  order.forEach((n, r) => {
+    const v = h[n], x = ml + r * bw, top = y(v), nn = sh.neurons[n];
+    const bar = v > 0 ? `<path d="M${x + 1},${mt + ph} V${top + 3} q0,-3 3,-3 h${Math.max(0, bw - 8)} q3,0 3,3 V${mt + ph} Z" fill="${annHeatColor(annState.heat.t(v))}"${sel === n ? ' stroke="var(--warn)" stroke-width="2"' : ''}/>` : '';
+    g += `<g class="tbar" data-n="${n}">${bar}<rect x="${x}" y="${mt}" width="${bw}" height="${ph}" fill="transparent"/><title>rank ${r + 1}: neuron #${n} (${nn.role}${nn.level !== null ? ', level ' + nn.level : ''})\n${annState.heat.label}: ${fmtHeat(v)}\nthis step: ${annState.heat.stepD[n]}</title></g>`;
+  });
+  g += `<line x1="${ml}" x2="${W - mr}" y1="${mt + ph}" y2="${mt + ph}" class="taxis"/>`;
+  if (isRate) g += `<line x1="${ml}" x2="${W - mr}" y1="${y(2 / 3)}" y2="${y(2 / 3)}" class="tref"/><text x="${W - mr - 2}" y="${y(2 / 3) - 4}" class="tlab" text-anchor="end">random trit 67%</text>`;
+  [1, 16, 32, 48, 64].forEach(r => g += `<text x="${ml + (r - .5) * bw}" y="${H - 6}" class="tlab" text-anchor="middle">${r}</text>`);
+  const zero = order.filter(n => h[n] === 0).length;
+  return `<h3>Neuron temperature, hottest first</h3><div class="hint">${annState.heat.label} per neuron, sorted; x = rank, not neuron index.${isRate ? ' Colour is stretched from the slowest to the fastest changing neuron; constant neurons are deep blue.' : ''} ${zero} of 64 ${isRate ? 'never change value' : 'never edited'}.</div>
+    <svg id="tempChart" viewBox="0 0 ${W} ${H}" width="100%">${g}</svg>`;
+}
+function annGo(i) { if (!annState) return; annState.step = Math.max(0, Math.min(seqLen(), i)); renderAnn(); }
+$('annSlider').oninput = e => annGo(+e.target.value);
+$('annPrev').onclick = () => annGo(annState.step - 1);
+$('annNext').onclick = () => annGo(annState.step + 1);
+$('annFitBtn').onclick = () => { annView.auto = true; annFit(); };
+$('annMode').onclick = () => { annState.mode = annState.mode === 'circle' ? 'tree' : 'circle'; $('annMode').textContent = annState.mode === 'circle' ? 'Tree view' : 'Circle view'; annView.auto = true; renderAnn(); };
+$('annHeat').onchange = renderAnn; $('annWin').oninput = renderAnn;
+$('annBar').addEventListener('wheel', e => { e.preventDefault(); annGo(annState.step + (e.deltaY > 0 ? 1 : -1)); }, { passive: false });
+window.addEventListener('keydown', e => {
+  if ($('annView').hidden || ['INPUT', 'SELECT'].includes(e.target.tagName)) return;
+  if (e.key === 'ArrowRight') annGo(annState.step + 1); else if (e.key === 'ArrowLeft') annGo(annState.step - 1);
+});
+$('annSvg').addEventListener('click', () => { if (annState && annState.selected !== null) { annState.selected = null; renderAnn(); } });
+
+const TARGETS_233 = '010010000011111011111001010100111011010101000010101000001010011111100100110011100110110110110100010111000101011101111100111110000010111100110110001011010000000000010101000010110100101001101101000110001010011101001111111111111100010010100100010010101110010101011010110000000111111010010011001100000000111011111110110101011000101011000101101001100101110101101110100101001101001110100011100101110101011101100001010101010110101011100110111111001001110110110000110111010010100101000100111001011111001111101010001010010101010010100000000010100110111010000100001110110111011010001010101000101111001011101000111100110111101011000000001000101011010001110110011110111010011010100111101011000110010111110011111100001000010101101101001011001110001000001111100110000011001010000001100111010000111000100100011010110100011011101000100001001111010011000111011110100110100000100011110111001100100010010100110000111011110001001111010000101010100111101001101000110000011001010111011111110100100111001111100111000010011000011011100110110010011110101110101000101000101011011011001001101000110110001010110010011101001001011011101010001010010100101001100011011001010010111000101000101001101000111110110011101110101110101111010100011101100111110110101111011111100100001111110110001111001010101001001001100000100011110110000011101010000110010001110010010011001100111000110001001100010000011001101011101100001011001100000000001011111101101010111100011001011101111100101011001110001110110010010110101111101110010100011010010100010111101000100111111101000111110110110110000110011000111100100110111101110011000110010101000101111001110101001000100010010001010011110101001010001000111000111110111100001101001100100010110011001101110110100001001000010001011101110110111111101101001101110000011011101110111000011100100001010110010011101001101010001011001000010010110000010101101111011010011010111001001110010010110010110010110011100100011100110101011001011101001100001111001001110011110111101100111110011111010100111011001011000110011010110110100001100111100100000010110011111001110000010011011001000000010010000010011100001000010001100011101011110101011000010011010100100110000111010001001011110101011000111001010010100101111001111100100001110100110000101001011110010010111011101110111000100110101000010111010110001100011000010000101010100000111101110010011100100100100110101000010001000111101001101110111000000110001010010101110000101101111100101110100010001111100011111011010001011001011000010110001011010101010111010111000011111110111001000000011000110001010110011101101001100111001011001110010010100010000010010111001000111110111001100010011001100100000001010100110011110110010001010000100011100010101011111011001010011101110001001110010100100100001111111101100110001011101010010101100101100011000001011010101101010001110000100011101000011111111111010011101111001001110010010111000011011100011010011010110011110110111111011101001011001001010111010110010010010100100011111000100001100110000011010010110001010111100001000111001100011101000001011011001111000101110110100001011101111001111000111101011110100111100100100010100010111011001001000101011010001101011110010011001011001001110101100100110100100101111110101111100000000110001111001001011001010100010011001110110111110001001100101000100000011101000010010010110011010110100001111100011110000010110010111110101111100100011010011010100110010111000111110101101111011000101011001011000110000010111000110110001001111100010110010100100000111100001011000111100101101011101011011000110010001100111001101110000101001110110111000110011011010011011110010000011000111100011100001011001010001101000011110001111000011100110010111110101110000011100001011010111111100010001111111011100101101000111000011100001001011100111011010000001011011111011110111010010101011011001111101011110100101101000111011101001000011001011110011111111110000001001011001001110010011001010101010000010011000001010001110110000000001101101110011100011110000100010110000011011101010110000101110110001110101111110010110101110001011000000000000011101011011100100010011000111011011000011000000010011111100011110111001000110010100011011010001000010111001110010111000100010100110111000001100011110100101011011101010100110111010011110111100111110010110001100100010001110000111101011000101100110101111011100010011010001101000111111110000001001111001000100110001100100011001010100010101110010010111111110100111101101001100111011000100111110000101011011000000110011101011001001111010100100111100011000111110010111100111000100000101001101011011111101101100111001111000111001111001101101100110101010100011110011010111110011001100111100000101011011000000111101010111101100111110011010010111110100001000100110100000100001111101110011101001111011010111101010001010110011000111011011001101110001101000010111110111010001100001001100111010000110001111001000001011011100001100010011110101011111111010011010110000100010110011011101111100000110010011010000010000100101110101101111110011100011101101001101001110110000101111110001100010010010011001001101010011010110011000110001110111001010001010010111111011101001001001100001000010100001011010000010011011100101010000100011101111010100101001111011001010011100010101100011100010110011100100111010110000010101010111010001100000011111110101011100100001101101010100010011000000110111001010010010101011001010011011001101110110101010000111001000101110101100111011001110110010001111110101110110111010000001010010011001110111011000110000110011101100100110101010100000100111100110100101010111100000110000101011011011001000101011111000010110001011110010100010110110101100010100000100011011001110010101001111010010010000110101000001111010110101100101000000011011110110000001011010100001100101110101101010101111100001100011111111110110001101101010101010010011110001000001111001100101000011100110010011000100011100000010100111111010000001011110011010011000110111001011000110010110101010001101100110010110001000000111011000011011100110111100011001101110101110001110111100001011011110010111110101001110100110011111010010001001000001111010001100111110100011011100011100000001110101011000100100110101111010110001001110111100111011011111011010011110011100110111000010110111000111110001010011011111010011110100001011110110100110011000000001000101100111100011001110011010011000100110100100100011111000110100110111100011000010011101011001010001100001000010110100001011010001111110110101000011001100110011111010110010000010010100100011001001101100001011011101110011111001100001101001001001110010001101010111101111111001000111010110010100111000000000110110011110011100110111010111101111110110001011011101011100110011000011101111101100100001110000001100010101110110100000110100100011110110011011111101101000001001100011111000000111001110101011100000110001010001100001111000010111101000110010111100000000100010100011111000110001100111110001010011101110101100001100001101111100000000000010010111011011100010111110000000011000010110001011101000101001011111000000110101011011001101011011110010010101010101000101100111111000100111111000010110001010100000001101111011001001000101100100001110001000011110111010100111110001111100111011001000101011000101110110111000011001111000111111011101001101101101111001100101110000000100101111101100100001100110111100011000010011001010011100000010100011111101100010010110011101111111100110100001101010110111101100010000011000010000000010010110110101010101001000010010001010110111001001011111101000110001101010110100010001101111110100000110111111000100000110101010111011100101110110110111101100101011101101010101110110101010001010110010001000110101010011110100010011101111011010101010000101100110001010000011100101101110010100101101010001100010010111001010010010111011011101000010100011100000010111101001101000100110001101011010000011011110100100010000000101101001110000101110100011010100011000010110101000101111100011011101011111100110010100110111111010000010100001101001110010101100111100110101111001111110101111100001111000010011110010101101001110100000100110010101001011011101001111001100100100100100011110000110011011101011011001110111011001101110110001010101010101100110001101001001000010101110001000110001010100111011001001010110010010001011001000101001111110010110111111100000110111000011001110111001101000100110111101000101111100100000100001100101011111010110111001001010111010101011101010101001001101011000000100001100001000001110101111001000001001110110011011110011001001110100001101111110000101100010101111100101000011001011111111100110101110100111111000010100011010111001010111001011101100110101101111011010000010101000000101110001101001011001001001111001111101100110001100011111011001000110111011001100010110101101010111000011010101010010001010110110000001111111100000000011010001101101001111001111000001110110011101110100001011001100010011010011010101110001011011100010100101101110000011001010101011111001110101100110010010011110001101110011011000100001101001111010001111110010001100110100000101111'; // epochs 233-234
+const TARGETS_235 = '001010100010101110010010111111110100111101101001100111011000100111110000101011011000000110011101011001001111010100100111100011000111110010111100111000100000101001101011011111101101100111001111000111001111001101101100110101010100011110011010111110011001100111100000101011011000000111101010111101100111110011010010111110100001000100110100000100001111101110011101001111011010111101010001010110011000111011011001101110001101000010111110111010001100001001100111010000110001111001000001011011100001100010011110101011111111010011010110000100010110011011101111100000110010011010000010000100101110101101111110011100011101101001101001110110000101111110001100010010010011001001101010011010110011000110001110111001010001010010111111011101001001001100001000010100001011010000010011011100101010000100011101111010100101001111011001010011100010101100011100010110011100100111010110000010101010111010001100000011111110101011100100001101101010100010011000000110111001010010010101011001010011011001101110110101010000111001000101110101100111011001110110010001111110101110110111010000001010010011001110111011000110000110011101100100110101010100000100111100110100101010111100000110000101011011011001000101011111000010110001011110010100010110110101100010100000100011011001110010101001111010010010000110101000001111010110101100101000000011011110110000001011010100001100101110101101010101111100001100011111111110110001101101010101010010011110001000001111001100101000011100110010011000100011100000010100111111010000001011110011010011000110111001011000110010110101010001101100110010110001000000111011000011011100110111100011001101110101110001110111100001011011110010111110101001110100110011111010010001001000001111010001100111110100011011100011100000001110101011000100100110101111010110001001110111100111011011111011010011110011100110111000010110111000111110001010011011111010011110100001011110110100110011000000001000101100111100011001110011010011000100110100100100011111000110100110111100011000010011101011001010001100001000010110100001011010001111110110101000011001100110011111010110010000010010100100011001001101100001011011101110011111001100001101001001001110010001101010111101111111001000111010110010100111000000000110110011110011100110111010111101111110110001011011101011100110011000011101111101100100001110000001100010101110110100000110100100011110110011011111101101000001001100011111000000111001110101011100000110001010001100001111000010111101000110010111100000000100010100011111000110001100111110001010011101110101100001100001101111100000000000010010111011011100010111110000000011000010110001011101000101001011111000000110101011011001101011011110010010101010101000101100111111000100111111000010110001010100000001101111011001001000101100100001110001000011110111010100111110001111100111011001000101011000101110110111000011001111000111111011101001101101101111001100101110000000100101111101100100001100110111100011000010011001010011100000010100011111101100010010110011101111111100110100001101010110111101100010000011000010000000010010110110101010101001000010010001010110111001001011111101000110001101010110100010001101111110100000110111111000100000110101010111011100101110110110111101100101011101101010101110110101010001010110010001000110101010011110100010011101111011010101010000101100110001010000011100101101110010100101101010001100010010111001010010010111011011101000010100011100000010111101001101000100110001101011010000011011110100100010000000101101001110000101110100011010100011000010110101000101111100011011101011111100110010100110111111010000010100001101001110010101100111100110101111001111110101111100001111000010011110010101101001110100000100110010101001011011101001111001100100100100100011110000110011011101011011001110111011001101110110001010101010101100110001101001001000010101110001000110001010100111011001001010110010010001011001000101001111110010110111111100000110111000011001110111001101000100110111101000101111100100000100001100101011111010110111001001010111010101011101010101001001101011000000100001100001000001110101111001000001001110110011011110011001001110100001101111110000101100010101111100101000011001011111111100110101110100111111000010100011010111001010111001011101100110101101111011010000010101000000101110001101001011001001001111001111101100110001100011111011001000110111011001100010110101101010111000011010101010010001010110110000001111111100000000011010001101101001111001111000001110110011101110100001011001100010011010011010101110001011011100010100101101110000011001010101011111001110101100110010010011110001101110011011000100001101001111010001111110010001100110100000101111100100100100011110001001001011001100101100001110110010101101001101100011011100010011010100011011110100000011011101100111001111011001011001110100111001101101011100110010000110111001001100001111100011010011000110110010001010011010111011010000011010011000101111001100001001110110001100110011000000100101001000110001111110000100011011101001100111011101000110100110101100100111101110000100111100010100010110011101000100001101100000010011100111100100110011001111110000000010001101110111000011001010100110001000001101100101000100111110001100100110010101101010010010001100100000011011010100111010000011000101000001111011101010001101001101100001001000110011101001010101000001100010000001011000100101000101100110011110111110101100101000010001101011010000100101110111100011100101011010000011011110100000100100011001101110100111000000100011100011101001101010101110100001101100110001011110111111001101001001110010011001110100001111100100010000011101001101111011010110111010010101000011101101000000011101111001001010011110101011100101010011110011101011011001011101011100110110111101111011001010101001001110001001101100011011101001000000011101000000110100011101110101100101111011111111010001010100011001000011101100101100110000101010110111010000101101101111110100110000100110100001001011101100010110011100111101000001100111001111000110100111111001111001001001000101011100010001010101100001100000001001001101010000101010010010011010101011111100010010100001011010111011110100100001110100111000010000110011100101010101110110101001001011111110001100101011101010111101100101110010101000000111100101110010110100011010010010111110101110001101100110111111100001100010010111001000111001011000001010011010101010001000100110110001111100110100001010101101010011001011101011110001111101001001111000000100110110110111100110010010001001101000001001011011001110011111000101111100001001000001100001110000100011000010010001101011001111100011101001100101111010010011010001011011111100110011010000011011110010000110101101011011001111000010011000111001000011101000110101000100001101100110010100101010000111101100111000001100010000111100111011010111010110111100111001010010011100111011001110111110000111010011001110111010110011011001011010110001100110011111110110110010110001001011011111101001010010000010001110011001100001001011110101101100101001110011101010101011101000010011010111100101011111000011011011100010000101111011110100101001110111000001010000011001001100010110110000100001101001101011001011000101001101110100001001010111010111100110111011001001000111000011011000110111100010010111001000110011111000011100100101111110010111100110110011001011000000011000110011110111000100100101001111110011101110101000000010111001001011101011101001110011101010110111101010001011101001010001111001101100001011111011010011110100111100011001010010001001111111000111111001110001101011011110001000101010100111100011000011000110001100110110010011101001110000010111001111100101110001110101111010100110100110011010101110101100010100000011010011100101111000111000010111110101100110010001011100000101010001100100011110000110100000010010111001111000011100101100000011101000001100100011001110101001001101100101001100110010101111011101011010110111011000110001001010110000111000001111001100010000111000010110110011110011100111011110000110100111010111011001010100001010001110000100100100110011010011101000001001110011000001101011010111011011001111011000001100110101110010001101111111001011111100010110001010011101010000010000000110100110011000100100000110010011000110101101000001001000011101010011100001010110001100101000010100111001000010110011000001011010111101110010011010010111001011101011010010011000111110000100000111110011001011101101111000100111101101010100101010101011010100111010010100001111100011100111011001101011001000111010001001011110001010000111011000000010101011010100001010010101100100000011101110010110110011100001000101110011100011000111101010010110101111001010011000101110001001001101011011000001100110100011100000100011110000001010110100111011001110010010000001111010101111101010011010011000001011100010101000101110011001100101111001010101101001110010000001010011011010001100001110101000110010001000100101100010111100110000111010011000111000011111100101011010100111101110110111110011011101100101011010101000001101100101110001001101000000100100111101111001000011011111011110100101';
+// bpp9000 task per epoch: targets (core data/bpp9000.task) and BPP9000_ADVANCE_THRESHOLD
+const EPOCH_TASK = { 233: { targets: TARGETS_233, adv: 2920 }, 234: { targets: TARGETS_233, adv: 2920 }, 235: { targets: TARGETS_235, adv: 2190 } };
+const ANN_EPOCHS = Object.keys(EPOCH_TASK).map(Number), ANN_LATEST = Math.max(...ANN_EPOCHS);
+let annTask = EPOCH_TASK[ANN_LATEST];
+
+// ---------- pasted JSON trees (miner-local solutions, replayable without bob) ----------
+let jsonSeq = 0;
+function loadJsonTree(text) {
+  let d; try { d = JSON.parse(text); } catch (e) { throw new Error('not valid JSON: ' + e.message); }
+  const list = Array.isArray(d) ? d : d.solutions;
+  if (!Array.isArray(list) || !list.length) throw new Error('expected {"solutions": [...]} with at least one solution');
+  const H64 = /^[0-9a-fA-F]{64}$/, sols = {}, trie = new Map(); // trie key: group|nonce prefix -> synthetic solution
+  list.forEach((x, si) => {
+    for (const f of ['pubkey', 'miningSeed', 'anchorTickDigest']) if (!H64.test(x[f] || '')) throw new Error(`solution ${si + 1}: ${f} must be 64 hex characters`);
+    if (!Array.isArray(x.nonces) || !x.nonces.length || x.nonces.some(n => !H64.test(n))) throw new Error(`solution ${si + 1}: nonces must be a non-empty list of 64-hex nonces`);
+    const grp = [x.pubkey, x.miningSeed, x.anchorTickDigest].join('|').toLowerCase();
+    let parent = null, prefix = grp;
+    x.nonces.forEach((nonce, d) => {
+      prefix += '|' + nonce.toLowerCase();
+      let s = trie.get(prefix);
+      if (!s) {
+        const id = ++jsonSeq;
+        s = { key: `${id}:0`, tick: id, idx: 0, parentTick: parent ? parent.tick : 0, parentIdx: parent ? 0 : 4294967295,
+          nonce: nonce.toLowerCase(), anchorTick: x.anchorTick, claimedScore: null, log: { score: null, result: 0 },
+          json: { pubkeyHex: x.pubkey.toLowerCase(), seedHex: x.miningSeed.toLowerCase(), anchorHex: x.anchorTickDigest.toLowerCase(), anchorTick: x.anchorTick, depth: d + 1, sols: [], finalFor: [] } };
+        trie.set(prefix, s); sols[s.key] = s;
+      }
+      s.json.sols.push(si + 1);
+      if (d === x.nonces.length - 1) { s.json.finalFor.push({ sol: si + 1, finalScore: x.finalScore, maxDepth: x.maxDepth }); if (x.finalScore != null) s.log.score = s.claimedScore = x.finalScore; }
+      parent = s;
+    });
+  });
+  if (annRun) { annRun.cancel(); annRun = null; }
+  showAnnView(false);
+  curId = 'json'; curEpoch = { epoch: 'json', initialTick: null }; selectedKey = null; autoFit = true;
+  treeData = buildTree(Object.values(sols)); renderTree(treeData);
+  const pks = new Set(list.map(x => x.pubkey.toLowerCase()));
+  setStatus(`Pasted tree: ${list.length} solutions, ${Object.keys(sols).length} nodes, ${pks.size} pubkey(s). Scores are known only for each solution's last node until you replay a branch.`);
+  $('right').innerHTML = '<div class="hint">Click a node, then "Visualize ANN" to replay it and fill in the real scores.</div>';
+}
+function showJsonDetail(n) {
+  const s = n.s, j = s.json, ni = nonceInfo(s.nonce), row = (k, v) => `<tr><td>${k}</td><td>${v}</td></tr>`;
+  const parentKey = `${s.parentTick}:${s.parentIdx}`, parent = treeData.nodes.get(parentKey);
+  $('right').innerHTML = `<h3>Pasted node ${esc(s.key)} <span class="hint">(depth ${j.depth})</span></h3><table>` +
+    row('solutions through it', j.sols.join(', ')) +
+    row('parent', parent ? `<a href="#" data-k="${parentKey}">${parentKey}</a>` : 'ROOT (derived from the pubkey)') +
+    row('children', n.children.map(c => `<a href="#" data-k="${c.key}">${c.key}</a>`).join(', ') || '-') +
+    row('error', s.log.score != null ? `${s.log.score}${s.computed ? ' (replayed)' : ' (finalScore from JSON)'}` : '? (replay to compute)') +
+    (s.shift != null ? row('shift', s.shift) : '') +
+    (s.badStep ? row('valid step', '<span class="bad">no: does not beat its parent</span>') : s.computed ? row('valid step', '<span class="ok">yes</span>') : '') +
+    j.finalFor.map(f => row(`solution ${f.sol} end`, `finalScore ${f.finalScore}, maxDepth ${f.maxDepth}` + (s.computed ? (s.log.score === f.finalScore ? ' <span class="ok">matches replay</span>' : ` <span class="bad">replay gives ${s.log.score}</span>`) : ''))).join('') +
+    row('nonce', s.nonce) + row('mode / L / K', `${MODE_NAMES[ni.mode]} / ${ni.L} / ${ni.K}`) +
+    row('pubkey', j.pubkeyHex) + row('mining seed', j.seedHex) + row('anchor', `tick ${j.anchorTick}, digest ${j.anchorHex}`) +
+    `</table><button class="annbtn" id="annGoBtn">Visualize ANN (replay root to this node, ${j.depth} steps)</button>
+    <div class="hint">Replays in your browser with the pasted seed and anchor digest; no bob needed.</div>`;
+  $('annGoBtn').onclick = () => visualizeAnn(n);
+  $('right').querySelectorAll('a[data-k]').forEach(a => a.onclick = e => { e.preventDefault(); selectKey(a.dataset.k, true); });
+}
+$('pasteBtn').onclick = () => { $('pasteErr').textContent = ''; $('pasteDlg').hidden = false; $('pasteText').focus(); };
+$('pasteCancel').onclick = () => { $('pasteDlg').hidden = true; };
+$('pasteLoad').onclick = () => { try { loadJsonTree($('pasteText').value); $('pasteDlg').hidden = true; } catch (e) { $('pasteErr').textContent = e.message; } };
+
+// ---------- ui ----------
+async function run(rescan) {
+  const id = $('ident').value.trim().toUpperCase();
+  if (!/^[A-Z]{60}$/.test(id)) { setStatus('Identity must be 60 letters A-Z.'); return; }
+  base = $('bob').value.trim().replace(/\/$/, '');
+  if (isMixed() && !$('right').dataset.mixedShown) { $('right').innerHTML = mixedContentHelp(false); $('right').dataset.mixedShown = '1'; }
+  curId = id; $('load').disabled = $('refresh').disabled = true;
+  selectedKey = null; treeData = null; autoFit = true;
+  $('vp').replaceChildren(); $('stats').textContent = '';
+  try {
+    const { sols } = await loadIdentity(id, rescan, scheduleRender);
+    clearTimeout(renderTimer); renderTimer = null;
+    treeData = buildTree(sols);
+    renderTree(treeData);
+    location.hash = id + ($('epochIn').value ? '/' + $('epochIn').value : '');
+  } catch (e) {
+    setStatus('Error: ' + e.message); console.error(e);
+    if (isMixed()) $('right').innerHTML = mixedContentHelp(true);
+  }
+  $('load').disabled = $('refresh').disabled = false;
+}
+$('load').onclick = () => run(false);
+$('refresh').onclick = () => run(true);
+$('fit').onclick = () => fitView(lastBounds);
+$('ident').onkeydown = e => { if (e.key === 'Enter') run(false); };
+$('epochIn').onkeydown = e => { if (e.key === 'Enter') run(false); };
+// epoch suggestions: current epoch and the four before it
+(async () => {
+  try {
+    base = $('bob').value.trim().replace(/\/$/, '');
+    const cur = (await getJson('/status')).currentProcessingEpoch;
+    $('epochList').innerHTML = [0, 1, 2, 3, 4].map(d => `<option value="${cur - d}">${d ? '' : 'current'}</option>`).join('');
+    $('epochIn').placeholder = `current (${cur})`;
+  } catch (e) {}
+})();
+{ // #<ID> or #<ID>/<epoch>
+  const m = location.hash.match(/^#([A-Za-z]{60})(?:\/(\d+))?$/);
+  if (m) { $('ident').value = m[1]; if (m[2]) $('epochIn').value = m[2]; run(false); }
+}
+</script>
+<script src="/ann/qm.js?v=mvc4qypl"></script>
+</body>
+</html>
