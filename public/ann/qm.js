@@ -21,7 +21,7 @@
   bar.innerHTML =
     '<div class="qm-row">' +
       '<a class="qm-home" href="/" title="Qubic Ecosystem Map">← Map</a>' +
-      '<h1>Qubic <span>ANN Explorer</span></h1>' +
+      '<h1>Qubic <span>ANN Replay</span></h1>' +
       '<button type="button" id="qmAbout" aria-expanded="false">What am I looking at?</button>' +
       '<button type="button" id="qmAdv" aria-pressed="false" title="Show the full viewer controls (any identity, epoch, JSON)">Advanced</button>' +
     '</div>' +
