@@ -40,8 +40,10 @@ const GAMES = {
 const gameOf = (v) => (Object.prototype.hasOwnProperty.call(GAMES, v) ? v : "flappy");
 const BLOCK = /(fuck|shit|bitch|cunt|nigg|fagg|whore|slut|nazi|hitler|porn|pute|salope|connard|encul|merde|bite)/i;
 
+// Start tokens are signed with the GAME_KEY secret (set in Cloudflare: Settings > Variables and Secrets);
+// the fallback only keeps the arcade working until it is set.
 async function sign(text, env) {
-  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode((env.SALT || "qubic-ecosystem-map") + "|game"), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(env.GAME_KEY || (env.SALT || "qubic-ecosystem-map") + "|game"), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(text)));
   return [...mac.slice(0, 12)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
