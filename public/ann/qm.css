@@ -51,5 +51,6 @@ html.qm:not(.qm-adv) #status { display: none; }
   #qmAdv { display: none; }
   .qm-pick { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .qm-pick > * { flex: 0 0 auto; }
+  #qmPickEp { order: 9; }
 }
 @media (prefers-reduced-motion: reduce) { .qm-bar i, html.qm #right { transition: none; } }
