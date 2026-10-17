@@ -29,7 +29,7 @@
     '<div id="qmExplain" hidden>' +
       '<p>Qubic miners don’t burn energy on useless hashes: they search for small artificial neural networks (64 neurons) for <b>Aigarth</b>. Every solution a miner publishes on-chain is one improvement step on its own network.</p>' +
       '<p>This page reads a top miner’s solutions straight from the Qubic chain, rebuilds the best network step by step in your browser, and checks every score against the chain. Nothing is simulated.</p>' +
-      '<p class="qm-dim">Circles are neurons, lines are their links. Colour shows activity: <span class="qm-grad"></span> cold → hot. White ring = changed at this step. Tap a neuron for its links and table. Use ◀ ▶ or the slider to travel through the steps.</p>' +
+      '<p class="qm-dim">Circles are neurons, lines are their links. Colour shows activity: <span class="qm-grad"></span> cold → hot. White ring = changed at this step. Tap a neuron for its links and table. Use ◀ ▶, the slider or ▶ Play to travel through the steps. The networks are rebuilt from the chain every day; ↻ Live rebuilds the selected one now in your browser (several minutes).</p>' +
     '</div>';
   document.body.insertBefore(bar, document.body.firstChild);
 
@@ -129,7 +129,7 @@
   /* ---------- open a network ---------- */
   function openNet(id, epoch) {
     if (scanning()) return false;
-    G("showAnnView")(false); // also cancels a running replay
+    stopPlay(); G("showAnnView")(false); // also cancels a running replay
     $("ident").value = id; $("epochIn").value = epoch || "";
     phase = "scan"; say("Connecting to the Qubic chain…", 0.02);
     G("run")(false);
@@ -139,9 +139,62 @@
   var autoStarted = scanning();
   if (autoStarted) phase = "scan";
 
+  /* ---------- rebuilt networks (computed daily by GitHub, see .github/workflows/ann-precompute.yml) ---------- */
+  function setG(name, v) { window.__qmv = v; (0, eval)(name + " = window.__qmv"); delete window.__qmv; }
+  function when(iso) { var d = new Date(iso); return d.toUTCString().slice(5, 22) + " UTC"; }
+  function loadPre(n) {
+    if (scanning()) return false;
+    stopPlay(); G("showAnnView")(false);
+    phase = "pre"; say("Loading the rebuilt network…", 0.3);
+    fetch("/ann/data/" + n.id + ".json").then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); }).then(function (d) {
+      var sz = d.sizes, F = d.root.slice();
+      var toAnn = function (F) { return { links: Int32Array.from(F.slice(0, sz[0])), init: Uint8Array.from(F.slice(sz[0], sz[0] + sz[1])), lut: Uint8Array.from(F.slice(sz[0] + sz[1])) }; };
+      $("ident").value = d.id; $("epochIn").value = d.epoch;
+      setG("curId", d.id); setG("curEpoch", { epoch: d.epoch, initialTick: d.initialTick });
+      var pk = G("identityToPubkeyHex")(d.id);
+      d.sols.forEach(function (s) { if (s.log) { s.log.pubkey = pk; if (s.log.nonce == null) s.log.nonce = s.nonce; } });
+      var cache = G("annCache");
+      cache.set("root:" + d.id + ":" + d.epoch, { ann: toAnn(F), shift: 0, error: null });
+      d.steps.forEach(function (st, i) {
+        for (var j = 0; j < st.d.length; j += 2) F[st.d[j]] = st.d[j + 1];
+        cache.set(d.sols[i].key, { ann: toAnn(F), shift: st.sh, error: st.e, flips: st.f ? { imp: st.f[0], wor: st.f[1], inert: st.f[2] } : null, chainError: d.sols[i].log.score });
+      });
+      var t = G("buildTree")(d.sols);
+      setG("treeData", t); setG("selectedKey", null); setG("autoFit", true);
+      G("renderTree")(t);
+      var leaf = t.nodes.get(d.sols[d.sols.length - 1].key);
+      G("selectKey")(leaf.key, true);
+      G("visualizeAnn")(leaf); // every step is in the cache: nothing to compute
+      G("annGo")(d.steps.length);
+      phase = "idle";
+      say("✓ Rebuilt from the Qubic chain on " + when(d.built) + ": " + d.steps.length + " steps, every score matched the chain. Press ▶ Play to watch it evolve.", 1, true);
+    }).catch(function () { phase = "idle"; openNet(n.id, n.epoch); });
+    return true;
+  }
+
+  /* ---------- play the evolution like a film ---------- */
+  var play = document.createElement("button"), playT = null;
+  play.type = "button"; play.id = "qmPlay"; play.textContent = "▶ Play"; play.title = "Watch the network evolve from the first step to the last";
+  function stopPlay() { clearTimeout(playT); playT = null; play.textContent = "▶ Play"; }
+  play.onclick = function () {
+    var s = G("annState"); if (!s) return;
+    if (playT) return stopPlay();
+    follow = false;
+    var total = s.path.length, delay = Math.max(40, Math.min(300, 15000 / total));
+    if (s.step >= total) G("annGo")(0);
+    play.textContent = "❚❚ Pause";
+    (function tick() {
+      var st = G("annState"); if (!st || st.step >= st.done || st.step >= total) return stopPlay();
+      G("annGo")(st.step + 1);
+      playT = setTimeout(tick, delay);
+    })();
+  };
+  $("annNext").parentNode.insertBefore(play, $("annNext").nextSibling);
+  ["annPrev", "annNext", "annSlider"].forEach(function (id) { $(id).addEventListener("pointerdown", stopPlay); });
+
   /* ---------- featured networks ---------- */
-  var pick = $("qmPick");
-  function chips(j) {
+  var pick = $("qmPick"), current = null;
+  function chips(j, pre) {
     var L = (j && j.items) || [];
     if (!L.length) { $("qmPickEp").textContent = "none listed yet: use Advanced to enter an identity"; return; }
     $("qmPickEp").innerHTML = "best verified solutions · epoch " + (+j.epoch) + ' · source <a href="https://annexplorer.jetskipool.ai/solutions?offset=0&epoch=' + (+j.epoch) + '" target="_blank" rel="noopener">JetskiPool ANN Explorer ↗</a>';
@@ -150,21 +203,37 @@
       b.type = "button"; b.title = n.id; b.setAttribute("aria-pressed", "false");
       b.innerHTML = "#" + (i + 1) + " <span>" + n.id.slice(0, 5) + "…</span>";
       b.onclick = function () {
-        if (!openNet(n.id, n.epoch)) return;
+        if (!(pre ? loadPre(n) : openNet(n.id, n.epoch))) return;
+        current = n;
         [].forEach.call(pick.querySelectorAll("button"), function (x) { x.setAttribute("aria-pressed", "false"); });
         b.setAttribute("aria-pressed", "true");
       };
-      pick.appendChild(b);
+      pick.insertBefore(b, $("qmPickEp"));
       if (i === 0 && !autoStarted) b.click();
       if (autoStarted && location.hash.indexOf(n.id) === 1) b.setAttribute("aria-pressed", "true");
     });
+    if (pre) {
+      var live = document.createElement("button");
+      live.type = "button"; live.id = "qmLive"; live.textContent = "↻ Live";
+      live.title = "Rebuild the selected network live from the chain in your browser (takes several minutes, shows the latest solutions)";
+      live.onclick = function () { if (current) { stopPlay(); openNet(current.id, current.epoch); } };
+      pick.insertBefore(live, $("qmPickEp"));
+    }
   }
   function featured(ep) { return fetch("/api/ann/featured" + (ep ? "?epoch=" + ep : "")).then(function (r) { return r.json(); }); }
-  featured().then(function (j) {
-    // the viewer only replays epochs it carries the task for: fall back to its latest one
-    if (j && j.epoch && !G("EPOCH_TASK")[j.epoch]) return featured(G("ANN_LATEST"));
-    return j;
-  }).then(chips).catch(function () { $("qmPickEp").textContent = "unavailable: use Advanced to enter an identity"; });
+  function liveList() {
+    return featured().then(function (j) {
+      // the viewer only replays epochs it carries the task for: fall back to its latest one
+      if (j && j.epoch && !G("EPOCH_TASK")[j.epoch]) return featured(G("ANN_LATEST"));
+      return j;
+    }).then(function (j) { chips(j, false); });
+  }
+  fetch("/ann/data/index.json", { cache: "no-cache" }).then(function (r) { if (!r.ok) throw 0; return r.json(); }).then(function (j) {
+    if (!j || !j.items || !j.items.length || !G("EPOCH_TASK")[j.epoch]) throw 0;
+    chips(j, true);
+  }).catch(function () {
+    return liveList().catch(function () { $("qmPickEp").textContent = "unavailable: use Advanced to enter an identity"; });
+  });
 
   /* ---------- touch: one finger pans, two fingers zoom (the viewer handles mouse only) ---------- */
   function touchPanZoom(svg, getV, apply, onStart) {

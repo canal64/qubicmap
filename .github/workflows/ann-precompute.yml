@@ -1,0 +1,76 @@
+# Every day, rebuilds the networks of the 5 top miners (scan + replay checked against the chain)
+# and publishes them as public/ann/data/*.json, so qubicmap.org/ann shows them instantly.
+name: ann-precompute
+on:
+  schedule:
+    - cron: "7 3 * * *"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: ann-precompute
+jobs:
+  pick:
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.p.outputs.list }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: p
+        name: Top miners from the JetskiPool archive (via qubicmap.org)
+        run: |
+          node -e '
+            const epochs = require("./public/ann/meta.json").epochs;
+            const get = q => fetch("https://qubicmap.org/api/ann/featured" + q, { headers: { "User-Agent": "qubicmap-ann-precompute" } }).then(r => r.json());
+            (async () => {
+              let j = await get("");
+              if (!epochs.includes(j.epoch)) j = await get("?epoch=" + Math.max(...epochs));
+              const list = (j.items || []).slice(0, 5).map((x, i) => ({ rank: i + 1, id: x.id, epoch: x.epoch, score: x.score }));
+              if (!list.length) throw new Error("no featured miners");
+              console.log(list);
+              require("fs").appendFileSync(process.env.GITHUB_OUTPUT, "list=" + JSON.stringify(list) + "\n");
+            })().catch(e => { console.error(e); process.exit(1); });'
+  build:
+    needs: pick
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    strategy:
+      fail-fast: false
+      matrix:
+        miner: ${{ fromJson(needs.pick.outputs.list) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: |
+          npm i --no-save playwright@1.47.2
+          npx playwright install --with-deps chromium
+      - name: Rebuild miner ${{ matrix.miner.rank }}
+        run: node scripts/ann-precompute.mjs ${{ matrix.miner.id }} ${{ matrix.miner.epoch }} out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ann-${{ matrix.miner.rank }}
+          path: out/*.json
+          retention-days: 2
+  publish:
+    needs: [pick, build]
+    if: always() && needs.pick.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ann-*
+          path: new
+          merge-multiple: true
+      - name: Publish the rebuilt networks
+        env:
+          LIST: ${{ needs.pick.outputs.list }}
+        run: |
+          ls new 2>/dev/null || { echo "nothing rebuilt"; exit 1; }
+          node scripts/ann-publish.mjs new
+          git config user.name "qubicmap-bot"; git config user.email "actions@users.noreply.github.com"
+          git add -A public/ann/data
+          git diff --cached --quiet && { echo "unchanged"; exit 0; }
+          git commit -m "ANN: daily rebuild of the top networks"
+          for i in 1 2 3; do git pull --rebase -q && git push && exit 0; sleep 5; done; exit 1
