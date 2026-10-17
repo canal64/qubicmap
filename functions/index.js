@@ -174,6 +174,21 @@ async function ghJson(path, env) {
   return r.json();
 }
 const firstLine = (m) => String(m || "").split("\n")[0].replace(/\s+/g, " ").trim().slice(0, 160);
+export async function atom(url, kind) {
+  const r = await fetch(url, { headers: { "User-Agent": GH_HEAD["User-Agent"], Accept: "application/atom+xml" }, signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error("http " + r.status);
+  const xml = await r.text(), out = [];
+  for (const m of xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)) {
+    const e = m[1];
+    const title = decode(((e.match(/<title[^>]*>([\s\S]*?)<\/title>/) || [])[1] || "").replace(/<[^>]+>/g, "")).trim();
+    const link = (e.match(/<link[^>]*href="([^"]+)"/) || [])[1];
+    const date = (e.match(/<updated>([^<]+)<\/updated>/) || [])[1];
+    if (!title || !link || !date) continue;
+    out.push({ k: kind, t: "qubic/core · " + (kind === "rel" ? (/^v?\d/.test(title) ? "Release " : "") + title : firstLine(title)), d: date, u: link.startsWith("http") ? link : "https://github.com" + link });
+    if (out.length >= 4) break;
+  }
+  return out;
+}
 export async function refreshGithub(env) {
   let items = null, note = "";
   try {
@@ -195,6 +210,14 @@ export async function refreshGithub(env) {
     if (out.length) items = out.slice(0, 6);
     note = (rel || []).length + " releases, " + top.length + " repos";
   } catch (e) { note = String((e && e.message) || e).slice(0, 140); }
+  // GitHub limits its API for unauthenticated calls from shared hosts: fall back to the public Atom feeds of qubic/core.
+  if (!items) {
+    try {
+      const out = [...(await atom("https://github.com/qubic/core/releases.atom", "rel")), ...(await atom("https://github.com/qubic/core/commits/main.atom", "push"))];
+      out.sort((a, b) => (a.d < b.d ? 1 : -1));
+      if (out.length) { items = out.slice(0, 6); note += " · atom feeds: " + out.length + " entries"; }
+    } catch (e) { note += " · atom: " + String((e && e.message) || e).slice(0, 80); }
+  }
   const now = Date.now();
   const log = env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('gh_status', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind((items ? "ok: " : "failed: ") + note, now);
   if (items)
