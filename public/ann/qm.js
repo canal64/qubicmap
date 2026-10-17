@@ -212,7 +212,7 @@
     L.slice(0, 5).forEach(function (n, i) {
       var b = document.createElement("button");
       b.type = "button"; b.title = n.id; b.setAttribute("aria-pressed", "false");
-      b.innerHTML = "#" + (i + 1) + " <span>" + n.id.slice(0, 5) + "…</span>";
+      b.innerHTML = "#" + (n.rank || i + 1) + " <span>" + n.id.slice(0, 5) + "…</span>";
       b.onclick = function () {
         if (!(pre ? loadPre(n) : openNet(n.id, n.epoch))) return;
         current = n;
