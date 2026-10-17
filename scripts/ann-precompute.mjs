@@ -24,15 +24,20 @@ await page.route("**/api/ann/featured*", r => r.fulfill({ json: { items: [] } })
 await page.route("**/ann/data/**", r => r.fulfill({ status: 404, body: "" })); // force the live path
 // a hash makes the viewer load this identity live; the qubicmap layer then replays the best leaf
 await page.goto(`http://127.0.0.1:${PORT}/ann.html#${ID}/${EPOCH}`);
-const t0 = Date.now(); let last = "";
+const t0 = Date.now(); let last = "", tries = 0;
 for (;;) {
   await page.waitForTimeout(5000);
   const s = await page.evaluate(() => ({ pill: (document.getElementById("qmPillT") || {}).textContent || "", ann: (document.getElementById("annStatus") || {}).textContent || "" }));
   if (s.pill !== last) { console.log(Math.round((Date.now() - t0) / 1000) + "s", s.pill); last = s.pill; }
-  if (/MISMATCH/.test(s.ann)) die("replay does not match the chain");
+  if (/MISMATCH/.test(s.ann)) await die("replay does not match the chain");
   if (/^✓ Network rebuilt/.test(s.pill)) break;
-  if (/Couldn’t reach|replay stopped|No replayable|new epoch started/.test(s.pill)) die(s.pill);
-  if (Date.now() - t0 > LIMIT_MIN * 60000) die("time limit");
+  if (/Couldn’t reach|replay stopped/.test(s.pill) && tries < 4) {
+    // bob drops connections under load: reload; the viewer resumes the scan from its local cache
+    tries++; console.log("retry", tries, "in 60s"); await page.waitForTimeout(60000);
+    await page.reload(); last = ""; continue;
+  }
+  if (/Couldn’t reach|replay stopped|No replayable|new epoch started/.test(s.pill)) await die(s.pill);
+  if (Date.now() - t0 > LIMIT_MIN * 60000) await die("time limit");
 }
 
 const data = await page.evaluate(() => {

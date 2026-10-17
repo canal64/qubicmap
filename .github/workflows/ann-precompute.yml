@@ -41,10 +41,10 @@ jobs:
   build:
     needs: pick
     runs-on: ubuntu-latest
-    timeout-minutes: 100
+    timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 2
       matrix:
         miner: ${{ fromJson(needs.pick.outputs.list) }}
     steps:
@@ -56,7 +56,7 @@ jobs:
           npm i --no-save playwright@1.47.2
           npx playwright install --with-deps chromium
       - name: Rebuild miner ${{ matrix.miner.rank }}
-        run: node scripts/ann-precompute.mjs ${{ matrix.miner.id }} ${{ matrix.miner.epoch }} out || { sleep 90; node scripts/ann-precompute.mjs ${{ matrix.miner.id }} ${{ matrix.miner.epoch }} out; }
+        run: node scripts/ann-precompute.mjs ${{ matrix.miner.id }} ${{ matrix.miner.epoch }} out
       - uses: actions/upload-artifact@v4
         with:
           name: ann-${{ matrix.miner.rank }}

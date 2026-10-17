@@ -1,0 +1,42 @@
+{
+ "epoch": 235,
+ "built": "2026-10-17T09:59:46.718Z",
+ "items": [
+  {
+   "rank": 2,
+   "id": "EKLNMGLNCVBIKAOBHMBJVEOBGBVCISUQVIQSBPGWDAEADCRCQYZIDGIAFQDE",
+   "epoch": 235,
+   "score": 2622,
+   "steps": 266,
+   "built": "2026-10-17T09:49:21.657Z",
+   "solutions": 10000
+  },
+  {
+   "rank": 3,
+   "id": "XBTSETFHNBVAVEVJPENXJRVWTXIATQAHMEAODDXVUBLVOCWIQOBCFSRBOSFL",
+   "epoch": 235,
+   "score": 2627,
+   "steps": 289,
+   "built": "2026-10-17T09:43:57.103Z",
+   "solutions": 5792
+  },
+  {
+   "rank": 4,
+   "id": "XQGBGJANWRJYLECXFGLGGERQRUHAZQBYNGUJDDRKQDFTNGNIZJEEGNWBOOCG",
+   "epoch": 235,
+   "score": 2673,
+   "steps": 276,
+   "built": "2026-10-17T09:59:38.098Z",
+   "solutions": 2575
+  },
+  {
+   "rank": 5,
+   "id": "SNSNDTCCSCIXKGUXQCUZKREDTQQCHCBSUTHWSXVEZDWQUXFSNVCKZZOELYTN",
+   "epoch": 235,
+   "score": 2684,
+   "steps": 281,
+   "built": "2026-10-17T09:57:11.564Z",
+   "solutions": 9202
+  }
+ ]
+}
