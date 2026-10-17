@@ -19,6 +19,12 @@ h1 span{color:transparent;-webkit-text-stroke:1px var(--ice)}
 .r a{color:var(--ice);text-underline-offset:3px}
 .r b{color:var(--warn);font-weight:500}
 a:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.pick{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding-inline:16px;padding-block:10px;border-bottom:1px solid var(--rule);font:12px var(--mono);color:var(--muted)}
+.pick b{color:var(--ink);font-weight:500;letter-spacing:.08em;text-transform:uppercase;font-size:11px}
+.pick button{font:12px var(--mono);color:var(--ink);background:var(--panel);border:1px solid var(--rule);padding:6px 10px;cursor:pointer}
+.pick button[aria-pressed="true"]{border-color:var(--live);color:var(--live)}
+.pick button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.pick .tip{flex-basis:100%;color:var(--muted)}
 .frame{flex:1;min-height:70vh;position:relative}
 iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--panel)}
 </style></head><body>
@@ -33,5 +39,15 @@ iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(
     <a href="/">← Ecosystem Map</a>
   </div>
 </header>
+<div class="pick" id="pick" hidden><b>Featured networks</b><span id="pickEp"></span><span class="tip">Loading a network takes a few seconds: the viewer rebuilds it from the chain. Then tap a leaf of the tree and choose "Visualize ANN" to see its neurons.</span></div>
 <div class="frame"><iframe src="https://krypdkat.github.io/bpp9kviewer/" title="bpp9k ANN viewer by dkat" loading="eager" referrerpolicy="no-referrer" allow="clipboard-write"></iframe></div>
+<script>
+(function(){var V="https://krypdkat.github.io/bpp9kviewer/",fr=document.querySelector("iframe"),pk=document.getElementById("pick");
+fetch("/api/ann/featured").then(function(r){return r.json()}).then(function(j){var L=(j&&j.items)||[];if(!L.length)return;
+  document.getElementById("pickEp").textContent="best verified solutions, epoch "+j.epoch;
+  L.slice(0,4).forEach(function(n,i){var b=document.createElement("button");b.type="button";b.textContent="#"+(i+1)+" · "+n.id.slice(0,6)+"… · score "+n.score;b.title=n.id;
+    b.onclick=function(){[].forEach.call(pk.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed","false")});b.setAttribute("aria-pressed","true");fr.src=V+"#"+n.id+"/"+n.epoch};
+    pk.insertBefore(b,pk.querySelector(".tip"));if(i===0)b.click()});
+  pk.hidden=false}).catch(function(){})})();
+</script>
 </body></html>
