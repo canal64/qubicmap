@@ -49,5 +49,7 @@ html.qm:not(.qm-adv) #status { display: none; }
   #qmBar h1 { font-size: 15px; }
   .qm-row { padding: 7px 10px; }
   #qmAdv { display: none; }
+  .qm-pick { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .qm-pick > * { flex: 0 0 auto; }
 }
 @media (prefers-reduced-motion: reduce) { .qm-bar i, html.qm #right { transition: none; } }
