@@ -1,6 +1,6 @@
 // Worker entry: serves the site from public/ and runs the same server code that
 // used to run as Pages Functions (functions/), so both layouts stay in sync.
-import { onRequest as home } from "../functions/index.js";
+import { onRequest as home, githubIfStale } from "../functions/index.js";
 import { onRequest as api } from "../functions/api/[[route]].js";
 import { serveMedia, mediaBatch } from "../functions/media.js";
 
@@ -10,6 +10,7 @@ export default {
   // Cron: fills and refreshes the tile previews and logos a few sites at a time.
   async scheduled(event, env, ctx) {
     ctx.waitUntil(mediaBatch(env, true).catch(() => {}));
+    ctx.waitUntil(githubIfStale(env).catch(() => {}));
   },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);

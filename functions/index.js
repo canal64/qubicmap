@@ -163,6 +163,63 @@ async function media(request, env, waitUntil) {
   return out;
 }
 
+// ---- Qubic GitHub activity: core releases and the most recently pushed repositories ----------
+const GH_MAX_AGE = 3600000, GH_RETRY = 900000;
+const GH_HEAD = { "User-Agent": "QubicEcosystemMap/1.0 (+https://qubicmap.org)", Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" };
+async function ghJson(path, env) {
+  const h = { ...GH_HEAD };
+  if (env.GITHUB_TOKEN) h.Authorization = "Bearer " + env.GITHUB_TOKEN;
+  const r = await fetch("https://api.github.com/" + path, { headers: h, signal: AbortSignal.timeout(8000) });
+  if (!r.ok) throw new Error("http " + r.status + " on " + path);
+  return r.json();
+}
+const firstLine = (m) => String(m || "").split("\n")[0].replace(/\s+/g, " ").trim().slice(0, 160);
+export async function refreshGithub(env) {
+  let items = null, note = "";
+  try {
+    const [rel, repos] = await Promise.all([
+      ghJson("repos/qubic/core/releases?per_page=4", env).catch(() => []),
+      ghJson("orgs/qubic/repos?sort=pushed&direction=desc&per_page=6", env),
+    ]);
+    const out = [];
+    for (const r of rel || []) if (!r.draft && r.published_at)
+      out.push({ k: "rel", t: "qubic/core · " + (r.name && r.name !== r.tag_name ? r.tag_name + " · " + r.name : "Release " + r.tag_name), d: r.published_at, u: r.html_url });
+    const top = (repos || []).filter((r) => !r.private && r.pushed_at).slice(0, 4);
+    const commits = await Promise.all(top.map((r) =>
+      ghJson("repos/qubic/" + r.name + "/commits?per_page=1&sha=" + encodeURIComponent(r.default_branch || "main"), env).then((c) => c && c[0]).catch(() => null)));
+    top.forEach((r, i) => {
+      const c = commits[i];
+      out.push({ k: "push", t: "qubic/" + r.name + " · " + (c ? firstLine(c.commit && c.commit.message) : "updated"), d: (c && c.commit && c.commit.committer && c.commit.committer.date) || r.pushed_at, u: c ? c.html_url : r.html_url });
+    });
+    out.sort((a, b) => (a.d < b.d ? 1 : -1));
+    if (out.length) items = out.slice(0, 6);
+    note = (rel || []).length + " releases, " + top.length + " repos";
+  } catch (e) { note = String((e && e.message) || e).slice(0, 140); }
+  const now = Date.now();
+  const log = env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('gh_status', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind((items ? "ok: " : "failed: ") + note, now);
+  if (items)
+    await env.DB.batch([log, env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('gh', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind(JSON.stringify(items), now)]);
+  else
+    await env.DB.batch([log, env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('gh', '[]', ?1) ON CONFLICT(k) DO UPDATE SET ts = ?1").bind(now - GH_MAX_AGE + GH_RETRY)]);
+}
+export async function githubIfStale(env) {
+  const row = await env.DB.prepare("SELECT ts FROM kv WHERE k = 'gh'").first();
+  if (!row || Date.now() - row.ts > GH_MAX_AGE) await refreshGithub(env);
+}
+async function github(request, env, waitUntil) {
+  const origin = new URL(request.url).origin;
+  const cache = typeof caches !== "undefined" && caches.default;
+  const key = new Request(origin + "/api/gh-cache");
+  const hit = cache && (await cache.match(key));
+  if (hit) return await hit.json();
+  const row = await env.DB.prepare("SELECT v, ts FROM kv WHERE k = 'gh'").first();
+  if (!row || Date.now() - row.ts > GH_MAX_AGE) waitUntil(refreshGithub(env).catch(() => {}));
+  const out = row ? JSON.parse(row.v || "[]") : [];
+  if (cache)
+    waitUntil(cache.put(key, new Response(JSON.stringify(out), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=300" } })));
+  return out;
+}
+
 const safe = (v) => JSON.stringify(v).replace(/</g, "\\u003c").replace(/[\u2028\u2029]/g, "");
 
 export async function onRequest(context) {
@@ -170,17 +227,19 @@ export async function onRequest(context) {
   const res = await next();
   try {
     if (request.method !== "GET" || !(res.headers.get("content-type") || "").includes("text/html")) return res;
-    const [l, n, k, m] = await Promise.all([
+    const [l, n, k, m, g] = await Promise.all([
       likes(request, env, waitUntil).catch(() => null),
       news(request, env, waitUntil).catch(() => null),
       links(request, env, waitUntil).catch(() => null),
       media(request, env, waitUntil).catch(() => null),
+      github(request, env, waitUntil).catch(() => null),
     ]);
     let script = "";
     if (l) script += "window.__LIKES=" + safe(l) + ";";
     if (n && n.length) script += "window.__NEWS=" + safe(n) + ";";
     if (k && Object.keys(k).length) script += "window.__LINKS=" + safe(k) + ";";
     if (m && Object.keys(m).length) script += "window.__MEDIA=" + safe(m) + ";";
+    if (g && g.length) script += "window.__GH=" + safe(g) + ";";
     if (!script) return res;
     const out = new HTMLRewriter()
       .on("head", { element(el) { el.append("<script>" + script + "</script>", { html: true }); } })
