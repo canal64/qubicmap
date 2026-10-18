@@ -1,0 +1,113 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Was my Qubic wallet drained? · Address check</title>
+<meta name="description" content="Check if your Qubic address is one of the 1,404 addresses drained in the sweep of 17–18 October 2026. Search only, nothing is sent anywhere.">
+<link rel="canonical" href="https://qubicmap.org/check"><meta property="og:type" content="website"><meta property="og:title" content="Was my Qubic wallet drained?"><meta property="og:description" content="Paste your public Qubic address to check it against the list of drained addresses."><meta property="og:url" content="https://qubicmap.org/check"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#04070c">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--void:#04070c;--panel:#0a1019;--rule:#182434;--ink:#dfe9f3;--muted:#8a9db1;--ice:#cfe6ff;--live:#62d6a0;--warn:#f1bb5c;--bad:#ff7a6b;
+  --display:"Chakra Petch",system-ui,sans-serif;--sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--void);color:var(--ink);font:16px/1.55 var(--sans)}
+a{color:var(--ice);text-underline-offset:3px}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.wrap{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font:13px var(--mono);color:var(--muted)}
+header a{text-decoration:none;border:1px solid var(--rule);padding:8px 12px;border-radius:6px}
+.tag{display:inline-block;margin-top:34px;font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--warn);border:1px solid #4a3a1a;background:#1a1408;padding:6px 10px;border-radius:4px}
+h1{margin:14px 0 10px;font:700 clamp(34px,7vw,56px)/1.02 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.lede{margin:0;color:#b4c3d2;font-size:18px;max-width:62ch}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;margin:22px 0 0;font:14px var(--mono);color:var(--muted)}
+.stats b{color:var(--ink);font-weight:500}
+form{margin-top:30px;display:flex;flex-wrap:wrap;gap:10px}
+label.sr{position:absolute;left:-9999px}
+input{flex:1 1 420px;min-width:0;font:500 16px var(--mono);letter-spacing:.04em;color:var(--ink);background:var(--panel);border:1px solid #2a3f58;border-radius:10px;padding:16px;min-height:56px;text-transform:uppercase}
+input::placeholder{text-transform:none;letter-spacing:0;color:#6d8094}
+button{font:600 15px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#04070c;background:var(--live);border:0;border-radius:10px;padding:0 26px;min-height:56px;cursor:pointer}
+.hint{margin:10px 0 0;font:13px var(--mono);color:var(--muted)}
+#out{margin-top:22px}
+.card{border-radius:14px;padding:22px;border:1px solid var(--rule);background:var(--panel)}
+.card.bad{border-color:#6b2f28;background:#170b0a}
+.card.ok{border-color:#1f4a3a;background:#07140f}
+.card h2{margin:0 0 8px;font:700 24px var(--display);text-transform:uppercase}
+.card.bad h2{color:var(--bad)}.card.ok h2{color:var(--live)}
+dl{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:8px 18px;margin:16px 0 0;font-size:15px}
+dt{color:var(--muted);font:13px var(--mono);padding-top:2px}
+dd{margin:0;word-break:break-all}
+.mono{font-family:var(--mono)}
+section.help{margin-top:38px}
+.help h2{font:700 22px var(--display);text-transform:uppercase;margin:0 0 12px}
+.help ol{margin:0;padding-left:22px;display:grid;gap:10px}
+.help li b{color:var(--ink)}
+.warnbox{margin-top:18px;border:1px solid #4a3a1a;background:#1a1408;border-radius:10px;padding:14px 16px;color:#f3dfb2}
+details{margin-top:30px;border-top:1px solid var(--rule);padding-top:18px}
+summary{cursor:pointer;font:500 14px var(--mono);color:var(--ice)}
+.col{font:13px var(--mono);word-break:break-all;margin:8px 0}
+footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);font:12.5px var(--mono);color:var(--muted)}
+</style></head><body><div class="wrap">
+<header><span>qubicmap.org · community notice</span><a href="/">← Ecosystem Map</a></header>
+<span class="tag">Temporary page · wallet sweep of 17–18 Oct 2026</span>
+<h1>Was my Qubic wallet drained?</h1>
+<p class="lede">Paste your <b>public</b> Qubic address (60 letters) to check it against the list of addresses drained in the sweep. The search runs in your browser: nothing you type is sent anywhere.</p>
+<div class="stats" id="stats"></div>
+
+<form id="f" autocomplete="off">
+  <label class="sr" for="q">Your public Qubic address</label>
+  <input id="q" name="q" inputmode="text" spellcheck="false" maxlength="80" placeholder="Paste your public address, e.g. ABCD…XYZ (60 letters)">
+  <button type="submit">Check</button>
+</form>
+<p class="hint">Never paste your seed or private key here, or anywhere else. Only your public address.</p>
+<div id="out" aria-live="polite"></div>
+
+<section class="help">
+  <h2>If your address is on the list</h2>
+  <ol>
+    <li><b>Treat the wallet as compromised.</b> Assume whoever drained it can still use it.</li>
+    <li><b>Create a new wallet with a new seed</b>, on a device you trust, and move anything that is left (other tokens, shares) there. Do not reuse the old seed.</li>
+    <li><b>Follow only official Qubic channels</b> for updates on the incident.</li>
+  </ol>
+  <div class="warnbox"><b>Beware of “recovery” scams.</b> Nobody can get your QU back for a fee. Anyone who DMs you offering help, asking for your seed, or asking you to “verify” your wallet is a scammer.</div>
+</section>
+
+<details>
+  <summary>Addresses that received the drained funds</summary>
+  <div id="cols"></div>
+</details>
+
+<footer>
+  <p id="asof"></p>
+  <p>Data: list of drained addresses compiled from on-chain transfers (qubic_sweep_victims_1404). Not being on this list does not prove a wallet is safe; it only covers the transfers recorded in this file.</p>
+</footer>
+</div>
+<script>
+(function(){
+  var D=null,$=function(i){return document.getElementById(i)};
+  var fmt=function(n){return Number(n).toLocaleString("en-US")};
+  var X="https://explorer.qubic.org/network/";
+  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+  function when(iso){var d=new Date(iso);return d.toUTCString().replace(" GMT"," UTC")}
+  fetch("/check/victims.json",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(j){
+    D=j;var m=j.meta;
+    $("stats").innerHTML="<span><b>"+fmt(m.count)+"</b> addresses drained</span><span><b>"+fmt(m.total)+"</b> QU taken</span><span>sent to <b>"+m.collectors+"</b> addresses</span>";
+    $("asof").textContent="List covers transfers from "+when(m.from)+" to "+when(m.to)+".";
+    var c={};Object.keys(j.v).forEach(function(k){var x=j.v[k];c[x[3]]=c[x[3]]||{n:0,q:0};c[x[3]].n++;c[x[3]].q+=x[0]});
+    $("cols").innerHTML=Object.keys(c).sort(function(a,b){return c[b].q-c[a].q}).map(function(k){return '<p class="col"><a href="'+X+'address/'+k+'" target="_blank" rel="noopener">'+k+'</a><br>'+fmt(c[k].n)+' addresses · '+fmt(c[k].q)+' QU</p>'}).join("");
+    var h=(location.hash||"").replace("#","");if(/^[A-Za-z]{60}$/.test(h)){$("q").value=h.toUpperCase();check()}
+  }).catch(function(){$("out").innerHTML='<div class="card"><h2>List unavailable</h2><p>Please reload the page in a moment.</p></div>'});
+  function check(){
+    var id=($("q").value||"").toUpperCase().replace(/[^A-Z]/g,"");
+    if(id.length!==60){$("out").innerHTML='<div class="card"><h2>Check the address</h2><p>A Qubic public address is exactly 60 letters A–Z. You entered '+id.length+'.</p></div>';return}
+    if(!D){$("out").innerHTML='<div class="card"><p>Loading the list…</p></div>';return}
+    var x=D.v[id];
+    if(!x){$("out").innerHTML='<div class="card ok"><h2>Not on the list</h2><p>This address is not among the '+fmt(D.meta.count)+' drained addresses in this list. Stay careful: this only covers the sweep of 17–18 October up to '+when(D.meta.to)+'.</p></div>';return}
+    var tx=x[4].map(function(h){return '<a class="mono" href="'+X+'tx/'+esc(h)+'" target="_blank" rel="noopener">'+esc(h)+'</a>'}).join("<br>");
+    $("out").innerHTML='<div class="card bad"><h2>⚠ This address was drained</h2><p>It is on the list of addresses swept on 17–18 October. Read the steps below now.</p><dl>'+
+      '<dt>AMOUNT TAKEN</dt><dd><b>'+fmt(x[0])+' QU</b></dd>'+
+      '<dt>WHEN</dt><dd>'+esc(when(x[1]))+' · tick '+fmt(x[2])+'</dd>'+
+      '<dt>SENT TO</dt><dd class="mono"><a href="'+X+'address/'+esc(x[3])+'" target="_blank" rel="noopener">'+esc(x[3])+'</a></dd>'+
+      '<dt>TRANSACTION'+(x[4].length>1?'S':'')+'</dt><dd>'+tx+'</dd></dl></div>';
+  }
+  $("f").addEventListener("submit",function(e){e.preventDefault();check()});
+})();
+</script>
+</body></html>
