@@ -39,6 +39,7 @@ dd{margin:0;word-break:break-all}
 .upd h2{margin:0 0 8px;font:700 20px var(--display);text-transform:uppercase;color:var(--live)}
 .upd ul{margin:6px 0 10px;padding-left:20px}
 .upd p{margin:8px 0 0}
+.upd .src{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
 section.help{margin-top:38px}
 .help h2{font:700 22px var(--display);text-transform:uppercase;margin:0 0 12px}
 .help ol{margin:0;padding-left:22px;display:grid;gap:10px}
@@ -56,13 +57,17 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);font:12
 <div class="stats" id="stats"></div>
 <div class="upd" role="note">
   <h2>Update · 18 Oct 2026</h2>
-  <p><b>The network is paused.</b> The seeds that were drained were weak. So far, these combinations generated weak seeds:</p>
+  <p class="src">From joetom, Qubic Core team</p>
+  <p><b>What happened.</b> Some wallet seeds were generated with insufficient randomness. Seeds created on these combinations are affected:</p>
   <ul>
-    <li>iPhone or iPad, any browser (before 18 Oct)</li>
-    <li>MacBook or iMac with Safari (before 18 Oct)</li>
-    <li>the early iOS app (before July 2025)</li>
+    <li>iPhone / iPad, any browser: seeds created before 2026-10-18</li>
+    <li>MacBook / iMac with Safari: seeds created before 2026-10-18</li>
+    <li>Qubic iOS app: seeds created before July 2025</li>
   </ul>
-  <p><b>Assets of weak seeds will be protected by the computors: nothing will be lost.</b> This covers QU, tokens, Qearn stakes and all smart-contract positions. The claim process is still to be decided and will be announced later.</p>
+  <p><b>The funds are contained.</b> The network is paused: computors coordinated a protective halt at tick 85,371,949, so the drained funds cannot be moved or sold. Exchanges have suspended Qubic deposits and withdrawals. Seed generation is fixed in version 4.26.4.</p>
+  <p><b>Next.</b> Any resolution is a decision for the computor quorum. A community poll will give them a recommendation. A full technical report will follow once recovery is settled.</p>
+  <p class="src" style="margin-top:14px">From Kimz, community board</p>
+  <p>12.9% of the funds (379.04B QU) went to a single MEXC deposit address; MEXC froze that account at ~01:52 UTC. The other 87.1% (2.56T QU) is still on 8 attacker wallets on the Qubic network and has not moved since 01:26 UTC. A full report was sent to MEXC and other exchanges listing QU were notified.</p>
 </div>
 
 <form id="f" autocomplete="off">
@@ -76,11 +81,12 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);font:12
 <section class="help">
   <h2>What to do</h2>
   <ol>
-    <li><b>Do nothing in a hurry.</b> Your assets are protected; the claim process will be announced later.</li>
-    <li><b>Treat the seed as weak</b>, even if your address is not on the list, when it was created with one of the combinations above. When the network is back, follow the official instructions to move to a new seed.</li>
-    <li><b>Follow only official Qubic channels</b> for the claim process.</li>
+    <li><b>No need to rush.</b> There is nothing to do on-chain right now: the network is stopped for everyone.</li>
+    <li><b>If your address was drained, file a police / cybercrime report</b> in your country. Include your wallet ID, the amount lost and the transaction link: this page shows all three when you check your address.</li>
+    <li><b>Treat your seed as weak</b> if it was created with one of the combinations above, even if your address is not on the list. When the network is back, follow the official instructions.</li>
+    <li><b>Follow only official Qubic channels</b> for the outcome of the computor vote.</li>
   </ol>
-  <div class="warnbox"><b>Beware of “recovery” scams.</b> Nobody can get your QU back for a fee. Anyone who DMs you offering help, asking for your seed, or asking you to “verify” your wallet is a scammer.</div>
+  <div class="warnbox"><b>Beware of scammers.</b> Nobody from the Qubic team will ever DM you first, ask for your seed, or offer “recovery services” for a fee. Report such messages to the mods.</div>
 </section>
 
 <details>
@@ -115,7 +121,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);font:12
     var x=D.v[id];
     if(!x){$("out").innerHTML='<div class="card ok"><h2>Not on the list</h2><p>This address is not among the '+fmt(D.meta.count)+' drained addresses in this list. Stay careful: this only covers the sweep of 17–18 October up to '+when(D.meta.to)+'.</p></div>';return}
     var tx=x[4].map(function(h){return '<a class="mono" href="'+X+'tx/'+esc(h)+'" target="_blank" rel="noopener">'+esc(h)+'</a>'}).join("<br>");
-    $("out").innerHTML='<div class="card bad"><h2>⚠ This address was drained</h2><p>It is on the list of addresses swept on 17–18 October. Its assets are protected (see the update above); the claim process will be announced later.</p><dl>'+
+    $("out").innerHTML='<div class="card bad"><h2>⚠ This address was drained</h2><p>It is on the list of addresses swept on 17–18 October. Keep the details below for a police / cybercrime report. Any resolution will be decided by the computor quorum (see the update above).</p><dl>'+
       '<dt>AMOUNT TAKEN</dt><dd><b>'+fmt(x[0])+' QU</b></dd>'+
       '<dt>WHEN</dt><dd>'+esc(when(x[1]))+' · tick '+fmt(x[2])+'</dd>'+
       '<dt>SENT TO</dt><dd class="mono"><a href="'+X+'address/'+esc(x[3])+'" target="_blank" rel="noopener">'+esc(x[3])+'</a></dd>'+
