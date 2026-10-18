@@ -13,6 +13,13 @@
   var NEED = ["run", "buildTree", "ratingCmp", "pathTo", "selectKey", "visualizeAnn", "annGo", "annNet", "applyView", "annApplyView", "showAnnView", "EPOCH_TASK", "ANN_LATEST"];
   var missing = NEED.filter(function (n) { return G(n) === undefined; });
   document.documentElement.classList.add("qm");
+  /* ---------- security: the viewer's "Paste JSON" renders pasted data as HTML; disabled here ---------- */
+  try {
+    window.loadJsonTree = function () { throw new Error("Pasting JSON is disabled on qubicmap.org. Use the original viewer for it."); };
+    var pb = $("pasteBtn"); if (pb) pb.remove();
+    var pd = $("pasteDlg"); if (pd) pd.remove();
+  } catch (e) {}
+
   if (missing.length) { console.warn("qubicmap layer: viewer changed, missing", missing); document.documentElement.classList.add("qm-off"); return; }
 
   /* ---------- top bar ---------- */

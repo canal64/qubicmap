@@ -40,5 +40,12 @@ async function route(request, env, ctx, url) {
     if (url.pathname.startsWith("/m/")) return serveMedia(request, env, waitUntil);
     if (url.pathname === "/" || url.pathname === "/index.html")
       return home({ request, env, waitUntil, next: () => env.ASSETS.fetch(request) });
+    // the complaint template is a file to download, never a page running on qubicmap.org
+    if (url.pathname === "/check/plainte-qubic.html") {
+      const r = await env.ASSETS.fetch(request), o = new Response(r.body, r);
+      o.headers.set("Content-Disposition", 'attachment; filename="plainte-qubic.html"');
+      o.headers.set("Content-Type", "application/octet-stream");
+      return o;
+    }
     return env.ASSETS.fetch(request);
 }
