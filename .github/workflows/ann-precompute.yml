@@ -41,7 +41,10 @@ jobs:
   build:
     needs: pick
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 50
+    # one miner failing (node unreachable, replay mismatch, too slow) must not fail the run:
+    # publish keeps the others, and the run only fails when nothing at all was rebuilt
+    continue-on-error: true
     strategy:
       fail-fast: false
       max-parallel: 2
@@ -56,6 +59,8 @@ jobs:
           npm i --no-save playwright@1.47.2
           npx playwright install --with-deps chromium
       - name: Rebuild miner ${{ matrix.miner.rank }}
+        env:
+          ANN_MINUTES: "45"
         run: node scripts/ann-precompute.mjs ${{ matrix.miner.id }} ${{ matrix.miner.epoch }} out
       - uses: actions/upload-artifact@v4
         with:
