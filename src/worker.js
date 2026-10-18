@@ -21,11 +21,24 @@ export default {
       url.port = "";
       return Response.redirect(url.toString(), 301);
     }
+    // Never serve the site over plain HTTP (someone could alter a page on the way, e.g. /check).
+    if (url.protocol === "http:" && !/^(localhost|127\.0\.0\.1)$/.test(url.hostname)) {
+      url.protocol = "https:";
+      return Response.redirect(url.toString(), 301);
+    }
+    const res = await route(request, env, ctx, url);
+    // HSTS: browsers then always use HTTPS for qubicmap.org
+    const out = new Response(res.body, res);
+    out.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    return out;
+  },
+};
+
+async function route(request, env, ctx, url) {
     const waitUntil = (p) => ctx.waitUntil(p);
     if (url.pathname.startsWith("/api/")) return api({ request, env, waitUntil });
     if (url.pathname.startsWith("/m/")) return serveMedia(request, env, waitUntil);
     if (url.pathname === "/" || url.pathname === "/index.html")
       return home({ request, env, waitUntil, next: () => env.ASSETS.fetch(request) });
     return env.ASSETS.fetch(request);
-  },
-};
+}
