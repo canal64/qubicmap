@@ -35,6 +35,10 @@ dl{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:8px 18px
 dt{color:var(--muted);font:13px var(--mono);padding-top:2px}
 dd{margin:0;word-break:break-all}
 .mono{font-family:var(--mono)}
+.upd{margin-top:22px;border:1px solid #1f4a3a;background:#07140f;border-radius:12px;padding:18px 20px}
+.upd h2{margin:0 0 8px;font:700 20px var(--display);text-transform:uppercase;color:var(--live)}
+.upd ul{margin:6px 0 10px;padding-left:20px}
+.upd p{margin:8px 0 0}
 section.help{margin-top:38px}
 .help h2{font:700 22px var(--display);text-transform:uppercase;margin:0 0 12px}
 .help ol{margin:0;padding-left:22px;display:grid;gap:10px}
@@ -50,6 +54,16 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);font:12
 <h1>Was my Qubic wallet drained?</h1>
 <p class="lede">Paste your <b>public</b> Qubic address (60 letters) to check it against the list of addresses drained in the sweep. The search runs in your browser: nothing you type is sent anywhere.</p>
 <div class="stats" id="stats"></div>
+<div class="upd" role="note">
+  <h2>Update · 18 Oct 2026</h2>
+  <p><b>The network is paused.</b> The seeds that were drained were weak. So far, these combinations generated weak seeds:</p>
+  <ul>
+    <li>iPhone or iPad, any browser (before 18 Oct)</li>
+    <li>MacBook or iMac with Safari (before 18 Oct)</li>
+    <li>the early iOS app (before July 2025)</li>
+  </ul>
+  <p><b>Assets of weak seeds will be protected by the computors: nothing will be lost.</b> This covers QU, tokens, Qearn stakes and all smart-contract positions. The claim process is still to be decided and will be announced later.</p>
+</div>
 
 <form id="f" autocomplete="off">
   <label class="sr" for="q">Your public Qubic address</label>
@@ -60,11 +74,11 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);font:12
 <div id="out" aria-live="polite"></div>
 
 <section class="help">
-  <h2>If your address is on the list</h2>
+  <h2>What to do</h2>
   <ol>
-    <li><b>Treat the wallet as compromised.</b> Assume whoever drained it can still use it.</li>
-    <li><b>Create a new wallet with a new seed</b>, on a device you trust, and move anything that is left (other tokens, shares) there. Do not reuse the old seed.</li>
-    <li><b>Follow only official Qubic channels</b> for updates on the incident.</li>
+    <li><b>Do nothing in a hurry.</b> Your assets are protected; the claim process will be announced later.</li>
+    <li><b>Treat the seed as weak</b>, even if your address is not on the list, when it was created with one of the combinations above. When the network is back, follow the official instructions to move to a new seed.</li>
+    <li><b>Follow only official Qubic channels</b> for the claim process.</li>
   </ol>
   <div class="warnbox"><b>Beware of “recovery” scams.</b> Nobody can get your QU back for a fee. Anyone who DMs you offering help, asking for your seed, or asking you to “verify” your wallet is a scammer.</div>
 </section>
@@ -101,7 +115,7 @@ footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);font:12
     var x=D.v[id];
     if(!x){$("out").innerHTML='<div class="card ok"><h2>Not on the list</h2><p>This address is not among the '+fmt(D.meta.count)+' drained addresses in this list. Stay careful: this only covers the sweep of 17–18 October up to '+when(D.meta.to)+'.</p></div>';return}
     var tx=x[4].map(function(h){return '<a class="mono" href="'+X+'tx/'+esc(h)+'" target="_blank" rel="noopener">'+esc(h)+'</a>'}).join("<br>");
-    $("out").innerHTML='<div class="card bad"><h2>⚠ This address was drained</h2><p>It is on the list of addresses swept on 17–18 October. Read the steps below now.</p><dl>'+
+    $("out").innerHTML='<div class="card bad"><h2>⚠ This address was drained</h2><p>It is on the list of addresses swept on 17–18 October. Its assets are protected (see the update above); the claim process will be announced later.</p><dl>'+
       '<dt>AMOUNT TAKEN</dt><dd><b>'+fmt(x[0])+' QU</b></dd>'+
       '<dt>WHEN</dt><dd>'+esc(when(x[1]))+' · tick '+fmt(x[2])+'</dd>'+
       '<dt>SENT TO</dt><dd class="mono"><a href="'+X+'address/'+esc(x[3])+'" target="_blank" rel="noopener">'+esc(x[3])+'</a></dd>'+
