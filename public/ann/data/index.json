@@ -1,42 +1,42 @@
 {
  "epoch": 235,
- "built": "2026-10-17T10:45:49.635Z",
+ "built": "2026-10-18T10:36:28.260Z",
  "items": [
   {
-   "rank": 2,
-   "id": "OTPTECRMRWKTSAEBIPGMCLLZKIVCXJPWFAIFQQKOQFKTGLVROJCPCXREHVXE",
+   "rank": 1,
+   "id": "QSDGBMBEBLDPTGYQKVJGFAUCOTTCJLUMUCXULUKTNEXPAFKDDZVJMGGBJKUO",
    "epoch": 235,
-   "score": 2612,
+   "score": 2656,
    "steps": 309,
-   "built": "2026-10-17T10:16:14.515Z",
-   "solutions": 4122
+   "built": "2026-10-18T08:41:11.172Z",
+   "solutions": 9989
   },
   {
    "rank": 3,
-   "id": "XIFPSSCHHISJCFCHOQKDFIIAZIDBJGNWKWWEHULNZFIPQRWLUTTVSGMAFDUE",
+   "id": "YPOHAIJIRIFZMDAOTUBEZKVWNOSCOWGCVCFEGSOCBHNWQEGUJPOLASJFCMJO",
    "epoch": 235,
-   "score": 2615,
-   "steps": 395,
-   "built": "2026-10-17T10:14:42.783Z",
-   "solutions": 775
-  },
-  {
-   "rank": 4,
-   "id": "YKKRQRDZXVKVPBLEAMTGUTINSBMAQCAFYXEIWGNJKEIKCGUCFSWBWURESMBM",
-   "epoch": 235,
-   "score": 2624,
-   "steps": 414,
-   "built": "2026-10-17T10:45:37.650Z",
-   "solutions": 906
+   "score": 2696,
+   "steps": 342,
+   "built": "2026-10-18T09:38:46.543Z",
+   "solutions": 8954
   },
   {
    "rank": 5,
-   "id": "SNSNDTCCSCIXKGUXQCUZKREDTQQCHCBSUTHWSXVEZDWQUXFSNVCKZZOELYTN",
+   "id": "IEVRZDRTUILXUGLJPUQSFGGGHPADVBKSJQHHOOTQYGSGVJRNBOFEBGKCXMMF",
    "epoch": 235,
-   "score": 2632,
-   "steps": 281,
-   "built": "2026-10-17T10:32:56.206Z",
-   "solutions": 9278
+   "score": 2707,
+   "steps": 282,
+   "built": "2026-10-18T10:09:25.850Z",
+   "solutions": 9999
+  },
+  {
+   "rank": 6,
+   "id": "UIAMPDISXEXPTFAHVJNDEEXTLOMDJSQKGDZZCCIWWBUDOKBGZUGJWPIGJPMA",
+   "epoch": 235,
+   "score": 2752,
+   "steps": 323,
+   "built": "2026-10-18T10:20:12.950Z",
+   "solutions": 9999
   }
  ]
 }
