@@ -1,7 +1,7 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Is my Qubic wallet affected? · Address check</title>
-<meta name="description" content="Check if your Qubic address is one of the 1,404 addresses drained in the sweep of 17–18 October 2026. Search only, nothing is sent anywhere.">
-<link rel="canonical" href="https://qubicmap.org/check"><meta property="og:type" content="website"><meta property="og:title" content="Is my Qubic wallet affected?"><meta property="og:description" content="Paste your public Qubic address to check it against the list of drained addresses."><meta property="og:url" content="https://qubicmap.org/check"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#04070c">
+<title>Qubic weak-seed incident · Reclaim is open</title>
+<meta name="description" content="The Qubic network is live again. Fund reclaim for the weak-seed incident is open on the official site only: weak-seed-reclaim.qubic.org">
+<link rel="canonical" href="https://qubicmap.org/check"><meta property="og:type" content="website"><meta property="og:title" content="Qubic network is live again: fund reclaim is open"><meta property="og:description" content="Check your address and claim only on the official site: weak-seed-reclaim.qubic.org"><meta property="og:url" content="https://qubicmap.org/check"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#04070c">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -10,137 +10,65 @@
 *{box-sizing:border-box}
 body{margin:0;background:var(--void);color:var(--ink);font:16px/1.55 var(--sans)}
 a{color:var(--ice);text-underline-offset:3px}
-a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
-.wrap{max-width:860px;margin:0 auto;padding:20px 16px 60px}
+a:focus-visible,button:focus-visible{outline:2px solid var(--warn);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
 header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font:13px var(--mono);color:var(--muted)}
 header a{text-decoration:none;border:1px solid var(--rule);padding:8px 12px;border-radius:6px}
-.tag{display:inline-block;margin-top:34px;font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--warn);border:1px solid #4a3a1a;background:#1a1408;padding:6px 10px;border-radius:4px}
-h1{margin:14px 0 10px;font:700 clamp(34px,7vw,56px)/1.02 var(--display);text-transform:uppercase;letter-spacing:.02em}
-.lede{margin:0;color:#b4c3d2;font-size:18px;max-width:62ch}
-.stats{display:flex;flex-wrap:wrap;gap:10px 28px;margin:22px 0 0;font:14px var(--mono);color:var(--muted)}
-.stats b{color:var(--ink);font-weight:500}
-form{margin-top:30px;display:flex;flex-wrap:wrap;gap:10px}
-label.sr{position:absolute;left:-9999px}
-input{flex:1 1 420px;min-width:0;font:500 16px var(--mono);letter-spacing:.04em;color:var(--ink);background:var(--panel);border:1px solid #2a3f58;border-radius:10px;padding:16px;min-height:56px;text-transform:uppercase}
-input::placeholder{text-transform:none;letter-spacing:0;color:#6d8094}
-button{font:600 15px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:#04070c;background:var(--live);border:0;border-radius:10px;padding:0 26px;min-height:56px;cursor:pointer}
-.hint{margin:10px 0 0;font:13px var(--mono);color:var(--muted)}
-#out{margin-top:22px}
-.card{border-radius:14px;padding:22px;border:1px solid var(--rule);background:var(--panel)}
-.card.bad{border-color:#6b2f28;background:#170b0a}
-.card.ok{border-color:#1f4a3a;background:#07140f}
-.card h2{margin:0 0 8px;font:700 24px var(--display);text-transform:uppercase}
-.card.bad h2{color:var(--bad)}.card.ok h2{color:var(--live)}
-.card.fz{border-color:#6b5420;background:#171206}.card.fz h2{color:var(--warn)}
-dl{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:8px 18px;margin:16px 0 0;font-size:15px}
-dt{color:var(--muted);font:13px var(--mono);padding-top:2px}
-dd{margin:0;overflow-wrap:anywhere}
-.mono{font-family:var(--mono)}
-.upd{margin-top:22px;border:1px solid #1f4a3a;background:#07140f;border-radius:12px;padding:18px 20px}
-.upd h2{margin:0 0 8px;font:700 20px var(--display);text-transform:uppercase;color:var(--live)}
-.upd ul{margin:6px 0 10px;padding-left:20px}
-.upd p{margin:8px 0 0}
-.upd .src{font:500 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
-section.help{margin-top:38px}
-.help h2{font:700 22px var(--display);text-transform:uppercase;margin:0 0 12px}
-.help ol{margin:0;padding-left:22px;display:grid;gap:10px}
-.help li b{color:var(--ink)}
-.warnbox{margin-top:18px;border:1px solid #4a3a1a;background:#1a1408;border-radius:10px;padding:14px 16px;color:#f3dfb2}
-details{margin-top:30px;border-top:1px solid var(--rule);padding-top:18px}
-summary{cursor:pointer;font:500 14px var(--mono);color:var(--ice)}
-.col{font:13px var(--mono);word-break:break-all;margin:8px 0}
 .lang{display:flex;gap:4px}.lang button{font:500 12px var(--mono);color:var(--muted);background:transparent;border:1px solid var(--rule);border-radius:6px;padding:0 10px;min-height:36px;cursor:pointer;letter-spacing:.04em}
 .lang button[aria-pressed="true"]{color:var(--ink);border-color:var(--live)}
-.poll{display:inline-flex;align-items:center;min-height:46px;padding:0 18px;border-radius:8px;background:var(--live);color:#04070c;text-decoration:none;font:600 14px var(--mono);letter-spacing:.05em;text-transform:uppercase}
+.tag{display:inline-block;margin-top:34px;font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--live);border:1px solid #1f4a3a;background:#07140f;padding:6px 10px;border-radius:4px}
+h1{margin:14px 0 10px;font:700 clamp(32px,7vw,52px)/1.04 var(--display);text-transform:uppercase;letter-spacing:.02em}
+.lede{margin:0;color:#b4c3d2;font-size:18px;max-width:60ch}
+.cta{display:block;margin-top:28px;text-decoration:none;border-radius:14px;padding:22px;background:var(--live);color:#04070c}
+.cta b{display:block;font:700 22px var(--display);text-transform:uppercase}
+.cta span{font:500 16px var(--mono);overflow-wrap:anywhere}
+.card{margin-top:22px;border-radius:12px;padding:18px 20px;border:1px solid #6b2f28;background:#170b0a}
+.card h2{margin:0 0 8px;font:700 20px var(--display);text-transform:uppercase;color:var(--bad)}
+.card ul{margin:6px 0 0;padding-left:20px}
+p.note{margin-top:22px;color:var(--muted)}
 footer{margin-top:40px;padding-top:18px;border-top:1px solid var(--rule);font:12.5px var(--mono);color:var(--muted)}
 </style></head><body><div class="wrap">
 <header><span data-i="notice"></span><span class="lang" role="group" aria-label="Language"><button type="button" data-l="en">EN</button><button type="button" data-l="fr">FR</button><button type="button" data-l="es">ES</button></span><a href="/" data-i="back"></a></header>
 <span class="tag" data-i="tag"></span>
 <h1 data-i="h1"></h1>
 <p class="lede" data-i="lede"></p>
-<form id="f" autocomplete="off">
-  <label class="sr" for="q" data-i="lab"></label>
-  <input id="q" name="q" inputmode="text" spellcheck="false" maxlength="80">
-  <button type="submit" data-i="btn"></button>
-</form>
-<p class="hint" data-i="hint"></p>
-<div id="out" aria-live="polite"></div>
-<div class="stats" id="stats"></div>
-<div class="upd" role="note">
-  <h2 data-i="rec_h"></h2>
-  <p data-i="rec1"></p>
-  <p data-i="rec2"></p>
-  <p data-i="rec3"></p>
-  <hr style="border:0;border-top:1px solid #1f4a3a;margin:16px 0">
-  <h2 data-i="uh"></h2>
-  <p class="src" data-i="src1"></p>
-  <p data-i="u1"></p>
-  <ul><li data-i="l1"></li><li data-i="l2"></li><li data-i="l3"></li></ul>
-  <p data-i="u2"></p>
-  <p data-i="u3"></p>
-  <p class="src" style="margin-top:14px" data-i="src2"></p>
-  <p data-i="u4"></p>
-  <p data-i="u8"></p>
-  <p class="src" style="margin-top:14px" data-i="src3"></p>
-  <p data-i="u5"></p>
-  <p data-i="u6"></p>
-  <p data-i="u7"></p>
+<a class="cta" href="https://weak-seed-reclaim.qubic.org/" rel="noopener"><b data-i="cta"></b><span>weak-seed-reclaim.qubic.org</span></a>
+<section class="card"><h2 data-i="sh"></h2><ul><li data-i="s1"></li><li data-i="s2"></li><li data-i="s3"></li></ul></section>
+<p class="note" data-i="note"></p>
+<footer data-i="foot"></footer>
 </div>
-
-<section class="help">
-  <h2 data-i="wh"></h2>
-  <ol><li data-i="w1"></li><li data-i="w3"></li><li data-i="w4"></li></ol>
-  <div class="warnbox" data-i="scam"></div>
-</section>
-<details><summary data-i="cols"></summary><div id="cols"></div></details>
-<footer><p id="asof"></p><p data-i="data"></p><p data-i="fsrc"></p></footer>
-</div>
-<script src="/check/k12.js"></script>
 <script>
 (function(){
-  var I={"en": {"notice": "qubicmap.org · community notice", "back": "← Ecosystem Map", "tag": "Temporary page · weak-seed incident, 17–18 Oct 2026", "h1": "Is my Qubic wallet affected?", "lede": "Paste your <b>public</b> Qubic address (60 letters) to check it against the list of drained addresses and the list of frozen weak-seed addresses. The search runs in your browser: nothing you type is sent anywhere.", "uh": "Update · 18 Oct 2026", "src1": "From joetom, Qubic Core team", "u1": "<b>What happened.</b> Some wallet seeds were generated with insufficient randomness. Seeds created on these combinations are affected:", "l1": "iPhone / iPad, any browser: seeds created before 2026-10-18", "l2": "MacBook / iMac with Safari: seeds created before 2026-10-18", "l3": "Qubic iOS app: seeds created before July 2025", "u2": "<b>The funds are contained.</b> The network is paused: computors coordinated a protective halt at tick 85,371,949, so the drained funds cannot be moved or sold. Exchanges have suspended Qubic deposits and withdrawals. Seed generation is fixed in version 4.26.4.", "u3": "<b>Next.</b> The recovery path has since been decided: see “Recovery underway” above.", "src2": "From Kimz, community board", "u4": "12.9% of the funds (379.04B QU) went to a single MEXC deposit address; MEXC froze that account at ~01:52 UTC. The other 87.1% (2.56T QU) is still on 8 attacker wallets on the Qubic network and has not moved since 01:26 UTC. A full report was sent to MEXC and other exchanges listing QU were notified.", "lab": "Your public Qubic address", "ph": "Paste your public address, e.g. ABCD…XYZ (60 letters)", "btn": "Check", "hint": "Never paste your seed or private key here, or anywhere else. Only your public address.", "wh": "What to do", "w1": "<b>Wait for the official claim platform.</b> Its steps and timeline will be announced before any funds are returned.", "w3": "<b>Move to a new, securely generated seed</b> if your address is frozen, or if your seed was created with one of the combinations above.", "w4": "<b>Trust only official Qubic channels.</b> Do not trust any “claim your funds” link, DM or site until the official platform is announced.", "scam": "<b>Beware of scammers.</b> Nobody from the Qubic team will ever DM you first, ask for your seed, ask you to install anything, or offer “recovery services” for a fee. Report such messages to the mods.", "cols": "Addresses that received the drained funds", "data": "Data: list of drained addresses compiled from on-chain transfers (qubic_sweep_victims_1404). Not being on this list does not prove a wallet is safe; it only covers the transfers recorded in this file.", "s_drained": "addresses drained", "s_taken": "QU taken", "s_sent": "sent to {n} addresses", "asof": "List covers transfers from {a} to {b}.", "addrs": "addresses", "unav_h": "List unavailable", "unav": "Please reload the page in a moment.", "len_h": "Check the address", "len": "A Qubic public address is exactly 60 letters A–Z. You entered {n}.", "load": "Loading the list…", "no_h": "Not on the list", "no": "This address is not among the {n} drained addresses in this list. Stay careful: this only covers the sweep of 17–18 October up to {b}.", "yes_h": "⚠ This address was drained", "yes": "It is on the list of addresses swept on 17–18 October. The drained QU are being moved from the attacker’s addresses to a secured escrow and will be returned to their owners through the claim platform (see the update above).", "d_amt": "AMOUNT TAKEN", "d_when": "WHEN", "d_to": "SENT TO", "d_tx": "TRANSACTION", "d_txs": "TRANSACTIONS", "src3": "From dkat · last update for today: the attack has ended", "u5": "<b>Who is affected?</b> Seeds created with the web wallet or the mobile wallet app on an Apple device: iPhone or iPad in any browser (Safari, Chrome, Firefox…), MacBook or iMac in Safari, iOS wallet apps from before July 2025. This applies to all versions of iOS, macOS and iPadOS and all Apple hardware.", "u6": "<b>Weak IDs.</b> Besides the 1,405 hacked IDs, a few hundred other weak IDs could be exploited the same way. Their list will be visible in the code within 1–2 days and blocked by the computors, as planned.", "u7": "<b>What to do now?</b> Nothing: the network is halted. Wait for further announcements; the team will publish a detailed guide for users with weak IDs. To be extra safe, you can move your assets to a new ID once the network resumes (if your ID is not frozen).", "bad_h": "Invalid address", "bad": "This is not a valid Qubic address: its last 4 letters (the checksum) do not match. Check that you copied it exactly.", "s_frozen": "{n} frozen (weak seeds)", "fz_h": "⚠ Weak seed: frozen, not drained", "fz": "Your address is in the list of {n} identities frozen from tick {t} because their seed is weak. It was <b>not drained</b>. This is a protective measure, not a penalty: its QU and assets are moved to a secured escrow and you will get them back through the claim platform. You will also need a new, securely generated seed: a weak seed can never be considered safe again.", "w_net": "Where the funds are: they stayed on the Qubic network and are being moved into the secured escrow.", "w_mexc": "Where the funds are: sent to MEXC, where the receiving account was frozen.", "no2": "This address is neither among the {n} drained addresses nor among the {f} addresses frozen for weak seeds.", "fsrc": "Frozen list: <a href=\"https://github.com/qubic/core/blob/main/src/frozen_addresses.h\" target=\"_blank\" rel=\"noopener\">frozen_addresses.h</a> in qubic/core (merged into main on 19 Oct, PR #1048), with drained / MEXC details compiled by a community member.", "u8": "<b>Update from Kimz:</b> exchanges have suspended QUBIC deposits and withdrawals at the team’s request. They will not reopen until the team gives them the green light.", "rec_h": "🔐 Recovery underway · official update, 19 Oct", "rec1": "A computor update moves the drained QU from the attacker’s identities into a secured escrow, freezes every affected identity (drained and at-risk ones) and moves their QU and assets into the same escrow, and cancels open QX orders on frozen identities. The escrow is controlled by the core devs; every movement is on-chain and public.", "rec2": "<b>Claim platform, launching soon:</b> affected users will prove ownership of their identity to get their QU and assets back. The platform, steps and timeline will be announced before any funds are returned. QEarn funds will be released in later batches after the claim period (sent directly to the owner when already identified).", "rec3": "<b>Not affected?</b> Nothing changes for you: your funds are untouched and the network resumes normally."}, "fr": {"notice": "qubicmap.org · avis à la communauté", "back": "← Carte de l’écosystème", "tag": "Page temporaire · incident des seeds faibles, 17–18 oct. 2026", "h1": "Mon wallet Qubic est-il concerné ?", "lede": "Collez votre adresse Qubic <b>publique</b> (60 lettres) pour la comparer à la liste des adresses vidées et à celle des adresses gelées pour seed faible. La recherche se fait dans votre navigateur : rien de ce que vous tapez n’est envoyé.", "uh": "Point de situation · 18 oct. 2026", "src1": "De joetom, Core team Qubic (traduit)", "u1": "<b>Ce qui s’est passé.</b> Certaines seeds ont été générées avec un aléa insuffisant. Les seeds créées avec ces combinaisons sont concernées :", "l1": "iPhone / iPad, tout navigateur : seeds créées avant le 18/10/2026", "l2": "MacBook / iMac avec Safari : seeds créées avant le 18/10/2026", "l3": "Application Qubic iOS : seeds créées avant juillet 2025", "u2": "<b>Les fonds sont bloqués.</b> Le réseau est en pause : les computors l’ont arrêté par précaution au tick 85 371 949, les fonds volés ne peuvent donc être ni déplacés ni vendus. Les exchanges ont suspendu les dépôts et retraits de Qubic. La génération des seeds est corrigée dans la version 4.26.4.", "u3": "<b>La suite.</b> Le plan de récupération a depuis été décidé : voir « Récupération en cours » plus haut.", "src2": "De Kimz, community board (traduit)", "u4": "12,9 % des fonds (379,04 milliards de QU) sont partis vers une seule adresse de dépôt MEXC ; MEXC a gelé ce compte vers 01h52 UTC. Les 87,1 % restants (2 560 milliards de QU) sont toujours sur 8 wallets de l’attaquant sur le réseau Qubic et n’ont pas bougé depuis 01h26 UTC. Un rapport complet a été envoyé à MEXC et les autres exchanges qui listent le QU ont été prévenus.", "lab": "Votre adresse Qubic publique", "ph": "Collez votre adresse publique, ex. ABCD…XYZ (60 lettres)", "btn": "Vérifier", "hint": "Ne collez jamais votre seed ou votre clé privée ici, ni ailleurs. Uniquement votre adresse publique.", "wh": "Que faire", "w1": "<b>Attendez la plateforme officielle de réclamation.</b> Ses étapes et son calendrier seront annoncés avant tout remboursement.", "w3": "<b>Passez à une nouvelle seed générée de façon sûre</b> si votre adresse est gelée, ou si votre seed a été créée avec une des combinaisons ci-dessus.", "w4": "<b>Ne faites confiance qu’aux canaux officiels de Qubic.</b> Ignorez tout lien, message privé ou site « récupérez vos fonds » tant que la plateforme officielle n’est pas annoncée.", "scam": "<b>Attention aux arnaques.</b> Personne de l’équipe Qubic ne vous contactera jamais en premier en message privé, ne vous demandera votre seed ni d’installer quoi que ce soit, ni ne proposera un « service de récupération » payant. Signalez ces messages aux modérateurs.", "cols": "Adresses qui ont reçu les fonds volés", "data": "Données : liste des adresses vidées établie à partir des transferts on-chain (qubic_sweep_victims_1404). Ne pas figurer sur la liste ne prouve pas qu’un wallet est sûr : elle ne couvre que les transferts de ce fichier.", "s_drained": "adresses vidées", "s_taken": "QU volés", "s_sent": "envoyés vers {n} adresses", "asof": "La liste couvre les transferts du {a} au {b}.", "addrs": "adresses", "unav_h": "Liste indisponible", "unav": "Rechargez la page dans un instant.", "len_h": "Vérifiez l’adresse", "len": "Une adresse publique Qubic compte exactement 60 lettres A–Z. Vous en avez saisi {n}.", "load": "Chargement de la liste…", "no_h": "Absente de la liste", "no": "Cette adresse ne fait pas partie des {n} adresses vidées de cette liste. Restez prudent : elle ne couvre que le vidage du 17–18 octobre jusqu’au {b}.", "yes_h": "⚠ Cette adresse a été vidée", "yes": "Elle figure sur la liste des adresses vidées le 17–18 octobre. Les QU volés sont transférés des adresses de l’attaquant vers un séquestre sécurisé et seront rendus à leurs propriétaires via la plateforme de réclamation (voir plus haut).", "d_amt": "MONTANT VOLÉ", "d_when": "QUAND", "d_to": "ENVOYÉ VERS", "d_tx": "TRANSACTION", "d_txs": "TRANSACTIONS", "src3": "De dkat · dernière mise à jour du jour : l’attaque est terminée (traduit)", "u5": "<b>Qui est concerné ?</b> Les seeds créées avec le web wallet ou l’application mobile sur un appareil Apple : iPhone ou iPad dans n’importe quel navigateur (Safari, Chrome, Firefox…), MacBook ou iMac avec Safari, applications wallet iOS antérieures à juillet 2025. Cela vaut pour toutes les versions d’iOS, macOS et iPadOS et tous les modèles Apple.", "u6": "<b>IDs faibles.</b> En plus des 1 405 IDs piratés, quelques centaines d’autres IDs faibles pourraient être exploités de la même façon. Leur liste sera visible dans le code d’ici 1 à 2 jours et bloquée par les computors, comme prévu.", "u7": "<b>Que faire maintenant ?</b> Rien : le réseau est arrêté. Attendez les prochaines annonces ; l’équipe publiera un guide détaillé pour les utilisateurs ayant des IDs faibles. Par sécurité, vous pourrez transférer vos actifs vers un nouvel ID quand le réseau redémarrera (si votre ID n’est pas gelé).", "bad_h": "Adresse invalide", "bad": "Ce n’est pas une adresse Qubic valide : ses 4 dernières lettres (le contrôle) ne correspondent pas. Vérifiez que vous l’avez copiée exactement.", "s_frozen": "{n} gelées (seeds faibles)", "fz_h": "⚠ Seed faible : gelée, pas vidée", "fz": "Votre adresse fait partie des {n} identités gelées à partir du tick {t}, car leur seed est faible. Elle n’a <b>pas été vidée</b>. C’est une mesure de protection, pas une sanction : ses QU et actifs sont transférés vers un séquestre sécurisé et vous les récupérerez via la plateforme de réclamation. Il vous faudra aussi une nouvelle seed, générée de façon sûre : une seed faible ne peut plus jamais être considérée comme sûre.", "w_net": "Où sont les fonds : ils sont restés sur le réseau Qubic et sont transférés vers le séquestre sécurisé.", "w_mexc": "Où sont les fonds : envoyés chez MEXC, où le compte qui les a reçus a été gelé.", "no2": "Cette adresse ne fait partie ni des {n} adresses vidées, ni des {f} adresses gelées pour seed faible.", "fsrc": "Liste des adresses gelées : <a href=\"https://github.com/qubic/core/blob/main/src/frozen_addresses.h\" target=\"_blank\" rel=\"noopener\">frozen_addresses.h</a> dans qubic/core (fusionné sur main le 19 oct., PR #1048), avec les détails vidée / MEXC compilés par un membre de la communauté.", "u8": "<b>Mise à jour de Kimz (traduit) :</b> les exchanges ont suspendu les dépôts et retraits de QUBIC à la demande de l’équipe. Ils ne rouvriront pas tant que l’équipe ne leur aura pas donné le feu vert.", "rec_h": "🔐 Récupération en cours · annonce officielle, 19 oct. (traduit)", "rec1": "Une mise à jour des computors transfère les QU volés des identités de l’attaquant vers un séquestre sécurisé, gèle toutes les identités concernées (vidées et à risque) en transférant leurs QU et actifs vers ce même séquestre, et annule les ordres QX ouverts des identités gelées. Le séquestre est contrôlé par les core devs ; chaque mouvement est public, on-chain.", "rec2": "<b>Plateforme de réclamation, bientôt :</b> les personnes concernées prouveront qu’elles possèdent leur identité pour récupérer leurs QU et actifs. La plateforme, les étapes et le calendrier seront annoncés avant tout remboursement. Les fonds QEarn seront libérés par lots après la période de réclamation (envoyés directement au propriétaire quand il est déjà identifié).", "rec3": "<b>Pas concerné ?</b> Rien ne change pour vous : vos fonds ne sont pas touchés et le réseau reprend normalement."}, "es": {"notice": "qubicmap.org · aviso a la comunidad", "back": "← Mapa del ecosistema", "tag": "Página temporal · incidente de seeds débiles, 17–18 oct. 2026", "h1": "¿Está afectado mi wallet de Qubic?", "lede": "Pega tu dirección Qubic <b>pública</b> (60 letras) para compararla con la lista de direcciones vaciadas y la de direcciones congeladas por seed débil. La búsqueda se hace en tu navegador: nada de lo que escribes se envía.", "uh": "Actualización · 18 oct. 2026", "src1": "De joetom, Core team de Qubic (traducido)", "u1": "<b>Qué ha pasado.</b> Algunas seeds se generaron con una aleatoriedad insuficiente. Están afectadas las seeds creadas con estas combinaciones:", "l1": "iPhone / iPad, cualquier navegador: seeds creadas antes del 18/10/2026", "l2": "MacBook / iMac con Safari: seeds creadas antes del 18/10/2026", "l3": "App Qubic para iOS: seeds creadas antes de julio de 2025", "u2": "<b>Los fondos están bloqueados.</b> La red está en pausa: los computors la detuvieron por precaución en el tick 85.371.949, así que los fondos robados no se pueden mover ni vender. Los exchanges han suspendido los depósitos y retiros de Qubic. La generación de seeds está corregida en la versión 4.26.4.", "u3": "<b>Próximos pasos.</b> El plan de recuperación ya está decidido: ver «Recuperación en marcha» arriba.", "src2": "De Kimz, community board (traducido)", "u4": "El 12,9 % de los fondos (379.040 millones de QU) fue a una sola dirección de depósito de MEXC; MEXC congeló esa cuenta hacia las 01:52 UTC. El 87,1 % restante (2,56 billones de QU) sigue en 8 wallets del atacante en la red Qubic y no se ha movido desde las 01:26 UTC. Se envió un informe completo a MEXC y se avisó a los demás exchanges que listan QU.", "lab": "Tu dirección Qubic pública", "ph": "Pega tu dirección pública, p. ej. ABCD…XYZ (60 letras)", "btn": "Comprobar", "hint": "Nunca pegues tu seed ni tu clave privada aquí ni en ningún otro sitio. Solo tu dirección pública.", "wh": "Qué hacer", "w1": "<b>Espera la plataforma oficial de reclamación.</b> Sus pasos y calendario se anunciarán antes de devolver fondos.", "w3": "<b>Pasa a una nueva seed generada de forma segura</b> si tu dirección está congelada, o si tu seed se creó con una de las combinaciones anteriores.", "w4": "<b>Confía solo en los canales oficiales de Qubic.</b> No confíes en ningún enlace, mensaje privado o web de «reclama tus fondos» hasta que se anuncie la plataforma oficial.", "scam": "<b>Cuidado con las estafas.</b> Nadie del equipo de Qubic te escribirá primero por privado, te pedirá tu seed ni que instales nada, ni te ofrecerá un «servicio de recuperación» de pago. Denuncia esos mensajes a los moderadores.", "cols": "Direcciones que recibieron los fondos robados", "data": "Datos: lista de direcciones vaciadas elaborada a partir de las transferencias on-chain (qubic_sweep_victims_1404). No aparecer en la lista no prueba que un wallet sea seguro: solo cubre las transferencias de este archivo.", "s_drained": "direcciones vaciadas", "s_taken": "QU robados", "s_sent": "enviados a {n} direcciones", "asof": "La lista cubre las transferencias del {a} al {b}.", "addrs": "direcciones", "unav_h": "Lista no disponible", "unav": "Recarga la página en un momento.", "len_h": "Revisa la dirección", "len": "Una dirección pública de Qubic tiene exactamente 60 letras A–Z. Has escrito {n}.", "load": "Cargando la lista…", "no_h": "No está en la lista", "no": "Esta dirección no está entre las {n} direcciones vaciadas de esta lista. Ten cuidado: solo cubre el vaciado del 17–18 de octubre hasta el {b}.", "yes_h": "⚠ Esta dirección fue vaciada", "yes": "Está en la lista de direcciones vaciadas el 17–18 de octubre. Los QU robados se están moviendo de las direcciones del atacante a un escrow seguro y se devolverán a sus dueños mediante la plataforma de reclamación (ver arriba).", "d_amt": "IMPORTE ROBADO", "d_when": "CUÁNDO", "d_to": "ENVIADO A", "d_tx": "TRANSACCIÓN", "d_txs": "TRANSACCIONES", "src3": "De dkat · última actualización de hoy: el ataque ha terminado (traducido)", "u5": "<b>¿Quién está afectado?</b> Las seeds creadas con la web wallet o la app móvil en un dispositivo Apple: iPhone o iPad en cualquier navegador (Safari, Chrome, Firefox…), MacBook o iMac con Safari, apps de wallet para iOS anteriores a julio de 2025. Aplica a todas las versiones de iOS, macOS y iPadOS y a todos los modelos de Apple.", "u6": "<b>IDs débiles.</b> Además de los 1.405 IDs hackeados, unos cientos de IDs débiles más podrían explotarse del mismo modo. Su lista será visible en el código en 1–2 días y bloqueada por los computors, como estaba previsto.", "u7": "<b>¿Qué hacer ahora?</b> Nada: la red está detenida. Espera los próximos anuncios; el equipo publicará una guía detallada para los usuarios con IDs débiles. Para más seguridad, podrás mover tus activos a un nuevo ID cuando la red se reanude (si tu ID no está congelado).", "bad_h": "Dirección no válida", "bad": "No es una dirección Qubic válida: sus 4 últimas letras (el control) no coinciden. Comprueba que la copiaste exactamente.", "s_frozen": "{n} congeladas (seeds débiles)", "fz_h": "⚠ Seed débil: congelada, no vaciada", "fz": "Tu dirección está entre las {n} identidades congeladas desde el tick {t} porque su seed es débil. <b>No fue vaciada</b>. Es una medida de protección, no una sanción: sus QU y activos se mueven a un escrow seguro y los recuperarás mediante la plataforma de reclamación. También necesitarás una nueva seed generada de forma segura: una seed débil nunca volverá a ser segura.", "w_net": "Dónde están los fondos: se quedaron en la red Qubic y se están moviendo al escrow seguro.", "w_mexc": "Dónde están los fondos: enviados a MEXC, donde se congeló la cuenta que los recibió.", "no2": "Esta dirección no está entre las {n} direcciones vaciadas ni entre las {f} congeladas por seed débil.", "fsrc": "Lista de congeladas: <a href=\"https://github.com/qubic/core/blob/main/src/frozen_addresses.h\" target=\"_blank\" rel=\"noopener\">frozen_addresses.h</a> en qubic/core (fusionado en main el 19 oct., PR #1048), con los detalles vaciada / MEXC recopilados por un miembro de la comunidad.", "u8": "<b>Actualización de Kimz (traducido):</b> los exchanges han suspendido los depósitos y retiros de QUBIC a petición del equipo. No se reabrirán hasta que el equipo les dé luz verde.", "rec_h": "🔐 Recuperación en marcha · anuncio oficial, 19 oct. (traducido)", "rec1": "Una actualización de los computors mueve los QU robados de las identidades del atacante a un depósito seguro (escrow), congela todas las identidades afectadas (vaciadas y en riesgo) moviendo sus QU y activos al mismo escrow, y cancela las órdenes QX abiertas de las identidades congeladas. El escrow lo controlan los core devs; cada movimiento es público, on-chain.", "rec2": "<b>Plataforma de reclamación, próximamente:</b> los afectados demostrarán la propiedad de su identidad para recuperar sus QU y activos. La plataforma, los pasos y el calendario se anunciarán antes de devolver fondos. Los fondos de QEarn se liberarán por lotes tras el periodo de reclamación (directamente al propietario si ya está identificado).", "rec3": "<b>¿No afectado?</b> Nada cambia para ti: tus fondos no se tocan y la red se reanuda con normalidad."}};
-  var LG="en",D=null,PEND=false,$=function(i){return document.getElementById(i)};
-  var LOC={en:"en-US",fr:"fr-FR",es:"es-ES"};
-  function L(k,o){var s=(I[LG]&&I[LG][k])||I.en[k];if(o)for(var p in o)s=s.replace("{"+p+"}",o[p]);return s}
-  var fmt=function(n){return Number(n).toLocaleString(LOC[LG]).replace(/\u202f/g," ")};
-  var X="https://explorer.qubic.org/network/";
-  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-  function when(iso){return new Date(iso).toLocaleString(LOC[LG],{timeZone:"UTC",day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit"})+" UTC"}
-  function pick(){var q=(location.search.match(/[?&]lang=(en|fr|es)/)||[])[1];if(q)return q;try{var s=localStorage.getItem("qm_check_lang");if(s)return s}catch(e){}var n=(navigator.language||"en").slice(0,2);return I[n]?n:"en"}
-  function apply(l){LG=I[l]?l:"en";document.documentElement.lang=LG;
-    [].forEach.call(document.querySelectorAll("[data-i]"),function(e){e.innerHTML=L(e.getAttribute("data-i"))});
-    $("q").placeholder=L("ph");document.title=L("h1")+" · qubicmap";
-    [].forEach.call(document.querySelectorAll(".lang button"),function(b){b.setAttribute("aria-pressed",String(b.getAttribute("data-l")===LG))});
-    if(D)meta();if($("out").innerHTML)check(true)}
-  [].forEach.call(document.querySelectorAll(".lang button"),function(b){b.onclick=function(){var l=b.getAttribute("data-l");try{localStorage.setItem("qm_check_lang",l)}catch(e){}apply(l)}});
-  function meta(){var m=D.meta;
-    $("stats").innerHTML="<span><b>"+fmt(m.count)+"</b> "+L("s_drained")+"</span><span><b>"+fmt(m.total)+"</b> "+L("s_taken")+"</span><span>"+L("s_sent",{n:"<b>"+m.collectors+"</b>"})+"</span>"+(FZ?"<span>"+L("s_frozen",{n:"<b>"+fmt(FZ.n)+"</b>"})+"</span>":"");
-    $("asof").textContent=L("asof",{a:when(m.from),b:when(m.to)});
-    var c={};Object.keys(D.v).forEach(function(k){var x=D.v[k];c[x[3]]=c[x[3]]||{n:0,q:0};c[x[3]].n++;c[x[3]].q+=x[0]});
-    $("cols").innerHTML=Object.keys(c).sort(function(a,b){return c[b].q-c[a].q}).map(function(k){return '<p class="col"><a href="'+X+'address/'+k+'" target="_blank" rel="noopener">'+k+'</a><br>'+fmt(c[k].n)+' '+L("addrs")+' · '+fmt(c[k].q)+' QU</p>'}).join("")}
-  apply(pick());
-  var FZ=null;fetch("/check/frozen.json",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(j){FZ={t:j.tick,n:j.total,f:{},m:{}};j.f.forEach(function(x){FZ.f[x]=1});j.m.forEach(function(x){FZ.m[x]=1});if(D)meta();if($("q").value&&$("out").innerHTML)check(true)}).catch(function(){});
-  fetch("/check/victims.json",{cache:"no-cache"}).then(function(r){return r.json()}).then(function(j){
-    D=j;meta();if(PEND){PEND=false;check()}
-    var h=(location.hash||"").replace("#","");if(/^[A-Za-z]{60}$/.test(h)){$("q").value=h.toUpperCase();check()}
-  }).catch(function(){$("out").innerHTML='<div class="card"><h2>'+L("unav_h")+'</h2><p>'+L("unav")+'</p></div>'});
-  function check(quiet){
-    var id=($("q").value||"").toUpperCase().replace(/[^A-Z]/g,"");
-    if(quiet&&!id)return;
-    if(id.length!==60){$("out").innerHTML='<div class="card"><h2>'+L("len_h")+'</h2><p>'+L("len",{n:id.length})+'</p></div>';return}
-    if(window.qubicIdValid&&!window.qubicIdValid(id)){$("out").innerHTML='<div class="card"><h2>'+L("bad_h")+'</h2><p>'+L("bad")+'</p></div>';return}
-    if(!D){PEND=true;$("out").innerHTML='<div class="card"><p>'+L("load")+'</p></div>';return}
-    var x=D.v[id];
-    if(!x&&FZ&&FZ.f[id]){$("out").innerHTML='<div class="card fz"><h2>'+L("fz_h")+'</h2><p>'+L("fz",{n:fmt(FZ.n),t:fmt(FZ.t)})+'</p></div>';return}
-    if(!x){$("out").innerHTML='<div class="card ok"><h2>'+L("no_h")+'</h2><p>'+(FZ?L("no2",{n:fmt(D.meta.count),f:fmt(FZ.n)}):L("no",{n:fmt(D.meta.count),b:when(D.meta.to)}))+'</p></div>';return}
-    var tx=x[4].map(function(h){return '<a class="mono" href="'+X+'tx/'+esc(h)+'" target="_blank" rel="noopener">'+esc(h)+'</a>'}).join("<br>");
-    $("out").innerHTML='<div class="card bad"><h2>'+L("yes_h")+'</h2><p>'+L("yes")+'</p>'+(FZ?'<p><b>'+L(FZ.m[id]?"w_mexc":"w_net")+'</b></p>':'')+'<dl>'+
-      '<dt>'+L("d_amt")+'</dt><dd><b>'+fmt(x[0])+' QU</b></dd>'+
-      '<dt>'+L("d_when")+'</dt><dd>'+esc(when(x[1]))+' · tick '+fmt(x[2])+'</dd>'+
-      '<dt>'+L("d_to")+'</dt><dd class="mono"><a href="'+X+'address/'+esc(x[3])+'" target="_blank" rel="noopener">'+esc(x[3])+'</a></dd>'+
-      '<dt>'+L(x[4].length>1?"d_txs":"d_tx")+'</dt><dd>'+tx+'</dd></dl></div>';
-  }
-  $("f").addEventListener("submit",function(e){e.preventDefault();check()});
+var I={
+en:{notice:"Temporary page",back:"← qubicmap.org",tag:"Update · network live again",h1:"Fund reclaim is open",
+lede:"The Qubic network is running again. If your identity was affected by the weak-seed incident, check your address and file your claim on the official site. The claim window runs until 1 May 2027.",
+cta:"Check & claim on the official site",sh:"Beware of scams",
+s1:"This is the only official reclaim site. Ignore any other link, DM or \"claim\" site.",
+s2:"The Qubic team will never DM you first and never ask for your seed.",
+s3:"Double-check the URL before entering anything.",
+note:"Our temporary checker has been removed: the official site now includes its own address checker.",
+foot:"qubicmap.org is a community directory, not affiliated with the Qubic team."},
+fr:{notice:"Page temporaire",back:"← qubicmap.org",tag:"Mise à jour · réseau relancé",h1:"La récupération des fonds est ouverte",
+lede:"Le réseau Qubic fonctionne à nouveau. Si votre identité a été touchée par l'incident des seeds faibles, vérifiez votre adresse et déposez votre demande sur le site officiel. Les demandes sont ouvertes jusqu'au 1er mai 2027.",
+cta:"Vérifier et réclamer sur le site officiel",sh:"Attention aux arnaques",
+s1:"C'est le seul site officiel de récupération. Ignorez tout autre lien, DM ou site de « claim ».",
+s2:"L'équipe Qubic ne vous contactera jamais en premier et ne vous demandera jamais votre seed.",
+s3:"Vérifiez bien l'adresse du site avant de saisir quoi que ce soit.",
+note:"Notre vérificateur temporaire a été retiré : le site officiel intègre désormais son propre vérificateur d'adresse.",
+foot:"qubicmap.org est un annuaire communautaire, sans lien officiel avec l'équipe Qubic."},
+es:{notice:"Página temporal",back:"← qubicmap.org",tag:"Actualización · red activa de nuevo",h1:"La recuperación de fondos está abierta",
+lede:"La red Qubic vuelve a funcionar. Si tu identidad se vio afectada por el incidente de semillas débiles, comprueba tu dirección y presenta tu solicitud en el sitio oficial. El plazo está abierto hasta el 1 de mayo de 2027.",
+cta:"Comprobar y reclamar en el sitio oficial",sh:"Cuidado con las estafas",
+s1:"Es el único sitio oficial de recuperación. Ignora cualquier otro enlace, DM o sitio de \"claim\".",
+s2:"El equipo de Qubic nunca te escribirá primero ni te pedirá tu semilla.",
+s3:"Comprueba bien la URL antes de introducir nada.",
+note:"Hemos retirado nuestro verificador temporal: el sitio oficial ya incluye su propio verificador de direcciones.",
+foot:"qubicmap.org es un directorio comunitario, sin afiliación con el equipo de Qubic."}};
+function pick(){var q=(location.search.match(/[?&]lang=(en|fr|es)/)||[])[1];if(q)return q;try{var s=localStorage.getItem("qm_check_lang");if(s&&I[s])return s}catch(e){}var n=(navigator.language||"en").slice(0,2);return I[n]?n:"en"}
+function apply(l){l=I[l]?l:"en";document.documentElement.lang=l;
+[].forEach.call(document.querySelectorAll("[data-i]"),function(e){e.textContent=I[l][e.getAttribute("data-i")]});
+[].forEach.call(document.querySelectorAll(".lang button"),function(b){b.setAttribute("aria-pressed",b.getAttribute("data-l")===l)})}
+[].forEach.call(document.querySelectorAll(".lang button"),function(b){b.onclick=function(){var l=b.getAttribute("data-l");try{localStorage.setItem("qm_check_lang",l)}catch(e){}apply(l)}});
+apply(pick());
 })();
-</script>
-</body></html>
+</script></body></html>
