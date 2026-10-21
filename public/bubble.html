@@ -191,7 +191,7 @@ function sndLabel(){$("snd").textContent=S.sound?"♪ ON":"♪ OFF"}
 $("snd").onclick=function(){S.sound=!S.sound;save();sndLabel();if(S.sound)tone(660,.08,"triangle",.08)};sndLabel();
 
 /* ---------------- board geometry (logical units) ---------------- */
-var COLS=11,R=19,AW=COLS*R*2,ROWH=R*Math.sqrt(3),TOPY=R+4,AH=640,SHY=AH-46,DEAD=SHY-58-3*ROWH,SPEED=1250;
+var COLS=11,R=19,AW=COLS*R*2,ROWH=R*Math.sqrt(3),TOPY=R+4,AH=640,SHY=AH-46,DEAD=SHY-58-1.5*ROWH,SPEED=1250;
 var cv=$("cv"),cx=cv.getContext("2d"),SC=1,DPR=1;
 function layout(){var st=$("stage").getBoundingClientRect();DPR=Math.min(2.5,window.devicePixelRatio||1);
   SC=Math.max(.3,Math.min(st.width/AW,st.height/AH));cv.style.width=Math.floor(AW*SC)+"px";cv.style.height=Math.floor(AH*SC)+"px";
