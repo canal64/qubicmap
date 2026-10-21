@@ -193,12 +193,7 @@ footer{font:12.5px var(--mono);color:var(--muted);display:flex;flex-direction:co
 .art .logo{width:clamp(26px,14cqi,34px);height:clamp(26px,14cqi,34px)}
 .ai.gh{margin-top:9px}
 .ai.gh .nitem.rel .nd{color:var(--warn)}
-.relbox{margin-top:10px;border:1px solid var(--rule);border-left:2px solid var(--warn);background:var(--panel);border-radius:6px;padding:9px 12px;font-size:13px}
-.relbox .rh{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;font:500 12px var(--mono);color:var(--muted)}
-.relbox .rh b{color:var(--warn);font-weight:500}.relbox .rh .rv{color:var(--ink)}
-.relbox .rh a{margin-left:auto;color:var(--ice);text-decoration:none}
-.relbox ul{margin:6px 0 0;padding-left:18px;color:#b4c3d2;line-height:1.45}
-.relbox li{overflow-wrap:anywhere}
+.ai.relbox .ailab{color:var(--warn)}
 </style>
 
 <div class="wrap">
@@ -631,16 +626,16 @@ route();
 })();
 /* ---------- Latest qubic/core release of the epoch (supplied by the server) ---------- */
 (function(){var R=window.__REL,ai=document.querySelector(".ai");if(!ai||!R||!R.v||!/^https:\/\/github\.com\/qubic\/core\//.test(R.u||""))return;
-  var box=document.createElement("div");box.className="relbox";var anchor=document.querySelector(".ai.gh")||ai;anchor.parentNode.insertBefore(box,anchor.nextSibling);
-  var h=document.createElement("div");h.className="rh";box.appendChild(h);
-  function sp(c,t){var e=document.createElement(c==="b"?"b":"span");if(c&&c!=="b")e.className=c;e.textContent=t;return e}
-  var lab=sp("","★ "),ep=R.ep?sp("b",""):null,ver=sp("rv",R.v),dt=sp("",""),lk=document.createElement("a");
-  lk.href=R.u;lk.target="_blank";lk.rel="noopener";
-  h.appendChild(lab);if(ep)h.appendChild(ep);h.appendChild(ver);h.appendChild(dt);h.appendChild(lk);
-  if(R.n&&R.n.length){var ul=document.createElement("ul");R.n.slice(0,6).forEach(function(t){var li=document.createElement("li");li.textContent=t;ul.appendChild(li)});box.appendChild(ul)}
-  function show(){lab.textContent="★ "+tr("Core release");if(ep)ep.textContent=tr("Epoch")+" "+R.ep;
-    var d=new Date(R.d);dt.textContent=isNaN(d)?"":d.toLocaleDateString(lang==="zh"?"zh-Hans":lang,{day:"numeric",month:"short"});lk.textContent="GitHub ↗"}
-  show();var al=applyLang;applyLang=function(){al();show()};
+  var N=(R.n&&R.n.length?R.n:[R.t]).slice(0,8);
+  var box=document.createElement("div");box.className="ai news gh relbox";ai.parentNode.insertBefore(box,ai.nextSibling);
+  box.innerHTML='<a class="ailab" target="_blank" rel="noopener"></a><a class="nitem" target="_blank" rel="noopener"><span class="nd"></span><span class="nt"></span></a>';
+  var lab=box.querySelector(".ailab"),a=box.querySelector(".nitem"),i=0,held=false;lab.href=a.href=R.u;
+  function show(){lab.textContent=(R.ep?tr("Epoch")+" "+R.ep+" · ":"")+R.v+" ↗";lab.title=R.t;a.firstChild.textContent=(i+1)+"/"+N.length;a.lastChild.textContent=N[i];a.title=N[i]}
+  function next(){if(held||document.hidden||N.length<2)return;a.classList.add("out");setTimeout(function(){i=(i+1)%N.length;show();a.classList.remove("out")},reduce?0:290)}
+  show();if(!reduce)setInterval(next,5000);
+  ["pointerenter","focusin"].forEach(function(e){box.addEventListener(e,function(){held=true})});
+  ["pointerleave","focusout"].forEach(function(e){box.addEventListener(e,function(){held=false})});
+  var al=applyLang;applyLang=function(){al();show()};
 })();
 /* ---------- Qubic GitHub activity (supplied by the server) ---------- */
 (function(){var G=window.__GH,ai=document.querySelector(".ai");if(!ai||!G||!G.length)return;
