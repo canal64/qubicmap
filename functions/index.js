@@ -209,8 +209,20 @@ async function latestRelease(env) {
   const url = link.startsWith("http") ? link : "https://github.com" + link;
   return title && date ? relItem(title, (url.match(/\/tag\/([^/?#]+)/) || [])[1] || "", date, url, relNotes([...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map((m) => m[1]))) : null;
 }
+// The Atom feed only gives the tag as title: the release page title carries the full name ("EP236 Release v1.309.0 ...").
+async function releaseName(r) {
+  const res = await fetch(r.u, { headers: { "User-Agent": GH_HEAD["User-Agent"], Accept: "text/html" }, signal: AbortSignal.timeout(8000) });
+  if (!res.ok) return;
+  const t = decode(((await res.text()).match(/<title>([\s\S]*?)<\/title>/) || [])[1] || "").replace(/^Release\s+/, "").replace(/\s*·\s*qubic\/core.*$/, "").trim();
+  const ep = +((t.match(/\bEP\s?(\d{2,4})\b/i) || [])[1] || 0);
+  if (ep) { r.ep = ep; r.t = t.slice(0, 200); }
+}
 async function refreshRelease(env) {
   const r = await latestRelease(env).catch(() => null);
+  if (r && !r.ep) {
+    const html = ((r.n || []).join(" ") + " " + r.t).match(/\bEP\s?(\d{2,4})\b/i);
+    if (html) r.ep = +html[1]; else await releaseName(r).catch(() => {});
+  }
   if (r && /^https:\/\/github\.com\/qubic\/core\//.test(r.u))
     await env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('ghrel', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind(JSON.stringify(r), Date.now()).run();
 }
