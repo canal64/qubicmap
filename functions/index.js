@@ -189,7 +189,33 @@ export async function atom(url, kind) {
   }
   return out;
 }
+// Latest qubic/core release with its epoch and notes, for the release box on the home page.
+const relNotes = (lines) => lines.map((x) => decode(x.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim()).filter(Boolean).slice(0, 8).map((x) => x.slice(0, 160));
+const relItem = (title, tag, date, url, notes) => ({ ep: +((String(title).match(/\bEP\s?(\d{2,4})\b/i) || [])[1] || 0) || null, v: tag, t: String(title).slice(0, 200), d: date, u: url, n: notes });
+async function latestRelease(env) {
+  try {
+    const r = (await ghJson("repos/qubic/core/releases?per_page=5", env)).find((x) => !x.draft && !x.prerelease && x.published_at);
+    if (r) return relItem(r.name || r.tag_name, r.tag_name, r.published_at, r.html_url,
+      relNotes(String(r.body || "").split("\n").filter((l) => /^\s*[-*] /.test(l)).map((l) => l.replace(/^\s*[-*] /, "").replace(/[*_`]/g, ""))));
+  } catch (e) {}
+  const res = await fetch("https://github.com/qubic/core/releases.atom", { headers: { "User-Agent": GH_HEAD["User-Agent"], Accept: "application/atom+xml" }, signal: AbortSignal.timeout(8000) });
+  if (!res.ok) return null;
+  const e = ((await res.text()).match(/<entry>([\s\S]*?)<\/entry>/) || [])[1];
+  if (!e) return null;
+  const title = decode(((e.match(/<title[^>]*>([\s\S]*?)<\/title>/) || [])[1] || "").replace(/<[^>]+>/g, "")).trim();
+  const link = (e.match(/<link[^>]*href="([^"]+)"/) || [])[1] || "";
+  const date = (e.match(/<updated>([^<]+)<\/updated>/) || [])[1];
+  const html = decode((e.match(/<content[^>]*>([\s\S]*?)<\/content>/) || [])[1] || "");
+  const url = link.startsWith("http") ? link : "https://github.com" + link;
+  return title && date ? relItem(title, (url.match(/\/tag\/([^/?#]+)/) || [])[1] || "", date, url, relNotes([...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map((m) => m[1]))) : null;
+}
+async function refreshRelease(env) {
+  const r = await latestRelease(env).catch(() => null);
+  if (r && /^https:\/\/github\.com\/qubic\/core\//.test(r.u))
+    await env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('ghrel', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind(JSON.stringify(r), Date.now()).run();
+}
 export async function refreshGithub(env) {
+  await refreshRelease(env).catch(() => {});
   let items = null, note = "";
   try {
     const [rel, repos] = await Promise.all([
@@ -243,6 +269,11 @@ async function github(request, env, waitUntil) {
   return out;
 }
 
+async function release(request, env) {
+  const row = await env.DB.prepare("SELECT v FROM kv WHERE k = 'ghrel'").first();
+  return row ? JSON.parse(row.v) : null;
+}
+
 const safe = (v) => JSON.stringify(v).replace(/</g, "\\u003c").replace(/[\u2028\u2029]/g, "");
 
 export async function onRequest(context) {
@@ -250,12 +281,13 @@ export async function onRequest(context) {
   const res = await next();
   try {
     if (request.method !== "GET" || !(res.headers.get("content-type") || "").includes("text/html")) return res;
-    const [l, n, k, m, g] = await Promise.all([
+    const [l, n, k, m, g, r] = await Promise.all([
       likes(request, env, waitUntil).catch(() => null),
       news(request, env, waitUntil).catch(() => null),
       links(request, env, waitUntil).catch(() => null),
       media(request, env, waitUntil).catch(() => null),
       github(request, env, waitUntil).catch(() => null),
+      release(request, env).catch(() => null),
     ]);
     let script = "";
     if (l) script += "window.__LIKES=" + safe(l) + ";";
@@ -263,6 +295,7 @@ export async function onRequest(context) {
     if (k && Object.keys(k).length) script += "window.__LINKS=" + safe(k) + ";";
     if (m && Object.keys(m).length) script += "window.__MEDIA=" + safe(m) + ";";
     if (g && g.length) script += "window.__GH=" + safe(g) + ";";
+    if (r && r.v) script += "window.__REL=" + safe(r) + ";";
     if (!script) return res;
     const out = new HTMLRewriter()
       .on("head", { element(el) { el.append("<script>" + script + "</script>", { html: true }); } })
