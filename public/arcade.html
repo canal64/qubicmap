@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Qubic Arcade</title>
-<meta name="description" content="Qubic Arcade on the Qubic Ecosystem Map: Flappy Qubic, Whack-a-FUD, Quorum Defender, Epoch Breaker and Qubic Merge.">
+<meta name="description" content="Qubic Arcade on the Qubic Ecosystem Map: Flappy Qubic, Whack-a-FUD, Quorum Defender, Epoch Breaker and Qubic Bubble.">
 <link rel="canonical" href="https://qubicmap.org/arcade"><meta property="og:type" content="website"><meta property="og:title" content="Qubic Arcade"><meta property="og:description" content="Two quick games, one weekly board each, reset every epoch."><meta property="og:url" content="https://qubicmap.org/arcade"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#04070c">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap">
@@ -35,7 +35,7 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
 <div class="wrap">
   <div class="back"><a href="/">← Qubic Ecosystem Map</a></div>
   <h1>Qubic <span>Arcade</span></h1>
-  <p class="intro">Five quick games. Flappy, Whack, Quorum and Breaker each have their own board for epoch <b id="ep">—</b>, which resets every Wednesday at 12:00 UTC with the Qubic epoch. Board resets in <b id="left">—</b>. Qubic Merge keeps your best on this device.</p>
+  <p class="intro">Five quick games. Each has its own board for epoch <b id="ep">—</b>, which resets every Wednesday at 12:00 UTC with the Qubic epoch. Board resets in <b id="left">—</b>.</p>
   <div class="games">
     <a class="game" href="/play">
       <canvas id="cFlappy" width="640" height="360" aria-hidden="true"></canvas>
@@ -65,11 +65,11 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
       <div class="meta"><span id="lBreaker">Leader: …</span><span id="pBreaker"></span></div>
       <span class="go">▶ Play</span>
     </a>
-    <a class="game" href="/merge">
-      <canvas id="cMerge" width="640" height="360" aria-hidden="true"></canvas>
-      <h2>Qubic <span style="color:transparent;-webkit-text-stroke:1px var(--ice)">Merge</span></h2>
-      <p>Drop and merge spheres, from a single Trit all the way to Aigarth.</p>
-      <div class="meta"><span id="lMerge">Road to Aigarth</span><span id="pMerge"></span></div>
+    <a class="game" href="/bubble">
+      <canvas id="cBubble" width="640" height="360" aria-hidden="true"></canvas>
+      <h2>Qubic <span style="color:transparent;-webkit-text-stroke:1px var(--ice)">Bubble</span></h2>
+      <p>Aim at the ceiling and pop the Qubic bubbles. Clear boards from Trit to Aigarth.</p>
+      <div class="meta"><span id="lBubble">Leader: …</span><span id="pBubble"></span></div>
       <span class="go">▶ Play</span>
     </a>
   </div>
@@ -83,10 +83,9 @@ $("ep").textContent=234+k;$("left").textContent=(h>=24?Math.floor(h/24)+"d "+(h%
 function load(g,L,P){fetch("/api/game/board?g="+g,{cache:"no-store"}).then(function(r){return r.ok?r.json():null}).then(function(b){
   if(!b){$(L).textContent="";return}var t=b.top[0];$(L).innerHTML="";$(L).append("Leader: ");var e=document.createElement("b");e.textContent=t?t.name+" · "+t.score:"nobody yet";$(L).appendChild(e);
   $(P).textContent=b.players+(b.players===1?" player":" players")}).catch(function(){$(L).textContent=""})}
-load("flappy","lFlappy","pFlappy");load("whack","lWhack","pWhack");load("quorum","lQuorum","pQuorum");load("breaker","lBreaker","pBreaker");
-try{var M=JSON.parse(localStorage.getItem("qm_merge_v1")||"{}"),MN=["Trit","CPU Core","Miner","Tick","Smart Contract","Computor","Quorum","Qassandra","Anna AI","AIGARTH"];if(M&&M.hi){$("lMerge").textContent="Your best: ";var mb=document.createElement("b");mb.textContent=Number(M.hi).toLocaleString("en-US");$("lMerge").appendChild(mb);$("pMerge").textContent="Max tier: "+(MN[M.max|0]||"Trit")}}catch(e){}
+load("flappy","lFlappy","pFlappy");load("whack","lWhack","pWhack");load("quorum","lQuorum","pQuorum");load("breaker","lBreaker","pBreaker");load("bubble","lBubble","pBubble");
 /* small looping previews */
-var mg=$("cMerge").getContext("2d"),f=$("cFlappy").getContext("2d"),w=$("cWhack").getContext("2d"),q=$("cQuorum").getContext("2d"),bk=$("cBreaker").getContext("2d"),t0=performance.now(),still=matchMedia("(prefers-reduced-motion: reduce)").matches;
+var mg=$("cBubble").getContext("2d"),f=$("cFlappy").getContext("2d"),w=$("cWhack").getContext("2d"),q=$("cQuorum").getContext("2d"),bk=$("cBreaker").getContext("2d"),t0=performance.now(),still=matchMedia("(prefers-reduced-motion: reduce)").matches;
 function rr(g,x,y,W,H,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+W,y,x+W,y+H,r);g.arcTo(x+W,y+H,x,y+H,r);g.arcTo(x,y+H,x,y,r);g.arcTo(x,y,x+W,y,r);g.closePath();g.fill()}
 function frame(now){var t=still?2:(now-t0)/1000;
   f.fillStyle="#0a1019";f.fillRect(0,0,640,360);
@@ -108,11 +107,11 @@ function frame(now){var t=still?2:(now-t0)/1000;
   bk.fillStyle="#0a1019";bk.fillRect(0,0,640,360);var RC=["#ff5b5b","#f08a72","#f1bb5c","#62d6a0","#5fb8ff"],NM=["QX","QEARN","QSWAP","QBOND","MSVAULT","QBAY","QDRAW","CCF","QUTIL","RANDOM"];
   for(var br=0;br<4;br++)for(var bc=0;bc<8;bc++){if((br*8+bc+Math.floor(t*1.5))%9===0)continue;bk.fillStyle=RC[br];rr(bk,40+bc*72,40+br*30,66,24,3);bk.fillStyle="rgba(4,7,12,.8)";bk.font="600 11px 'IBM Plex Mono',monospace";bk.textAlign="center";bk.textBaseline="middle";bk.fillText(NM[(br*8+bc)%NM.length],73+bc*72,53+br*30)}
   var bx=320+Math.sin(t*1.7)*240,by=230-Math.abs(Math.sin(t*2.2))*90,px2=320+Math.sin(t*1.7-.3)*200;bk.fillStyle="#cfe6ff";bk.shadowColor="#cfe6ff";bk.shadowBlur=14;bk.fillRect(bx-7,by-7,14,14);rr(bk,px2-55,310,110,12,4);bk.shadowBlur=0;
-  mg.fillStyle="#0a1019";mg.fillRect(0,0,640,360);mg.strokeStyle="#3ef0ff";mg.lineWidth=2;mg.strokeRect(200,20,240,330);mg.setLineDash([8,6]);mg.strokeStyle="rgba(255,78,100,.5)";mg.beginPath();mg.moveTo(200,70);mg.lineTo(440,70);mg.stroke();mg.setLineDash([]);
-  var MS=[[262,320,28,"#ff4fd8"],[330,318,30,"#ff8a2a"],[396,326,22,"#ffd23f"],[228,330,18,"#2fe39a"],[300,268,26,"#a46bff"],[370,276,24,"#3ef0ff"],[418,290,14,"#8fd0ff"],[240,282,16,"#2fe39a"]];
-  MS.forEach(function(m){mg.fillStyle=m[3];mg.shadowColor=m[3];mg.shadowBlur=14;mg.beginPath();mg.arc(m[0],m[1],m[2],0,7);mg.fill()});
-  var ph=(t%2.4)/2.4,dy=ph<.7?50+ph/.7*170:220,dx=338+Math.sin(t*.8)*30;mg.fillStyle="#3ef0ff";mg.shadowColor="#3ef0ff";mg.beginPath();mg.arc(dx,dy,14,0,7);mg.fill();
-  if(ph>=.7){var k=(ph-.7)/.3;mg.globalAlpha=1-k;mg.strokeStyle="#3ef0ff";mg.lineWidth=3;mg.beginPath();mg.arc(dx,dy,14+k*40,0,7);mg.stroke();mg.globalAlpha=1}
+  mg.fillStyle="#0a1019";mg.fillRect(0,0,640,360);mg.strokeStyle="#3ef0ff";mg.lineWidth=2;mg.strokeRect(210,14,220,336);
+  var BC=["#e3e9f0","#8fd0ff","#3ef0ff","#2fe39a","#ffd23f","#ff8a2a"],pop=Math.floor(t*1.2)%11;
+  for(var br=0;br<5;br++)for(var bc=0;bc<(br%2?10:11);bc++){if(br===4&&bc===pop)continue;var bxx=220+bc*20+(br%2?10:0),byy=26+br*17.3;mg.fillStyle=BC[(br*3+bc*5)%6];mg.shadowColor=mg.fillStyle;mg.shadowBlur=8;mg.beginPath();mg.arc(bxx,byy,9,0,7);mg.fill()}
+  var ang=-Math.PI/2+Math.sin(t*1.1)*.7;mg.shadowBlur=0;mg.setLineDash([3,6]);mg.strokeStyle="rgba(62,240,255,.7)";mg.beginPath();mg.moveTo(320,326);mg.lineTo(320+Math.cos(ang)*200,326+Math.sin(ang)*200);mg.stroke();mg.setLineDash([]);
+  mg.fillStyle="#3ef0ff";mg.shadowColor="#3ef0ff";mg.shadowBlur=12;mg.beginPath();mg.arc(320,326,10,0,7);mg.fill();
   mg.shadowBlur=0;
   if(!still)requestAnimationFrame(frame)}
 requestAnimationFrame(frame);

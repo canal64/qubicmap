@@ -2,7 +2,7 @@
 //   GET  /api/likes          -> { counts: {project: n}, week: {project: n} }   (cached 60 s)
 //   POST /api/like {id, on}  -> { count }
 //   POST /api/suggest {kind, name, url, note, contact} -> { ok }   (project proposals and problem reports)
-//   (game routes take ?g=flappy|whack|quorum|breaker, or g in the score body; flappy is the default)
+//   (game routes take ?g=flappy|whack|quorum|breaker|bubble, or g in the score body; flappy is the default)
 //   GET  /api/game/board     -> { epoch, endsAt, players, top: [{name, score}], me, ladder: [[name, score, isMe]], champions: [{epoch, name, score}] }   (Flappy Qubic, one board per Qubic epoch)
 //   POST /api/game/start     -> { token }   (signed start time, used to reject impossible scores)
 //   POST /api/game/score {token, score, name} -> { rank, best, top }
@@ -36,6 +36,7 @@ const GAMES = {
   whack: { table: "whack_scores", maxMs: 5 * 60 * 1000, ok: (score, took) => took >= 25000 && score <= (took / 1000) * 15 }, // 30 s rounds
   breaker: { table: "breaker_scores", maxMs: 60 * 60 * 1000, ok: (score, took) => took >= 8000 && score <= 30 + (took / 1000) * 10 }, // bricks plus epoch bonuses
   quorum: { table: "quorum_scores", maxMs: 60 * 60 * 1000, ok: (score, took) => took >= 10000 && score <= 10 + (took / 1000) * 6 }, // ~3 kills a second at most
+  bubble: { table: "bubble_scores", max: 20000000, maxMs: 3 * 60 * 60 * 1000, ok: (score, took) => took >= 15000 && score <= 2000 + (took / 1000) * 6000 }, // pops, drops and combos, a few thousand points a second at most
 };
 const gameOf = (v) => (Object.prototype.hasOwnProperty.call(GAMES, v) ? v : "flappy");
 const BLOCK = /(fuck|shit|bitch|cunt|nigg|fagg|whore|slut|nazi|hitler|porn|pute|salope|connard|encul|merde|bite)/i;
@@ -91,7 +92,7 @@ async function game(url, request, env) {
     const [t, mac] = String((b && b.token) || "").split(".");
     const started = Number(t), score = Number(b && b.score), name = cleanName(b && b.name);
     if (!started || mac !== (await sign(tokenText(started, voter, g), env))) return json({ error: "bad token" }, 400);
-    if (!Number.isInteger(score) || score < 1 || score > MAX_SCORE) return json({ error: "bad score" }, 400);
+    if (!Number.isInteger(score) || score < 1 || score > (G.max || MAX_SCORE)) return json({ error: "bad score" }, 400);
     const took = now - started;
     if (took > G.maxMs || !G.ok(score, took)) return json({ error: "score not accepted" }, 400);
     if (!name) return json({ error: "pick another name" }, 400);
