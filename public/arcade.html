@@ -37,6 +37,13 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
   <h1>Qubic <span>Arcade</span></h1>
   <p class="intro">Five quick games. Each has its own board for epoch <b id="ep">—</b>, which resets every Wednesday at 12:00 UTC with the Qubic epoch. Board resets in <b id="left">—</b>.</p>
   <div class="games">
+    <a class="game" href="/bubble">
+      <canvas id="cBubble" width="640" height="360" aria-hidden="true"></canvas>
+      <h2>Qubic <span style="color:transparent;-webkit-text-stroke:1px var(--ice)">Bubble</span></h2>
+      <p>Aim at the ceiling and pop the Qubic bubbles. Clear boards from Trit to Aigarth.</p>
+      <div class="meta"><span id="lBubble">Leader: …</span><span id="pBubble"></span></div>
+      <span class="go">▶ Play</span>
+    </a>
     <a class="game" href="/play">
       <canvas id="cFlappy" width="640" height="360" aria-hidden="true"></canvas>
       <h2>Flappy Qubic</h2>
@@ -63,13 +70,6 @@ h1 span{color:transparent;-webkit-text-stroke:1.5px var(--ice)}
       <h2>Epoch <span style="color:transparent;-webkit-text-stroke:1px var(--ice)">Breaker</span></h2>
       <p>Every brick is a Qubic contract. Clear the wall to reach the next level.</p>
       <div class="meta"><span id="lBreaker">Leader: …</span><span id="pBreaker"></span></div>
-      <span class="go">▶ Play</span>
-    </a>
-    <a class="game" href="/bubble">
-      <canvas id="cBubble" width="640" height="360" aria-hidden="true"></canvas>
-      <h2>Qubic <span style="color:transparent;-webkit-text-stroke:1px var(--ice)">Bubble</span></h2>
-      <p>Aim at the ceiling and pop the Qubic bubbles. Clear boards from Trit to Aigarth.</p>
-      <div class="meta"><span id="lBubble">Leader: …</span><span id="pBubble"></span></div>
       <span class="go">▶ Play</span>
     </a>
   </div>
