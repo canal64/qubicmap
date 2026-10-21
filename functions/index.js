@@ -223,6 +223,11 @@ async function refreshRelease(env) {
     const html = ((r.n || []).join(" ") + " " + r.t).match(/\bEP\s?(\d{2,4})\b/i);
     if (html) r.ep = +html[1]; else await releaseName(r).catch(() => {});
   }
+  if (r && !r.ep) { // keep an epoch already known for this same release
+    const row = await env.DB.prepare("SELECT v FROM kv WHERE k = 'ghrel'").first().catch(() => null);
+    const old = row && JSON.parse(row.v || "null");
+    if (old && old.v === r.v && old.ep) { r.ep = old.ep; r.t = old.t; }
+  }
   if (r && /^https:\/\/github\.com\/qubic\/core\//.test(r.u))
     await env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('ghrel', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind(JSON.stringify(r), Date.now()).run();
 }
