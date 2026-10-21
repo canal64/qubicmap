@@ -36,7 +36,7 @@ const GAMES = {
   whack: { table: "whack_scores", maxMs: 5 * 60 * 1000, ok: (score, took) => took >= 25000 && score <= (took / 1000) * 15 }, // 30 s rounds
   breaker: { table: "breaker_scores", maxMs: 60 * 60 * 1000, ok: (score, took) => took >= 8000 && score <= 30 + (took / 1000) * 10 }, // bricks plus epoch bonuses
   quorum: { table: "quorum_scores", maxMs: 60 * 60 * 1000, ok: (score, took) => took >= 10000 && score <= 10 + (took / 1000) * 6 }, // ~3 kills a second at most
-  bubble: { table: "bubble_scores", teams: true, max: 20000000, maxMs: 3 * 60 * 60 * 1000, ok: (score, took) => took >= 15000 && score <= 2000 + (took / 1000) * 6000 }, // pops, drops and combos, a few thousand points a second at most
+  bubble: { table: "bubble_scores", teams: true, max: 20000000, maxMs: 3 * 60 * 60 * 1000, ok: (score, took) => took >= 4000 && score <= 2000 + (took / 1000) * 6000 }, // pops, drops and combos, a few thousand points a second at most
 };
 // Qubic Bubble teams: one per ecosystem project; a team's score is the sum of its players' best scores this epoch.
 const TEAMS = ["QCAP", "qMine", "QSwap", "Coded", "QuHub", "Qearn", "Anna", "Aigarth"];

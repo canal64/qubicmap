@@ -95,7 +95,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
   <ul>
     <li><b>Aim</b> with your finger or mouse, <b>release</b> to shoot. Bounce off the walls for tricky shots.</li>
     <li>Bubbles left hanging with nothing above them <b>fall</b> for a big bonus.</li>
-    <li>Pops in a row make a <b>combo</b>. Every 6 misses, the ceiling comes down one row.</li>
+    <li>Pops in a row make a <b>combo</b>. The ceiling comes down on a timer (watch the bar under it) and after a few misses.</li>
     <li>Pop a group next to a <b>Qubic bubble</b> to set it off: it blasts everything around it. Make it fall for a bonus too.</li>
     <li>Pops charge the <b>⚡ Quorum Pulse</b>: it blasts the two lowest rows.</li>
     <li>Clear the board to reach the next level, from <b>Trit</b> all the way to <b>Aigarth</b>.</li>
@@ -153,8 +153,10 @@ var QB=99;function kc(k){return k===QB?"#3ef0ff":K[k].c}
 var TEAMS=[["QCAP","#ffd23f"],["qMine","#ff8a2a"],["QSwap","#3ef0ff"],["Coded","#2fe39a"],["QuHub","#8fd0ff"],["Qearn","#a46bff"],["Anna","#ff3b55"],["Aigarth","#fff6d6"]];
 var teamC={};TEAMS.forEach(function(t){teamC[t[0]]=t[1]});
 function epochNow(){return 234+Math.floor((Date.now()-Date.UTC(2026,9,7,12,0,0))/(7*864e5))}
-function kindsFor(lv){return Math.min(K.length,3+Math.floor((lv+1)/2))}   /* 4 kinds at level 1, 7 from level 7 */
-function rowsFor(lv){return Math.min(9,4+lv)}
+function kindsFor(lv){return Math.min(K.length,4+Math.floor(lv/2))}      /* 4 kinds at level 1, 7 from level 7 */
+function rowsFor(lv){return Math.min(8,5+Math.floor(lv/2))}
+function missLimit(lv){return Math.max(3,5-Math.floor(lv/3))}            /* 5 misses, down to 3 */
+function dropEvery(lv){return Math.max(6,13-lv)}                          /* seconds between timed ceiling drops */
 
 /* ---------------- storage ---------------- */
 var KEY="qm_bubble_v1";
@@ -224,10 +226,10 @@ var G={on:false,score:0,lvl:0,shots:0,miss:0,combo:0,bestCombo:1,gauge:0,armed:f
 var parts=[],fall=[],texts=[],rings=[];
 function present(){var s={};grid.forEach(function(row){row&&row.forEach(function(k){if(k!=null)s[k]=1})});var a=Object.keys(s).map(Number).filter(function(k){return k!==QB});return a.length?a:null}
 function pick(){var a=present();if(a)return a[Math.floor(Math.random()*a.length)];return Math.floor(Math.random()*kindsFor(G.lvl))}
-function fillRow(){var r=[],n=kindsFor(G.lvl),len=COLS,prev=-1;for(var c=0;c<len;c++){var k=Math.random()<.45&&prev>=0?prev:Math.floor(Math.random()*n);r.push(k);prev=k}return r}
+function fillRow(){var r=[],n=kindsFor(G.lvl),len=COLS,prev=-1;for(var c=0;c<len;c++){var k=Math.random()<.22&&prev>=0?prev:Math.floor(Math.random()*n);r.push(k);prev=k}return r}
 var DIG={"0":"111101101101111","1":"010110010010111","2":"111001111100111","3":"111001111001111","4":"101101111001001","5":"111100111001111","6":"111100111101111","7":"111001010010010","8":"111101111101111","9":"111101111001111"};
-function epochRows(){var d=String(epochNow()).slice(-3).padStart(3,"0"),rows=[];for(var r=0;r<5;r++){var row=[];row.length=cols(r);for(var c=0;c<cols(r);c++){var x=c+((r+off)%2?.5:0),gi=Math.floor(x/4),gx=Math.floor(x)-gi*4,on=gx<3&&gi<3&&DIG[d[gi]][r*3+gx]==="1";row[c]=on?2:(Math.random()<.18?1:0)}rows.push(row)}return rows}
-function newLevel(){grid=[];off=0;G.drop=0;G.miss=0;var rows=rowsFor(G.lvl);if(G.lvl===0){grid=epochRows();rows=grid.length}else for(var r=0;r<rows;r++){var row=fillRow();row.length=cols(r);grid.push(row)}
+function epochRows(){var d=String(epochNow()).slice(-3).padStart(3,"0"),rows=[];for(var r=0;r<5;r++){var row=[];row.length=cols(r);for(var c=0;c<cols(r);c++){var x=c+((r+off)%2?.5:0),gi=Math.floor(x/4),gx=Math.floor(x)-gi*4,on=gx<3&&gi<3&&DIG[d[gi]][r*3+gx]==="1";row[c]=on?2:[0,0,1,3][Math.floor(Math.random()*4)]}rows.push(row)}return rows}
+function newLevel(){grid=[];off=0;G.drop=0;G.miss=0;G.clock=0;var rows=rowsFor(G.lvl);if(G.lvl===0){grid=epochRows();rows=grid.length}else for(var r=0;r<rows;r++){var row=fillRow();row.length=cols(r);grid.push(row)}
   for(var q=0;q<1+Math.floor(G.lvl/3);q++){var qr=1+Math.floor(Math.random()*(rows-1)),qc=Math.floor(Math.random()*cols(qr));grid[qr][qc]=QB}G.cur=pick();G.next=pick();
   texts.push({x:AW/2,y:AH*.5,s:G.lvl===0?"EPOCH "+epochNow()+" · LEVEL 1":"LEVEL "+(G.lvl+1)+" · "+LV[Math.min(9,G.lvl)].n.toUpperCase(),c:LV[Math.min(9,G.lvl)].c,l:1.8,z:1.3});evo();hud()}
 function reset(){G.on=true;G.score=0;G.lvl=0;G.shots=0;G.combo=0;G.bestCombo=1;G.gauge=0;G.armed=false;G.shot=null;G.shake=0;G.busy=0;parts=[];fall=[];texts=[];rings=[];
@@ -283,7 +285,7 @@ function land(s){G.shot=null;var cell=nearestFree(s.x,s.y);if(!cell){gameOver();
     G.shake=Math.max(G.shake,3+same.length+dropped.length*.7);if(navigator.vibrate)try{navigator.vibrate(15)}catch(e){}
     if(!clear()&&!present())qubicLeft();
     if(clear()){levelUp();return}}
-  else{G.combo=0;G.miss++;if(G.miss>=6){G.miss=0;ceiling()}}
+  else{G.combo=0;G.miss++;if(G.miss>=missLimit(G.lvl)){G.miss=0;G.clock=0;ceiling()}}
   trim();check();hud()}
 function flood(r,c,test){var seen={},out=[],st=[[r,c]];while(st.length){var p=st.pop(),key=p[0]+","+p[1];if(seen[key])continue;seen[key]=1;var k=get(p[0],p[1]);if(k==null||!test(k))continue;out.push(p);neighbors(p[0],p[1]).forEach(function(q){st.push(q)})}return out}
 function drops(){var seen={},st=[];if(grid[0])for(var c=0;c<grid[0].length;c++)if(grid[0][c]!=null)st.push([0,c]);
@@ -325,6 +327,7 @@ function burst(x,y,n,cols_,sp){if(still)n=Math.ceil(n/4);for(var i=0;i<n;i++){va
 var last=performance.now();
 function frame(now){var dt=Math.min(1/30,(now-last)/1000);last=now;
   if(G.on){if(G.shot)fly(dt);G.busy=Math.max(0,G.busy-dt);
+    if(G.busy<=0&&!G.shot&&G.drop>=0){G.clock=(G.clock||0)+dt;if(G.clock>=dropEvery(G.lvl)){G.clock=0;ceiling();trim();check()}}
     if(G.drop<0){G.dropV+=900*dt;G.drop=Math.min(0,G.drop+G.dropV*dt);if(G.drop===0){G.shake=Math.max(G.shake,4);check()}}}
   for(var i=fall.length-1;i>=0;i--){var f=fall[i];f.vy+=1400*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.a+=dt*4;if(f.y>AH+R*2){fall.splice(i,1);if(Math.random()<.5)burst(f.x,AH-4,4,[kc(f.k)],.5)}}
   G.shake*=Math.pow(.02,dt);if(G.shake<.2)G.shake=0;
@@ -340,7 +343,8 @@ function draw(t,dt){var s=SC*DPR;cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,c
   cx.strokeStyle="rgba(62,240,255,.05)";cx.lineWidth=1;cx.beginPath();for(var gx=38;gx<AW;gx+=38){cx.moveTo(gx,0);cx.lineTo(gx,AH)}for(var gy=38;gy<AH;gy+=38){cx.moveTo(0,gy);cx.lineTo(AW,gy)}cx.stroke();
   /* ceiling bar */
   var cy=Math.max(0,G.drop+TOPY-R-4);cx.fillStyle="rgba(155,92,255,.25)";cx.fillRect(0,0,AW,cy+3);cx.fillStyle="#9b5cff";cx.fillRect(0,cy,AW,2);
-  for(var m=0;m<6;m++){cx.fillStyle=m<G.miss?"#ff4e64":"rgba(255,255,255,.12)";cx.fillRect(AW-16-m*10,AH-12,7,5)}
+  for(var m=0;m<missLimit(G.lvl);m++){cx.fillStyle=m<G.miss?"#ff4e64":"rgba(255,255,255,.12)";cx.fillRect(AW-16-m*10,AH-12,7,5)}
+  if(G.on){var fr0=Math.min(1,(G.clock||0)/dropEvery(G.lvl));cx.fillStyle=fr0>.75?"rgba(255,78,100,"+(.6+.4*Math.sin(t*18))+")":"rgba(155,92,255,.8)";cx.fillRect(0,cy+2,AW*fr0,3)}
   /* danger line */
   var low=lowestY(),near=low>DEAD-ROWH*1.2;cx.save();cx.setLineDash([10,8]);cx.lineDashOffset=-t*30;cx.lineWidth=near?3:2;cx.strokeStyle=near?"rgba(255,78,100,"+(.6+.4*Math.sin(t*16))+")":"rgba(255,78,100,.3)";cx.beginPath();cx.moveTo(0,DEAD);cx.lineTo(AW,DEAD);cx.stroke();cx.restore();
   /* bubbles */
