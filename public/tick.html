@@ -24,6 +24,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
 .dot.live{background:var(--live);color:var(--live);animation:pulse 1s ease-out infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(98,214,160,.7)}100%{box-shadow:0 0 0 9px rgba(98,214,160,0)}}
 .feed b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.lng{display:flex;gap:4px;margin-left:auto;order:2}.top .feed{order:3}.lng .icon{min-width:34px;font-size:12px;padding:0 6px}#snd{margin-left:4px}.lng .icon[aria-pressed="true"]{color:var(--ink);border-color:var(--neon)}
 .icon{border:1px solid var(--rule);background:var(--panel);color:var(--muted);border-radius:8px;min-width:38px;min-height:34px;font:500 13px var(--mono);cursor:pointer}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
 .stat{border:1px solid var(--rule);background:var(--panel);border-radius:10px;padding:8px 10px;backdrop-filter:blur(6px);min-width:0}
@@ -77,14 +78,14 @@ body.shake .ui{animation:shake .45s}
 <div class="ui">
   <div class="top">
     <a class="brand" href="/">QUBIC <b>TICK</b> RIDER</a>
-    <div class="feed" title="Qubic network tick"><span class="dot" id="dot"></span><span id="mode">CONNECTING</span> · TICK <b id="tick">—</b></div>
-    <button class="icon" id="snd" type="button" aria-label="Sound">♪ ON</button>
+    <div class="feed" title="Qubic network tick"><span class="dot" id="dot"></span><span id="mode" data-i="conn">CONNECTING</span> · TICK <b id="tick">—</b></div>
+    <span class="lng" role="group" aria-label="Language"><button class="icon" type="button" data-l="en">EN</button><button class="icon" type="button" data-l="fr">FR</button><button class="icon" type="button" data-l="es">ES</button><button class="icon" id="snd" type="button" aria-label="Sound">♪ ON</button></span>
   </div>
   <div class="stats">
-    <div class="stat"><small>Score</small><b id="score">0</b></div>
-    <div class="stat"><small>Energy</small><div class="energy" id="energy"></div></div>
-    <div class="stat"><small>High score</small><b id="hi">0</b></div>
-    <div class="stat"><small>Streak</small><b id="streak">0 🔥</b></div>
+    <div class="stat"><small data-i="score">Score</small><b id="score">0</b></div>
+    <div class="stat"><small data-i="energy">Energy</small><div class="energy" id="energy"></div></div>
+    <div class="stat"><small data-i="hi">High score</small><b id="hi">0</b></div>
+    <div class="stat"><small data-i="streak">Streak</small><b id="streak">0 🔥</b></div>
   </div>
   <div class="mid">
     <div id="mult">1.00x</div>
@@ -92,34 +93,29 @@ body.shake .ui{animation:shake .45s}
     <div id="pts"></div>
   </div>
   <div class="bar"><button class="btn" id="go" type="button">Start ride</button></div>
-  <div class="hint" id="hint">Space / tap · each real Qubic tick raises your multiplier</div>
+  <div class="hint" id="hint" data-i="hint"></div>
 </div>
 
 <div class="ov on" id="intro"><div class="box">
   <h1>QUBIC <b>TICK</b> RIDER</h1>
-  <p>Your multiplier climbs with every <b>live tick</b> of the Qubic network. Any tick can be an Empty Tick.</p>
-  <ul>
-    <li><b>START RIDE</b>: the multiplier starts at 1.00x.</li>
-    <li>Each new tick raises it, and the crash risk grows with it.</li>
-    <li><b>SECURE POINTS</b> before the crash to bank the round.</li>
-    <li>A crash wipes the round. You have <b>5 energy</b> per session.</li>
-  </ul>
+  <p data-h="intro"></p>
+  <ul><li data-h="r1"></li><li data-h="r2"></li><li data-h="r3"></li><li data-h="r4"></li></ul>
   <span class="streak" id="introStreak"></span>
-  <div class="acts"><button class="btn" id="play" type="button">Play</button><a class="ghost" href="/">← qubicmap.org</a></div>
+  <div class="acts"><button class="btn" id="play" type="button" data-i="play">Play</button><a class="ghost" href="/">← qubicmap.org</a></div>
 </div></div>
 
 <div class="ov" id="over"><div class="box">
-  <h2>RIDE <b>OVER</b></h2>
+  <h2 data-h="over"></h2>
   <div class="res">
-    <div><small>Score</small><b id="rScore">0</b></div>
-    <div><small>Best multiplier</small><b id="rMult">1.00x</b></div>
-    <div><small>High score</small><b id="rHi">0</b></div>
-    <div><small>Crashed at tick</small><b id="rTick">—</b></div>
+    <div><small data-i="score">Score</small><b id="rScore">0</b></div>
+    <div><small data-i="bestm">Best multiplier</small><b id="rMult">1.00x</b></div>
+    <div><small data-i="hi">High score</small><b id="rHi">0</b></div>
+    <div><small data-i="ctick">Crashed at tick</small><b id="rTick">—</b></div>
   </div>
   <p id="rMsg"></p>
   <div class="acts">
-    <button class="btn x" id="share" type="button">Share on 𝕏</button>
-    <button class="btn" id="again" type="button">Play again</button>
+    <button class="btn x" id="share" type="button" data-i="share">Share on 𝕏</button>
+    <button class="btn" id="again" type="button" data-i="again">Play again</button>
     <a class="ghost" href="/">← qubicmap.org</a>
   </div>
 </div></div>
@@ -140,6 +136,40 @@ function touchStreak(){var t=today();if(S.last===t)return;var y=new Date();y.set
 var $=function(id){return document.getElementById(id)};
 var elMult=$("mult"),elSub=$("sub"),elPts=$("pts"),elGo=$("go"),elTick=$("tick"),elMode=$("mode"),elDot=$("dot");
 var fmt=function(n){return Math.round(n).toLocaleString("en-US")};
+/* ---------------- languages ---------------- */
+var I={
+en:{conn:"CONNECTING",live:"LIVE",sim:"SIMULATION",score:"Score",energy:"Energy",hi:"High score",streak:"Streak",hint:"Space / tap · each real Qubic tick raises your multiplier",
+ intro:"Your multiplier climbs with every <b>live tick</b> of the Qubic network. Any tick can be an Empty Tick.",
+ r1:"<b>START RIDE</b>: the multiplier starts at 1.00x.",r2:"Each new tick raises it, and the crash risk grows with it.",r3:"<b>SECURE POINTS</b> before the crash to bank the round.",r4:"A crash wipes the round. You have <b>5 energy</b> per session.",
+ play:"Play",over:"RIDE <b>OVER</b>",bestm:"Best multiplier",ctick:"Crashed at tick",share:"Share on 𝕏",again:"Play again",
+ ready:"Ready to ride",start:"Start ride",secure:"Secure points",gameover:"Game over",riding:"Riding · tick #{t}",secured:"Secured at tick #{t}",valid:"Tick #{t} validated",lost:"round lost",left:"Energy left: {n}",
+ none:"none 😎",rec:"New high score! ",best:"Best ever multiplier: {m} · streak {s} 🔥",days:"{n}-day streak · keep it alive",daily:"Play daily to build your streak",
+ crash:["EMPTY TICK DETECTED","QUORUM GLITCH","TICK REORG","COMPUTOR TIMEOUT","EMPTY TICK DETECTED"],
+ tweet:"⚡ I rode the Qubic blockchain up to a {m} multiplier and scored {p} pts before crashing at Tick #{t}! 🚀\nCan you survive the Empty Ticks?\nPlay live on https://qubicmap.org/tick"},
+fr:{conn:"CONNEXION",live:"LIVE",sim:"SIMULATION",score:"Score",energy:"Énergie",hi:"Record",streak:"Série",hint:"Espace / touche · chaque vrai tick Qubic fait monter ton multiplicateur",
+ intro:"Ton multiplicateur monte à chaque <b>tick en direct</b> du réseau Qubic. N'importe quel tick peut être un Empty Tick.",
+ r1:"<b>LANCER</b> : le multiplicateur part de 1.00x.",r2:"Chaque nouveau tick le fait monter, et le risque de crash aussi.",r3:"<b>SÉCURISER</b> avant le crash pour encaisser la manche.",r4:"Un crash efface la manche. Tu as <b>5 énergies</b> par partie.",
+ play:"Jouer",over:"FIN DE <b>PARTIE</b>",bestm:"Meilleur multiplicateur",ctick:"Crash au tick",share:"Partager sur 𝕏",again:"Rejouer",
+ ready:"Prêt à rouler",start:"Lancer",secure:"Sécuriser",gameover:"Partie terminée",riding:"En course · tick #{t}",secured:"Sécurisé au tick #{t}",valid:"Tick #{t} validé",lost:"manche perdue",left:"Énergie restante : {n}",
+ none:"aucun 😎",rec:"Nouveau record ! ",best:"Meilleur multiplicateur : {m} · série {s} 🔥",days:"Série de {n} jours · ne la casse pas",daily:"Joue chaque jour pour faire monter ta série",
+ crash:["EMPTY TICK DÉTECTÉ","BUG DE QUORUM","RÉORG DE TICK","COMPUTOR HORS DÉLAI","EMPTY TICK DÉTECTÉ"],
+ tweet:"⚡ J'ai surfé la blockchain Qubic jusqu'à un multiplicateur de {m} et marqué {p} pts avant de crasher au Tick #{t} ! 🚀\nTu tiens face aux Empty Ticks ?\nJoue en direct sur https://qubicmap.org/tick"},
+es:{conn:"CONECTANDO",live:"EN VIVO",sim:"SIMULACIÓN",score:"Puntos",energy:"Energía",hi:"Récord",streak:"Racha",hint:"Espacio / toca · cada tick real de Qubic sube tu multiplicador",
+ intro:"Tu multiplicador sube con cada <b>tick en vivo</b> de la red Qubic. Cualquier tick puede ser un Empty Tick.",
+ r1:"<b>EMPEZAR</b>: el multiplicador arranca en 1.00x.",r2:"Cada nuevo tick lo sube, y el riesgo de crash también.",r3:"<b>ASEGURAR</b> antes del crash para guardar la ronda.",r4:"Un crash borra la ronda. Tienes <b>5 de energía</b> por partida.",
+ play:"Jugar",over:"FIN DE LA <b>PARTIDA</b>",bestm:"Mejor multiplicador",ctick:"Crash en el tick",share:"Compartir en 𝕏",again:"Jugar otra vez",
+ ready:"Listo para correr",start:"Empezar",secure:"Asegurar",gameover:"Fin de la partida",riding:"En carrera · tick #{t}",secured:"Asegurado en el tick #{t}",valid:"Tick #{t} validado",lost:"ronda perdida",left:"Energía restante: {n}",
+ none:"ninguno 😎",rec:"¡Nuevo récord! ",best:"Mejor multiplicador: {m} · racha {s} 🔥",days:"Racha de {n} días · no la pierdas",daily:"Juega cada día para subir tu racha",
+ crash:["EMPTY TICK DETECTADO","FALLO DE QUÓRUM","REORG DE TICK","COMPUTOR SIN RESPUESTA","EMPTY TICK DETECTADO"],
+ tweet:"⚡ Surfeé la blockchain de Qubic hasta un multiplicador de {m} y sumé {p} pts antes de estrellarme en el Tick #{t}! 🚀\n¿Sobrevivirás a los Empty Ticks?\nJuega en vivo en https://qubicmap.org/tick"}};
+var LG="en";
+function L(k,v){var s=(I[LG][k]!=null?I[LG][k]:I.en[k]);if(v&&typeof s==="string")for(var x in v)s=s.split("{"+x+"}").join(v[x]);return s}
+function pickLang(){var q=(location.search.match(/[?&]lang=(en|fr|es)/)||[])[1];if(q)return q;try{var l=localStorage.getItem("qm_tick_lang");if(l&&I[l])return l}catch(e){}var n=(navigator.language||"en").slice(0,2);return I[n]?n:"en"}
+function applyLang(l){LG=I[l]?l:"en";document.documentElement.lang=LG;
+  [].forEach.call(document.querySelectorAll("[data-i]"),function(e){e.textContent=L(e.getAttribute("data-i"))});
+  [].forEach.call(document.querySelectorAll("[data-h]"),function(e){e.innerHTML=L(e.getAttribute("data-h"))}); /* our own strings only */
+  [].forEach.call(document.querySelectorAll(".lng button[data-l]"),function(b){b.setAttribute("aria-pressed",b.getAttribute("data-l")===LG)});
+  if(typeof refreshTexts==="function")refreshTexts()}
 
 /* ---------------- audio (one context, resumed on every gesture: iOS safe) ---------------- */
 var AC=null;
@@ -158,7 +188,7 @@ $("snd").onclick=function(){S.sound=!S.sound;save();setSndLabel();if(S.sound)ton
 var FEED={tick:0,live:null,lastChange:0,fails:0};
 var listeners=[];
 function emit(t){listeners.forEach(function(f){f(t)})}
-function setTick(t,live){if(!(t>FEED.tick)&&!(live&&!FEED.live&&t>1e6))return;FEED.tick=t;FEED.lastChange=performance.now();elTick.textContent=fmt(t);if(FEED.live!==live){FEED.live=live;elMode.textContent=live?"LIVE":"SIMULATION";elDot.className="dot"+(live?" live":"")}emit(t)}
+function setTick(t,live){if(!(t>FEED.tick)&&!(live&&!FEED.live&&t>1e6))return;FEED.tick=t;FEED.lastChange=performance.now();elTick.textContent=fmt(t);if(FEED.live!==live){FEED.live=live;elMode.removeAttribute("data-i");elMode.textContent=L(live?"live":"sim");elDot.className="dot"+(live?" live":"")}emit(t)}
 var URLS=["https://rpc.qubic.org/v1/tick-info","https://rpc.qubic.org/v1/status"];
 function parseTick(j){if(!j)return 0;var c=j.tickInfo||j.lastProcessedTick||j;var t=+(c.tick||c.tickNumber||(j.lastProcessedTick&&j.lastProcessedTick.tickNumber)||0);return t>1e6?t:0}
 function poll(){
@@ -176,36 +206,35 @@ setTimeout(function(){if(!FEED.tick)simStep()},2600);
 
 /* ---------------- game ---------------- */
 var MAXE=5,G={state:"idle",energy:MAXE,score:0,mult:1,shown:1,steps:0,round:0,sessBest:1,crashTick:0,lastTick:0};
-var CRASH=["EMPTY TICK DETECTED","QUORUM GLITCH","TICK REORG","COMPUTOR TIMEOUT","EMPTY TICK DETECTED"];
 function multAt(k){return Math.pow(1.075,k)+0.004*k*k}
 function riskAt(k){return Math.min(.34,.055+.011*k)}
 function roundPts(m){return Math.round((m-1)*1000)}
 function drawEnergy(){var e=$("energy");e.textContent="";for(var i=0;i<MAXE;i++){var b=document.createElement("i");if(i>=G.energy)b.className="off";e.appendChild(b)}}
 function hud(){$("score").textContent=fmt(G.score);$("hi").textContent=fmt(S.hi);$("streak").textContent=S.streak+" 🔥";drawEnergy()}
 function sub(t,c){elSub.textContent=t;elSub.className=c||""}
-function setBtn(){if(G.state==="ride"){elGo.textContent="Secure points";elGo.className="btn secure";elGo.disabled=false}
-  else{elGo.textContent=G.energy>0?"Start ride":"Game over";elGo.className="btn";elGo.disabled=G.state==="pause"||G.energy<=0}}
-function start(){if(G.state!=="idle"||G.energy<=0)return;ac();touchStreak();G.state="ride";G.mult=1;G.shown=1;G.steps=0;G.round++;elMult.className="";elPts.textContent="+0";sub("Riding · tick #"+fmt(FEED.tick||0));sfx.start();curve.reset();setBtn();hud()}
+function setBtn(){if(G.state==="ride"){elGo.textContent=L("secure");elGo.className="btn secure";elGo.disabled=false}
+  else{elGo.textContent=L(G.energy>0?"start":"gameover");elGo.className="btn";elGo.disabled=G.state==="pause"||G.energy<=0}}
+function start(){if(G.state!=="idle"||G.energy<=0)return;ac();touchStreak();G.state="ride";G.mult=1;G.shown=1;G.steps=0;G.round++;elMult.className="";elPts.textContent="+0";sub(L("riding",{t:fmt(FEED.tick||0)}));sfx.start();curve.reset();setBtn();hud()}
 function secure(){if(G.state!=="ride")return;var p=roundPts(G.mult);G.score+=p;G.sessBest=Math.max(G.sessBest,G.mult);G.state="pause";G.energy--;
-  elMult.className="safe";elMult.textContent=G.mult.toFixed(2)+"x";sub("Secured at tick #"+fmt(FEED.tick),"good");elPts.textContent="+"+fmt(p)+" pts";
+  elMult.className="safe";elMult.textContent=G.mult.toFixed(2)+"x";sub(L("secured",{t:fmt(FEED.tick)}),"good");elPts.textContent="+"+fmt(p)+" pts";
   sfx.secure();flash(true);burst(curve.headX,curve.headY,70,["#62d6a0","#3ef0ff","#ffffff"]);if(navigator.vibrate)try{navigator.vibrate(30)}catch(e){}
   hud();setBtn();setTimeout(next,1300)}
 function crash(t){G.state="pause";G.energy--;G.crashTick=t;G.sessBest=Math.max(G.sessBest,G.mult);
-  elMult.className="boom";elMult.textContent=G.mult.toFixed(2)+"x";sub(CRASH[Math.floor(Math.random()*CRASH.length)]+" · #"+fmt(t),"bad");elPts.textContent="round lost";
+  elMult.className="boom";elMult.textContent=G.mult.toFixed(2)+"x";var C=L("crash");sub(C[Math.floor(Math.random()*C.length)]+" · #"+fmt(t),"bad");elPts.textContent=L("lost");
   sfx.crash();flash(false);shake();burst(curve.headX,curve.headY,140,["#ff5a6e","#f1bb5c","#c46bff","#ffffff"]);curve.dead=true;if(navigator.vibrate)try{navigator.vibrate([60,40,90])}catch(e){}
   hud();setBtn();setTimeout(next,1600)}
-function next(){if(G.energy<=0)return over();G.state="idle";elMult.className="";elMult.textContent="1.00x";G.shown=1;elPts.textContent="";sub("Energy left: "+G.energy);setBtn();curve.reset()}
+function next(){if(G.energy<=0)return over();G.state="idle";elMult.className="";elMult.textContent="1.00x";G.shown=1;elPts.textContent="";sub(L("left",{n:G.energy}));setBtn();curve.reset()}
 listeners.push(function(t){G.lastTick=t;floaters.push({t:"#"+fmt(t),x:Math.random(),y:1,a:1});
   if(G.state!=="ride")return;
   if(Math.random()<riskAt(G.steps))return crash(t);
-  G.steps++;G.mult=multAt(G.steps);sfx.tick(G.steps);sub("Tick #"+fmt(t)+" validated");elPts.textContent="+"+fmt(roundPts(G.mult));
+  G.steps++;G.mult=multAt(G.steps);sfx.tick(G.steps);sub(L("valid",{t:fmt(t)}));elPts.textContent="+"+fmt(roundPts(G.mult));
   elMult.className=riskAt(G.steps)>.2?"hot":"";spark(curve.headX,curve.headY)});
 function over(){G.state="over";var rec=G.score>S.hi;if(rec)S.hi=G.score;S.bestMult=Math.max(S.bestMult,G.sessBest);save();hud();
   $("rScore").textContent=fmt(G.score);$("rMult").textContent=G.sessBest.toFixed(2)+"x";$("rHi").textContent=fmt(S.hi);$("rHi").className=rec?"rec":"";
-  $("rTick").textContent=G.crashTick?"#"+fmt(G.crashTick):"none 😎";
-  $("rMsg").textContent=(rec?"New high score! ":"")+"Best ever multiplier: "+S.bestMult.toFixed(2)+"x · streak "+S.streak+" day"+(S.streak>1?"s":"")+" 🔥";
+  $("rTick").textContent=G.crashTick?"#"+fmt(G.crashTick):L("none");
+  G.rec=rec;overMsg();
   $("over").classList.add("on");setBtn()}
-function reset(){G.state="idle";G.energy=MAXE;G.score=0;G.sessBest=1;G.crashTick=0;G.mult=1;G.shown=1;elMult.className="";elMult.textContent="1.00x";elPts.textContent="";sub("Ready to ride");$("over").classList.remove("on");curve.reset();hud();setBtn()}
+function reset(){G.state="idle";G.energy=MAXE;G.score=0;G.sessBest=1;G.crashTick=0;G.mult=1;G.shown=1;elMult.className="";elMult.textContent="1.00x";elPts.textContent="";sub(L("ready"));$("over").classList.remove("on");curve.reset();hud();setBtn()}
 function act(){if(G.state==="ride")secure();else if(G.state==="idle")start()}
 elGo.addEventListener("click",act);
 document.addEventListener("keydown",function(e){if((e.code==="Space"||e.key==="Enter")&&!$("intro").classList.contains("on")&&!$("over").classList.contains("on")){e.preventDefault();act()}});
@@ -213,9 +242,14 @@ $("play").onclick=function(){ac();$("intro").classList.remove("on")};
 $("again").onclick=function(){ac();reset()};
 $("share").onclick=function(){
   var tick=G.crashTick||G.lastTick||FEED.tick;
-  var txt="⚡ I rode the Qubic blockchain up to a "+G.sessBest.toFixed(2)+"x multiplier and scored "+fmt(G.score)+" pts before crashing at Tick #"+fmt(tick)+"! 🚀\nCan you survive the Empty Ticks?\nPlay live on https://qubicmap.org/tick";
+  var txt=L("tweet",{m:G.sessBest.toFixed(2)+"x",p:fmt(G.score),t:fmt(tick)});
   window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(txt),"_blank","noopener,width=600,height=520")};
-$("introStreak").textContent=S.streak?"🔥 "+S.streak+"-day streak · keep it alive":"🔥 Play daily to build your streak";
+function overMsg(){$("rMsg").textContent=(G.rec?L("rec"):"")+L("best",{m:S.bestMult.toFixed(2)+"x",s:S.streak})}
+function refreshTexts(){$("introStreak").textContent="🔥 "+(S.streak?L("days",{n:S.streak}):L("daily"));setBtn();
+  if(FEED.live!==null)elMode.textContent=L(FEED.live?"live":"sim");
+  if(G.state==="idle")sub(G.round?L("left",{n:G.energy}):L("ready"));if(G.state==="over"){overMsg();if(!G.crashTick)$("rTick").textContent=L("none")}}
+[].forEach.call(document.querySelectorAll(".lng button[data-l]"),function(b){b.onclick=function(){var l=b.getAttribute("data-l");try{localStorage.setItem("qm_tick_lang",l)}catch(e){}applyLang(l)}});
+applyLang(pickLang());
 function flash(good){var f=$("flash");f.className="flash"+(good?" g":"");f.style.transition="none";f.style.opacity=1;requestAnimationFrame(function(){f.style.transition="opacity .7s";f.style.opacity=0})}
 function shake(){document.body.classList.remove("shake");void document.body.offsetWidth;document.body.classList.add("shake")}
 document.addEventListener("visibilitychange",function(){if(document.hidden&&G.state==="ride")secure()}); /* no crash while the tab is hidden */
