@@ -176,8 +176,8 @@ footer{font:12.5px var(--mono);color:var(--muted);display:flex;flex-direction:co
 .play:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
 .shot{position:absolute;inset:0;z-index:0;overflow:hidden;opacity:0;transition:opacity .5s,transform .5s cubic-bezier(.2,.75,.2,1);transform:scale(1.001)}
 .shot.ok{opacity:1}
-.art .shot img{position:absolute;left:0;top:0;right:auto;bottom:auto;width:100%;height:auto;object-fit:fill;transition:none;display:block;transform:translate3d(0,0,0);animation:qpan 18s ease-in-out var(--d,0s) infinite;animation-play-state:paused;backface-visibility:hidden}
-.tile.vis .art .shot img{animation-play-state:running;will-change:transform}
+.art .shot img{position:absolute;left:0;top:0;right:auto;bottom:auto;width:100%;height:auto;object-fit:fill;transition:none;display:block;transform:translate3d(0,0,0);animation:none;backface-visibility:hidden}
+.tile.on .art .shot img{animation:qpan 18s ease-in-out -2.4s infinite;will-change:transform}
 .shot::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(4,7,12,.72),rgba(4,7,12,.2) 32%,rgba(4,7,12,.12) 55%);transition:opacity .4s}
 .tile.on .shot::after{opacity:.55}
 .tile.on .shot{transform:scale(1.05)}
