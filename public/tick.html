@@ -1,0 +1,267 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Qubic Tick Rider · ride the live Qubic ticks</title>
+<meta name="description" content="A push-your-luck game on the live Qubic blockchain. Your multiplier climbs with every real tick. Secure your points before an Empty Tick crashes the ride.">
+<link rel="canonical" href="https://qubicmap.org/tick">
+<meta property="og:type" content="website"><meta property="og:title" content="QUBIC TICK RIDER"><meta property="og:description" content="Ride the live Qubic ticks. Secure your points before the crash."><meta property="og:url" content="https://qubicmap.org/tick"><meta property="og:image" content="https://qubicmap.org/cover.jpg"><meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#04070c">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{--void:#04070c;--panel:#0a1019cc;--rule:#182434;--ink:#dfe9f3;--muted:#8a9db1;--ice:#cfe6ff;--live:#62d6a0;--neon:#3ef0ff;--warn:#f1bb5c;--bad:#ff5a6e;--mag:#c46bff;
+  --display:"Chakra Petch",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--void);color:var(--ink);font:15px/1.45 var(--mono);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.ui{position:fixed;inset:0;display:flex;flex-direction:column;padding:max(12px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));pointer-events:none}
+.ui>*{pointer-events:auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.brand{font:700 15px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--ink);text-decoration:none}
+.brand b{color:var(--neon)}
+.feed{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);border:1px solid var(--rule);background:var(--panel);border-radius:999px;padding:5px 12px;backdrop-filter:blur(6px)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 10px currentColor;color:var(--warn)}
+.dot.live{background:var(--live);color:var(--live);animation:pulse 1s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(98,214,160,.7)}100%{box-shadow:0 0 0 9px rgba(98,214,160,0)}}
+.feed b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+.icon{border:1px solid var(--rule);background:var(--panel);color:var(--muted);border-radius:8px;min-width:38px;min-height:34px;font:500 13px var(--mono);cursor:pointer}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:12px}
+.stat{border:1px solid var(--rule);background:var(--panel);border-radius:10px;padding:8px 10px;backdrop-filter:blur(6px);min-width:0}
+.stat small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat b{display:block;font:600 18px var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.energy{display:flex;gap:4px;margin-top:5px}
+.energy i{flex:1;height:8px;border-radius:2px;background:var(--neon);box-shadow:0 0 8px var(--neon)}
+.energy i.off{background:#1c2a3a;box-shadow:none}
+.mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none}
+#mult{font:700 clamp(64px,17vw,150px)/1 var(--display);letter-spacing:.01em;font-variant-numeric:tabular-nums;text-shadow:0 0 30px rgba(62,240,255,.55);color:var(--ink);transition:color .2s}
+#mult.hot{color:var(--warn);text-shadow:0 0 34px rgba(241,187,92,.7)}
+#mult.boom{color:var(--bad);text-shadow:0 0 40px rgba(255,90,110,.85)}
+#mult.safe{color:var(--live);text-shadow:0 0 40px rgba(98,214,160,.8)}
+#sub{margin-top:10px;font-size:14px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);min-height:1.5em}
+#sub.bad{color:var(--bad)}#sub.good{color:var(--live)}
+#pts{margin-top:6px;font:600 20px var(--mono);color:var(--neon);min-height:1.4em;font-variant-numeric:tabular-nums}
+.bar{display:flex;gap:10px;justify-content:center}
+.btn{flex:1;max-width:420px;min-height:64px;border:0;border-radius:14px;font:700 20px var(--display);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;color:#03131a;background:linear-gradient(135deg,var(--neon),#7affd6);box-shadow:0 0 28px rgba(62,240,255,.45),inset 0 -3px 0 rgba(0,0,0,.18);transition:transform .08s,filter .2s}
+.btn:active{transform:scale(.97)}
+.btn.secure{background:linear-gradient(135deg,#ffd36b,var(--warn));box-shadow:0 0 30px rgba(241,187,92,.55),inset 0 -3px 0 rgba(0,0,0,.18);animation:throb .9s ease-in-out infinite}
+@keyframes throb{50%{filter:brightness(1.15)}}
+.btn:disabled{filter:grayscale(1) brightness(.55);cursor:default;animation:none}
+.hint{text-align:center;margin-top:8px;font-size:11.5px;color:var(--muted)}
+.ov{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(2,4,8,.72);backdrop-filter:blur(8px);z-index:5}
+.ov.on{display:flex}
+.box{width:100%;max-width:460px;border:1px solid #1f3b50;background:linear-gradient(180deg,#0b1522,#070d16);border-radius:18px;padding:24px 22px;box-shadow:0 0 60px rgba(62,240,255,.15);text-align:center;max-height:100%;overflow:auto}
+.box h1,.box h2{margin:0;font:700 clamp(30px,8vw,42px)/1.02 var(--display);text-transform:uppercase;letter-spacing:.04em}
+.box h1 b,.box h2 b{color:var(--neon)}
+.box p{color:#b4c3d2;margin:12px 0 0;font-size:13.5px}
+.box ul{text-align:left;margin:14px 0 0;padding-left:18px;color:#b4c3d2;font-size:13px;display:grid;gap:6px}
+.box ul b{color:var(--ink)}
+.res{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.res div{border:1px solid var(--rule);border-radius:10px;padding:10px;background:#060b12}
+.res small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.res b{font:600 20px var(--mono);font-variant-numeric:tabular-nums}
+.res .rec{color:var(--warn)}
+.acts{display:grid;gap:10px;margin-top:18px}
+.acts .btn{max-width:none;min-height:56px;font-size:17px}
+.x{background:#fff;color:#000;box-shadow:0 0 22px rgba(255,255,255,.25)}
+.ghost{min-height:44px;border:1px solid var(--rule);background:transparent;color:var(--muted);border-radius:12px;font:500 13px var(--mono);cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}
+.streak{display:inline-block;margin-top:12px;font-size:13px;color:var(--warn);border:1px solid #4a3a1a;background:#1a1408;padding:5px 10px;border-radius:999px}
+.flash{position:fixed;inset:0;pointer-events:none;z-index:3;opacity:0;background:radial-gradient(circle at 50% 55%,rgba(255,90,110,.55),transparent 65%)}
+.flash.g{background:radial-gradient(circle at 50% 55%,rgba(98,214,160,.45),transparent 65%)}
+body.shake .ui{animation:shake .45s}
+@keyframes shake{20%{transform:translate(-8px,3px)}40%{transform:translate(7px,-4px)}60%{transform:translate(-5px,2px)}80%{transform:translate(3px,-1px)}}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.stat b{font-size:16px}.btn{min-height:60px;font-size:18px}}
+@media (prefers-reduced-motion:reduce){.dot.live,.btn.secure{animation:none}body.shake .ui{animation:none}}
+</style></head><body>
+<canvas id="cv" aria-hidden="true"></canvas>
+<div class="flash" id="flash"></div>
+<div class="ui">
+  <div class="top">
+    <a class="brand" href="/">QUBIC <b>TICK</b> RIDER</a>
+    <div class="feed" title="Qubic network tick"><span class="dot" id="dot"></span><span id="mode">CONNECTING</span> · TICK <b id="tick">—</b></div>
+    <button class="icon" id="snd" type="button" aria-label="Sound">♪ ON</button>
+  </div>
+  <div class="stats">
+    <div class="stat"><small>Score</small><b id="score">0</b></div>
+    <div class="stat"><small>Energy</small><div class="energy" id="energy"></div></div>
+    <div class="stat"><small>High score</small><b id="hi">0</b></div>
+    <div class="stat"><small>Streak</small><b id="streak">0 🔥</b></div>
+  </div>
+  <div class="mid">
+    <div id="mult">1.00x</div>
+    <div id="sub">Ready to ride</div>
+    <div id="pts"></div>
+  </div>
+  <div class="bar"><button class="btn" id="go" type="button">Start ride</button></div>
+  <div class="hint" id="hint">Space / tap · each real Qubic tick raises your multiplier</div>
+</div>
+
+<div class="ov on" id="intro"><div class="box">
+  <h1>QUBIC <b>TICK</b> RIDER</h1>
+  <p>Your multiplier climbs with every <b>live tick</b> of the Qubic network. Any tick can be an Empty Tick.</p>
+  <ul>
+    <li><b>START RIDE</b>: the multiplier starts at 1.00x.</li>
+    <li>Each new tick raises it, and the crash risk grows with it.</li>
+    <li><b>SECURE POINTS</b> before the crash to bank the round.</li>
+    <li>A crash wipes the round. You have <b>5 energy</b> per session.</li>
+  </ul>
+  <span class="streak" id="introStreak"></span>
+  <div class="acts"><button class="btn" id="play" type="button">Play</button><a class="ghost" href="/">← qubicmap.org</a></div>
+</div></div>
+
+<div class="ov" id="over"><div class="box">
+  <h2>RIDE <b>OVER</b></h2>
+  <div class="res">
+    <div><small>Score</small><b id="rScore">0</b></div>
+    <div><small>Best multiplier</small><b id="rMult">1.00x</b></div>
+    <div><small>High score</small><b id="rHi">0</b></div>
+    <div><small>Crashed at tick</small><b id="rTick">—</b></div>
+  </div>
+  <p id="rMsg"></p>
+  <div class="acts">
+    <button class="btn x" id="share" type="button">Share on 𝕏</button>
+    <button class="btn" id="again" type="button">Play again</button>
+    <a class="ghost" href="/">← qubicmap.org</a>
+  </div>
+</div></div>
+
+<script>
+(function(){
+"use strict";
+/* ---------------- storage (wrapped: private mode can throw) ---------------- */
+var KEY="qm_tickrider_v1";
+function load(){try{var s=JSON.parse(localStorage.getItem(KEY)||"{}");return s&&typeof s==="object"?s:{}}catch(e){return {}}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+var S=load();S.hi=+S.hi||0;S.bestMult=+S.bestMult||1;S.streak=+S.streak||0;S.last=S.last||"";S.sound=S.sound!==false;
+function today(d){d=d||new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function touchStreak(){var t=today();if(S.last===t)return;var y=new Date();y.setDate(y.getDate()-1);S.streak=S.last===today(y)?S.streak+1:1;S.last=t;save()}
+(function(){var y=new Date();y.setDate(y.getDate()-1);if(S.last&&S.last!==today()&&S.last!==today(y)){S.streak=0;save()}})();
+
+/* ---------------- DOM ---------------- */
+var $=function(id){return document.getElementById(id)};
+var elMult=$("mult"),elSub=$("sub"),elPts=$("pts"),elGo=$("go"),elTick=$("tick"),elMode=$("mode"),elDot=$("dot");
+var fmt=function(n){return Math.round(n).toLocaleString("en-US")};
+
+/* ---------------- audio (one context, resumed on every gesture: iOS safe) ---------------- */
+var AC=null;
+function ac(){if(!S.sound)return null;try{if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C()}if(AC.state!=="running")AC.resume();return AC}catch(e){return null}}
+function tone(f,d,type,g,slide){var a=ac();if(!a)return;try{var o=a.createOscillator(),v=a.createGain(),t=a.currentTime;o.type=type||"sine";o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);
+  v.gain.setValueAtTime(0.0001,t);v.gain.exponentialRampToValueAtTime(g||.12,t+.01);v.gain.exponentialRampToValueAtTime(0.0001,t+d);o.connect(v).connect(a.destination);o.start(t);o.stop(t+d+.02)}catch(e){}}
+function noise(d,g){var a=ac();if(!a)return;try{var n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(var i=0;i<n;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/n,2.2);
+  var s=a.createBufferSource(),f=a.createBiquadFilter(),v=a.createGain();s.buffer=b;f.type="lowpass";f.frequency.value=900;v.gain.value=g||.5;s.connect(f).connect(v).connect(a.destination);s.start()}catch(e){}}
+var sfx={tick:function(k){tone(330*Math.pow(1.045,Math.min(k,40)),.09,"triangle",.09)},start:function(){tone(220,.18,"sawtooth",.07,660)},
+  secure:function(){[523,659,784,1047].forEach(function(f,i){setTimeout(function(){tone(f,.16,"square",.06)},i*70)})},
+  crash:function(){noise(.7,.55);tone(160,.6,"sawtooth",.12,40)}};
+function setSndLabel(){$("snd").textContent=S.sound?"♪ ON":"♪ OFF"}
+$("snd").onclick=function(){S.sound=!S.sound;save();setSndLabel();if(S.sound)tone(660,.08,"triangle",.08)};setSndLabel();
+
+/* ---------------- Qubic tick feed: live API, realistic simulation as fallback ---------------- */
+var FEED={tick:0,live:null,lastChange:0,fails:0};
+var listeners=[];
+function emit(t){listeners.forEach(function(f){f(t)})}
+function setTick(t,live){if(!(t>FEED.tick)&&!(live&&!FEED.live&&t>1e6))return;FEED.tick=t;FEED.lastChange=performance.now();elTick.textContent=fmt(t);if(FEED.live!==live){FEED.live=live;elMode.textContent=live?"LIVE":"SIMULATION";elDot.className="dot"+(live?" live":"")}emit(t)}
+var URLS=["https://rpc.qubic.org/v1/tick-info","https://rpc.qubic.org/v1/status"];
+function parseTick(j){if(!j)return 0;var c=j.tickInfo||j.lastProcessedTick||j;var t=+(c.tick||c.tickNumber||(j.lastProcessedTick&&j.lastProcessedTick.tickNumber)||0);return t>1e6?t:0}
+function poll(){
+  var ctl=typeof AbortController!=="undefined"?new AbortController():null,timer=setTimeout(function(){if(ctl)ctl.abort()},2500);
+  fetch(URLS[FEED.fails%2===0?0:1]+"?_="+Date.now(),{cache:"no-store",signal:ctl?ctl.signal:undefined}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(j){
+    clearTimeout(timer);var t=parseTick(j);if(!t)throw 0;FEED.fails=0;if(FEED.live&&t===FEED.tick&&performance.now()-FEED.lastChange<=4500)return;
+    if(t>FEED.tick||!FEED.live)setTick(t,true);
+    else if(FEED.live&&performance.now()-FEED.lastChange>4500)simStep(); /* network stalled: keep the game moving */
+  }).catch(function(){clearTimeout(timer);FEED.fails++;if(FEED.fails>=2||!FEED.tick)simStep()});
+}
+var simBase=86030000+Math.floor((Date.now()-Date.UTC(2026,9,21,17,0))/1000);
+function simStep(){if(!FEED.tick)FEED.tick=simBase;setTick(FEED.tick+1+(Math.random()<.18?1:0),false)}
+poll();setInterval(poll,1000);
+setTimeout(function(){if(!FEED.tick)simStep()},2600);
+
+/* ---------------- game ---------------- */
+var MAXE=5,G={state:"idle",energy:MAXE,score:0,mult:1,shown:1,steps:0,round:0,sessBest:1,crashTick:0,lastTick:0};
+var CRASH=["EMPTY TICK DETECTED","QUORUM GLITCH","TICK REORG","COMPUTOR TIMEOUT","EMPTY TICK DETECTED"];
+function multAt(k){return Math.pow(1.075,k)+0.004*k*k}
+function riskAt(k){return Math.min(.34,.055+.011*k)}
+function roundPts(m){return Math.round((m-1)*1000)}
+function drawEnergy(){var e=$("energy");e.textContent="";for(var i=0;i<MAXE;i++){var b=document.createElement("i");if(i>=G.energy)b.className="off";e.appendChild(b)}}
+function hud(){$("score").textContent=fmt(G.score);$("hi").textContent=fmt(S.hi);$("streak").textContent=S.streak+" 🔥";drawEnergy()}
+function sub(t,c){elSub.textContent=t;elSub.className=c||""}
+function setBtn(){if(G.state==="ride"){elGo.textContent="Secure points";elGo.className="btn secure";elGo.disabled=false}
+  else{elGo.textContent=G.energy>0?"Start ride":"Game over";elGo.className="btn";elGo.disabled=G.state==="pause"||G.energy<=0}}
+function start(){if(G.state!=="idle"||G.energy<=0)return;ac();touchStreak();G.state="ride";G.mult=1;G.shown=1;G.steps=0;G.round++;elMult.className="";elPts.textContent="+0";sub("Riding · tick #"+fmt(FEED.tick||0));sfx.start();curve.reset();setBtn();hud()}
+function secure(){if(G.state!=="ride")return;var p=roundPts(G.mult);G.score+=p;G.sessBest=Math.max(G.sessBest,G.mult);G.state="pause";G.energy--;
+  elMult.className="safe";elMult.textContent=G.mult.toFixed(2)+"x";sub("Secured at tick #"+fmt(FEED.tick),"good");elPts.textContent="+"+fmt(p)+" pts";
+  sfx.secure();flash(true);burst(curve.headX,curve.headY,70,["#62d6a0","#3ef0ff","#ffffff"]);if(navigator.vibrate)try{navigator.vibrate(30)}catch(e){}
+  hud();setBtn();setTimeout(next,1300)}
+function crash(t){G.state="pause";G.energy--;G.crashTick=t;G.sessBest=Math.max(G.sessBest,G.mult);
+  elMult.className="boom";elMult.textContent=G.mult.toFixed(2)+"x";sub(CRASH[Math.floor(Math.random()*CRASH.length)]+" · #"+fmt(t),"bad");elPts.textContent="round lost";
+  sfx.crash();flash(false);shake();burst(curve.headX,curve.headY,140,["#ff5a6e","#f1bb5c","#c46bff","#ffffff"]);curve.dead=true;if(navigator.vibrate)try{navigator.vibrate([60,40,90])}catch(e){}
+  hud();setBtn();setTimeout(next,1600)}
+function next(){if(G.energy<=0)return over();G.state="idle";elMult.className="";elMult.textContent="1.00x";G.shown=1;elPts.textContent="";sub("Energy left: "+G.energy);setBtn();curve.reset()}
+listeners.push(function(t){G.lastTick=t;floaters.push({t:"#"+fmt(t),x:Math.random(),y:1,a:1});
+  if(G.state!=="ride")return;
+  if(Math.random()<riskAt(G.steps))return crash(t);
+  G.steps++;G.mult=multAt(G.steps);sfx.tick(G.steps);sub("Tick #"+fmt(t)+" validated");elPts.textContent="+"+fmt(roundPts(G.mult));
+  elMult.className=riskAt(G.steps)>.2?"hot":"";spark(curve.headX,curve.headY)});
+function over(){G.state="over";var rec=G.score>S.hi;if(rec)S.hi=G.score;S.bestMult=Math.max(S.bestMult,G.sessBest);save();hud();
+  $("rScore").textContent=fmt(G.score);$("rMult").textContent=G.sessBest.toFixed(2)+"x";$("rHi").textContent=fmt(S.hi);$("rHi").className=rec?"rec":"";
+  $("rTick").textContent=G.crashTick?"#"+fmt(G.crashTick):"none 😎";
+  $("rMsg").textContent=(rec?"New high score! ":"")+"Best ever multiplier: "+S.bestMult.toFixed(2)+"x · streak "+S.streak+" day"+(S.streak>1?"s":"")+" 🔥";
+  $("over").classList.add("on");setBtn()}
+function reset(){G.state="idle";G.energy=MAXE;G.score=0;G.sessBest=1;G.crashTick=0;G.mult=1;G.shown=1;elMult.className="";elMult.textContent="1.00x";elPts.textContent="";sub("Ready to ride");$("over").classList.remove("on");curve.reset();hud();setBtn()}
+function act(){if(G.state==="ride")secure();else if(G.state==="idle")start()}
+elGo.addEventListener("click",act);
+document.addEventListener("keydown",function(e){if((e.code==="Space"||e.key==="Enter")&&!$("intro").classList.contains("on")&&!$("over").classList.contains("on")){e.preventDefault();act()}});
+$("play").onclick=function(){ac();$("intro").classList.remove("on")};
+$("again").onclick=function(){ac();reset()};
+$("share").onclick=function(){
+  var tick=G.crashTick||G.lastTick||FEED.tick;
+  var txt="⚡ I rode the Qubic blockchain up to a "+G.sessBest.toFixed(2)+"x multiplier and scored "+fmt(G.score)+" pts before crashing at Tick #"+fmt(tick)+"! 🚀\nCan you survive the Empty Ticks?\nPlay live on https://qubicmap.org/tick";
+  window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(txt),"_blank","noopener,width=600,height=520")};
+$("introStreak").textContent=S.streak?"🔥 "+S.streak+"-day streak · keep it alive":"🔥 Play daily to build your streak";
+function flash(good){var f=$("flash");f.className="flash"+(good?" g":"");f.style.transition="none";f.style.opacity=1;requestAnimationFrame(function(){f.style.transition="opacity .7s";f.style.opacity=0})}
+function shake(){document.body.classList.remove("shake");void document.body.offsetWidth;document.body.classList.add("shake")}
+document.addEventListener("visibilitychange",function(){if(document.hidden&&G.state==="ride")secure()}); /* no crash while the tab is hidden */
+
+/* ---------------- canvas: grid, energy curve, particles, floating ticks ---------------- */
+var cv=$("cv"),cx=cv.getContext("2d"),W=0,H=0,DPR=1,reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+function size(){DPR=Math.min(2,window.devicePixelRatio||1);W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;cx.setTransform(DPR,0,0,DPR,0,0)}
+addEventListener("resize",size);size();
+var P=[],floaters=[],stars=[];for(var i=0;i<70;i++)stars.push({x:Math.random(),y:Math.random(),z:Math.random()*.8+.2});
+function burst(x,y,n,cols){if(reduce)n=Math.floor(n/4);for(var i=0;i<n;i++){var a=Math.random()*Math.PI*2,s=Math.random()*7+1.5;P.push({x:x,y:y,vx:Math.cos(a)*s,vy:Math.sin(a)*s-1.5,l:1,d:Math.random()*.02+.012,c:cols[i%cols.length],r:Math.random()*2.6+1})}}
+function spark(x,y){burst(x,y,14,["#3ef0ff","#7affd6","#ffffff"])}
+var curve={pts:[],dead:false,headX:0,headY:0,reset:function(){this.pts=[];this.dead=false}};
+var t0=performance.now(),last=t0;
+function frame(now){var dt=Math.min(.05,(now-last)/1000);last=now;
+  if(G.state==="ride"){G.shown+=(G.mult-G.shown)*Math.min(1,dt*6);elMult.textContent=G.shown.toFixed(2)+"x"}
+  cx.clearRect(0,0,W,H);
+  var g=cx.createRadialGradient(W/2,H*.62,0,W/2,H*.62,Math.max(W,H)*.75);g.addColorStop(0,G.state==="ride"&&riskAt(G.steps)>.2?"#1a1206":"#071722");g.addColorStop(1,"#04070c");cx.fillStyle=g;cx.fillRect(0,0,W,H);
+  var sp=G.state==="ride"?1+G.steps*.12:.35;
+  stars.forEach(function(s){s.x-=dt*.02*s.z*sp;if(s.x<0){s.x=1;s.y=Math.random()}cx.fillStyle="rgba(207,230,255,"+(.15+.5*s.z)+")";cx.fillRect(s.x*W,s.y*H,1.4*s.z+.4,1.4*s.z+.4)});
+  /* perspective grid */
+  var hz=H*.58,off=((now-t0)/1000*40*sp)%40;cx.strokeStyle="rgba(62,240,255,.10)";cx.lineWidth=1;cx.beginPath();
+  for(var k=0;k<14;k++){var yy=hz+Math.pow(k/14,2)*(H-hz)+off*(k/14);cx.moveTo(0,yy);cx.lineTo(W,yy)}
+  for(var v=-12;v<=12;v++){cx.moveTo(W/2+v*30,hz);cx.lineTo(W/2+v*W/6,H)}cx.stroke();
+  /* curve: x = time since ride start, y = multiplier (log scale) */
+  var L=W*.08,R=W*.92,B=H*.86,T=H*.24;
+  if(G.state==="ride"||curve.dead||elMult.className==="safe"){
+    if(G.state==="ride")curve.pts.push(G.shown);
+    var n=curve.pts.length,maxM=Math.max(2,G.shown*1.25),span=Math.max(240,n);
+    cx.lineJoin="round";cx.lineCap="round";
+    var col=curve.dead?"#ff5a6e":elMult.className==="safe"?"#62d6a0":riskAt(G.steps)>.2?"#f1bb5c":"#3ef0ff";
+    cx.beginPath();for(var j=0;j<n;j++){var px=L+(R-L)*(j/span),py=B-(B-T)*(Math.log(curve.pts[j])/Math.log(maxM));if(j)cx.lineTo(px,py);else cx.moveTo(px,py);curve.headX=px;curve.headY=py}
+    cx.shadowColor=col;cx.shadowBlur=24;cx.strokeStyle=col;cx.lineWidth=4;cx.stroke();cx.shadowBlur=0;
+    if(n>1){cx.lineTo(curve.headX,B);cx.lineTo(L,B);cx.closePath();var fg=cx.createLinearGradient(0,T,0,B);fg.addColorStop(0,col+"44");fg.addColorStop(1,col+"00");cx.fillStyle=fg;cx.fill()}
+    if(!curve.dead&&n){cx.beginPath();cx.arc(curve.headX,curve.headY,7+Math.sin(now/90)*2,0,Math.PI*2);cx.fillStyle="#fff";cx.shadowColor=col;cx.shadowBlur=30;cx.fill();cx.shadowBlur=0;
+      if(G.state==="ride"&&!reduce&&Math.random()<.7)P.push({x:curve.headX,y:curve.headY,vx:-Math.random()*2-1,vy:(Math.random()-.5)*1.4,l:1,d:.03,c:col,r:Math.random()*2+1})}
+  } else {curve.headX=W/2;curve.headY=H*.6}
+  /* particles */
+  for(var q=P.length-1;q>=0;q--){var p=P[q];p.x+=p.vx;p.y+=p.vy;p.vy+=.06;p.vx*=.99;p.l-=p.d;if(p.l<=0){P.splice(q,1);continue}cx.globalAlpha=p.l;cx.fillStyle=p.c;cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);cx.fill()}
+  cx.globalAlpha=1;
+  /* floating real tick numbers */
+  cx.font="500 12px 'IBM Plex Mono',monospace";
+  for(var f=floaters.length-1;f>=0;f--){var o=floaters[f];o.y-=dt*.09;o.a-=dt*.35;if(o.a<=0){floaters.splice(f,1);continue}cx.fillStyle="rgba(62,240,255,"+o.a*.45+")";cx.fillText(o.t,o.x*(W-120)+20,H*.3+o.y*H*.55)}
+  if(P.length>600)P.splice(0,P.length-600);
+  requestAnimationFrame(frame)}
+requestAnimationFrame(frame);
+hud();setBtn();
+})();
+</script>
+</body></html>
