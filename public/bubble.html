@@ -225,7 +225,8 @@ function evo(){var e=$("evo");e.textContent="";LV.forEach(function(t,i){var d=do
 
 /* ---------------- input: aim, release to shoot, tap the next bubble to swap ---------------- */
 function pos(e){var r=cv.getBoundingClientRect();return [(e.clientX-r.left)/r.width*AW,(e.clientY-r.top)/r.height*AH]}
-function setAim(p){var a=Math.atan2(p[1]-SHY,p[0]-AW/2);if(a>0)a=p[0]<AW/2?-Math.PI+.12:-.12;G.aim=Math.max(-Math.PI+.12,Math.min(-.12,a))}
+/* aim from a pivot below the cannon: a touch anywhere (even next to or under the cannon) gives a sensible upward angle; near-vertical snaps straight up */
+function setAim(p){var dy=Math.min(-28,-Math.abs(p[1]-(SHY+70))),a=Math.atan2(dy,p[0]-AW/2);if(Math.abs(a+Math.PI/2)<.035)a=-Math.PI/2;G.aim=Math.max(-Math.PI+.12,Math.min(-.12,a))}
 var down=false;
 function onNext(p){return Math.hypot(p[0]-(AW/2+70),p[1]-(SHY+8))<R+8}
 cv.addEventListener("pointerdown",function(e){if(!G.on)return;ac();var p=pos(e);if(onNext(p)){swap();return}down=true;setAim(p);try{cv.setPointerCapture(e.pointerId)}catch(_){}e.preventDefault()});
