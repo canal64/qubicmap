@@ -95,7 +95,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
   <ul>
     <li><b>Aim</b> with your finger or mouse, <b>release</b> to shoot. Bounce off the walls for tricky shots.</li>
     <li>Bubbles left hanging with nothing above them <b>fall</b> for a big bonus.</li>
-    <li>Pops in a row make a <b>combo</b>. The ceiling comes down after 7 shots, then faster after every drop. You have 4 seconds per shot.</li>
+    <li>Pops in a row make a <b>combo</b>. The ceiling comes down after 5 shots, then faster after every drop. You have 4 seconds per shot.</li>
     <li>Pop a group next to a <b>Qubic bubble</b> to set it off: it blasts everything around it. Make it fall for a bonus too.</li>
     <li>Lucky <b>$CFB</b> coin in your cannon? It takes the colour of what it hits, pops even a pair, and pumps the points x2.</li>
     <li>Pops charge the <b>⚡ Quorum Pulse</b>: it blasts the lowest row.</li>
@@ -156,7 +156,7 @@ var teamC={};TEAMS.forEach(function(t){teamC[t[0]]=t[1]});
 function epochNow(){return 234+Math.floor((Date.now()-Date.UTC(2026,9,7,12,0,0))/(7*864e5))}
 function kindsFor(lv){return Math.min(K.length,5+Math.floor(lv/2))}      /* 4 kinds at level 1, 7 from level 7 */
 function rowsFor(lv){return Math.min(9,6+Math.floor(lv/2))}
-function missLimit(lv){return Math.max(3,7-(G.dropN||0))}              /* 7 shots before the first drop, one fewer after each drop, down to 3 */            /* the ceiling drops every 8 shots, down to 5 (classic Puzzle Bobble rule) */
+function missLimit(lv){return Math.max(2,5-(G.dropN||0))}              /* 5 shots before the first drop, one fewer after each drop, down to 2 */            /* the ceiling drops every 8 shots, down to 5 (classic Puzzle Bobble rule) */
 var SHOT_TIME=4;                                                          /* seconds before the bubble fires by itself */
 
 /* ---------------- storage ---------------- */
