@@ -286,6 +286,18 @@ async function github(request, env, waitUntil) {
   return out;
 }
 
+// Qubic Bubble: current epoch leader and last epoch's champion, for the arcade line on the home page.
+async function arcade(request, env, waitUntil) {
+  const origin = new URL(request.url).origin, cache = typeof caches !== "undefined" && caches.default, key = new Request(origin + "/api/arcade-cache");
+  const hit = cache && (await cache.match(key));
+  if (hit) return await hit.json();
+  const ep = 234 + Math.floor((Date.now() - Date.UTC(2026, 9, 7, 12, 0, 0)) / (7 * 86400000));
+  const q = "SELECT name, score, team FROM bubble_scores WHERE epoch = ?1 ORDER BY score DESC, ts ASC LIMIT 1";
+  const [lead, champ] = await Promise.all([env.DB.prepare(q).bind(ep).first(), env.DB.prepare(q).bind(ep - 1).first()]);
+  const out = { ep, lead: lead || null, champ: champ ? { ep: ep - 1, ...champ } : null };
+  if (cache) waitUntil(cache.put(key, new Response(JSON.stringify(out), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=120" } })));
+  return out;
+}
 async function release(request, env) {
   const row = await env.DB.prepare("SELECT v FROM kv WHERE k = 'ghrel'").first();
   return row ? JSON.parse(row.v) : null;
@@ -298,13 +310,14 @@ export async function onRequest(context) {
   const res = await next();
   try {
     if (request.method !== "GET" || !(res.headers.get("content-type") || "").includes("text/html")) return res;
-    const [l, n, k, m, g, r] = await Promise.all([
+    const [l, n, k, m, g, r, a] = await Promise.all([
       likes(request, env, waitUntil).catch(() => null),
       news(request, env, waitUntil).catch(() => null),
       links(request, env, waitUntil).catch(() => null),
       media(request, env, waitUntil).catch(() => null),
       github(request, env, waitUntil).catch(() => null),
       release(request, env).catch(() => null),
+      arcade(request, env, waitUntil).catch(() => null),
     ]);
     let script = "";
     if (l) script += "window.__LIKES=" + safe(l) + ";";
@@ -313,6 +326,7 @@ export async function onRequest(context) {
     if (m && Object.keys(m).length) script += "window.__MEDIA=" + safe(m) + ";";
     if (g && g.length) script += "window.__GH=" + safe(g) + ";";
     if (r && r.v) script += "window.__REL=" + safe(r) + ";";
+    if (a && (a.lead || a.champ)) script += "window.__ARC=" + safe(a) + ";";
     if (!script) return res;
     const out = new HTMLRewriter()
       .on("head", { element(el) { el.append("<script>" + script + "</script>", { html: true }); } })

@@ -66,6 +66,13 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
 .lb li .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lb li .s{font-variant-numeric:tabular-nums;color:var(--ink)}.lb li .k{color:var(--muted)}
 .lb li.me{border-color:var(--neon);color:var(--neon)}.lb li.ex{color:var(--muted);grid-template-columns:2.4em 1fr}
 .leader{margin-top:10px;font-size:12px;color:var(--muted)}.leader b{color:var(--warn);font-weight:500}
+.teams{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
+.teams button{min-height:38px;border:1px solid var(--rule);background:#060b12;color:var(--muted);border-radius:9px;font:600 12px var(--mono);cursor:pointer;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.teams button[aria-pressed="true"]{color:#04070c;border-color:transparent;font-weight:700}
+.tlab{margin-top:14px;font:600 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.tb{display:grid;gap:4px}.tb div{display:grid;grid-template-columns:5.2em 1fr auto;gap:8px;align-items:center;font-size:12.5px}
+.tb i{display:block;height:10px;border-radius:3px;min-width:3px}.tb span{font-variant-numeric:tabular-nums;color:var(--muted)}
+.tag{font-size:11px;color:var(--muted)}
 @media (prefers-reduced-motion:reduce){#pulse.ready{animation:none}}
 </style></head><body>
 <div class="top">
@@ -93,6 +100,8 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
     <li>Pops charge the <b>⚡ Quorum Pulse</b>: it blasts the two lowest rows.</li>
     <li>Clear the board to reach the next level, from <b>Trit</b> all the way to <b>Aigarth</b>.</li>
   </ul>
+  <div class="tlab">Pick your team</div>
+  <div class="teams" id="teams"></div>
   <span class="streak" id="introStreak"></span>
   <div class="leader" id="leader"></div>
   <div class="acts"><button class="btn" id="play" type="button">Play</button><button class="ghost" id="introBoard" type="button">🏆 Epoch board</button></div>
@@ -111,6 +120,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
   <div class="rank" id="rRank"></div>
   <div class="acts">
     <button class="btn x" id="share" type="button">Share on 𝕏</button>
+    <button class="ghost" id="card" type="button">🖼 Share score card</button>
     <button class="btn" id="again" type="button">Play again</button>
     <button class="ghost" id="overBoard" type="button">🏆 Epoch board</button>
     <a class="ghost" href="/arcade">← Arcade</a>
@@ -119,7 +129,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
 
 <div class="ov" id="board"><div class="box">
   <h2 id="bTitle">EPOCH <b>BOARD</b></h2>
-  <div class="lb"><h3>Top 10 this epoch</h3><ol id="olBoard"></ol><div class="leader" id="bPlayers"></div><h3>Champions</h3><ol id="olChamps"></ol></div>
+  <div class="lb"><h3>Team battle</h3><div class="tb" id="tBattle"></div><h3>Top 10 this epoch</h3><ol id="olBoard"></ol><div class="leader" id="bPlayers"></div><h3>Champions</h3><ol id="olChamps"></ol></div>
   <div class="acts"><button class="btn" id="bPlay" type="button">Play</button></div>
 </div></div>
 
@@ -140,6 +150,9 @@ var K=[
  {n:"Quorum",l:"676",c:"#ff4fd8",g:"#a3178a"}];
 var LV=[{n:"Trit",c:"#e3e9f0"},{n:"CPU Core",c:"#8fd0ff"},{n:"Miner",c:"#3ef0ff"},{n:"Tick",c:"#2fe39a"},{n:"Smart Contract",c:"#ffd23f"},{n:"Computor",c:"#ff8a2a"},{n:"Quorum",c:"#ff4fd8"},{n:"Qassandra",c:"#a46bff"},{n:"Anna AI",c:"#ff3b55"},{n:"AIGARTH",c:"#ffd23f"}];
 var QB=99;function kc(k){return k===QB?"#3ef0ff":K[k].c}
+var TEAMS=[["QCAP","#ffd23f"],["qMine","#ff8a2a"],["QSwap","#3ef0ff"],["Coded","#2fe39a"],["QuHub","#8fd0ff"],["Qearn","#a46bff"],["Anna","#ff3b55"],["Aigarth","#fff6d6"]];
+var teamC={};TEAMS.forEach(function(t){teamC[t[0]]=t[1]});
+function epochNow(){return 234+Math.floor((Date.now()-Date.UTC(2026,9,7,12,0,0))/(7*864e5))}
 function kindsFor(lv){return Math.min(K.length,3+Math.floor((lv+1)/2))}   /* 4 kinds at level 1, 7 from level 7 */
 function rowsFor(lv){return Math.min(9,4+lv)}
 
@@ -212,9 +225,11 @@ var parts=[],fall=[],texts=[],rings=[];
 function present(){var s={};grid.forEach(function(row){row&&row.forEach(function(k){if(k!=null)s[k]=1})});var a=Object.keys(s).map(Number).filter(function(k){return k!==QB});return a.length?a:null}
 function pick(){var a=present();if(a)return a[Math.floor(Math.random()*a.length)];return Math.floor(Math.random()*kindsFor(G.lvl))}
 function fillRow(){var r=[],n=kindsFor(G.lvl),len=COLS,prev=-1;for(var c=0;c<len;c++){var k=Math.random()<.45&&prev>=0?prev:Math.floor(Math.random()*n);r.push(k);prev=k}return r}
-function newLevel(){grid=[];off=0;G.drop=0;G.miss=0;var rows=rowsFor(G.lvl);for(var r=0;r<rows;r++){var row=fillRow();row.length=cols(r);grid.push(row)}
+var DIG={"0":"111101101101111","1":"010110010010111","2":"111001111100111","3":"111001111001111","4":"101101111001001","5":"111100111001111","6":"111100111101111","7":"111001010010010","8":"111101111101111","9":"111101111001111"};
+function epochRows(){var d=String(epochNow()).slice(-3).padStart(3,"0"),rows=[];for(var r=0;r<5;r++){var row=[];row.length=cols(r);for(var c=0;c<cols(r);c++){var x=c+((r+off)%2?.5:0),gi=Math.floor(x/4),gx=Math.floor(x)-gi*4,on=gx<3&&gi<3&&DIG[d[gi]][r*3+gx]==="1";row[c]=on?2:(Math.random()<.18?1:0)}rows.push(row)}return rows}
+function newLevel(){grid=[];off=0;G.drop=0;G.miss=0;var rows=rowsFor(G.lvl);if(G.lvl===0){grid=epochRows();rows=grid.length}else for(var r=0;r<rows;r++){var row=fillRow();row.length=cols(r);grid.push(row)}
   for(var q=0;q<1+Math.floor(G.lvl/3);q++){var qr=1+Math.floor(Math.random()*(rows-1)),qc=Math.floor(Math.random()*cols(qr));grid[qr][qc]=QB}G.cur=pick();G.next=pick();
-  texts.push({x:AW/2,y:AH*.5,s:"LEVEL "+(G.lvl+1)+" · "+LV[Math.min(9,G.lvl)].n.toUpperCase(),c:LV[Math.min(9,G.lvl)].c,l:1.8,z:1.3});evo();hud()}
+  texts.push({x:AW/2,y:AH*.5,s:G.lvl===0?"EPOCH "+epochNow()+" · LEVEL 1":"LEVEL "+(G.lvl+1)+" · "+LV[Math.min(9,G.lvl)].n.toUpperCase(),c:LV[Math.min(9,G.lvl)].c,l:1.8,z:1.3});evo();hud()}
 function reset(){G.on=true;G.score=0;G.lvl=0;G.shots=0;G.combo=0;G.bestCombo=1;G.gauge=0;G.armed=false;G.shot=null;G.shake=0;G.busy=0;parts=[];fall=[];texts=[];rings=[];
   touchStreak();newLevel();$("over").classList.remove("on");newToken()}
 function hud(){$("score").textContent=fmt(G.score);$("lvl").textContent=G.lvl+1;$("best").textContent=fmt(Math.max(S.hi,G.score));
@@ -367,7 +382,7 @@ function preRank(sc){if(!BOARD)return "";var t=BOARD.top,r=1;t.forEach(function(
 function submit(name,show){var sc=Math.round(G.score),tk=gameToken,el=$("rRank");
   if(!tk){el.textContent="Score not saved: no connection";return}
   el.textContent="Saving…";
-  fetch(API+"score",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({g:GN,token:tk,score:sc,name:name})})
+  fetch(API+"score",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({g:GN,token:tk,score:sc,name:name,team:teamGet()})})
   .then(function(r){return r.json().then(function(j){return {ok:r.ok,j:j}})})
   .then(function(x){if(!x.ok){el.textContent=x.j.error==="pick another name"?"That name is not allowed, pick another one":"Score not saved: "+(x.j.error||"error");return}
     BOARD=x.j;leader();var me=x.j.me;
@@ -375,11 +390,16 @@ function submit(name,show){var sc=Math.round(G.score),tk=gameToken,el=$("rRank")
     if(show)showBoard()})
   .catch(function(){el.textContent="Score not saved: no connection"})}
 function row(ol,k,n,sc,cls){var li=document.createElement("li");if(cls)li.className=cls;[["k",k],["n",n],["s",sc]].forEach(function(p){if(p[0]==="s"&&sc==="")return;var sp=document.createElement("span");sp.className=p[0];sp.textContent=p[1];li.appendChild(sp)});ol.appendChild(li)}
+function battle(T){var el=$("tBattle");el.textContent="";var mx=T.length?T[0].score:0,mine=teamGet();
+  if(!T.length){var p=document.createElement("div");p.className="tag";p.textContent="No team score yet. Pick a team and play.";el.appendChild(p);return}
+  T.forEach(function(t){var d=document.createElement("div"),n=document.createElement("b"),bar=document.createElement("i"),v=document.createElement("span");n.textContent=t.team;n.style.color=teamC[t.team]||"#dfe9f3";if(t.team===mine)n.textContent+=" ★";
+    bar.style.width=Math.max(2,Math.round(t.score/mx*100))+"%";bar.style.background=teamC[t.team]||"#3ef0ff";v.textContent=fmt(t.score)+" · "+t.players;d.appendChild(n);var w=document.createElement("div");w.style.display="block";w.appendChild(bar);d.appendChild(w);d.appendChild(v);el.appendChild(d)})}
 function render(b){var ol=$("olBoard"),oc=$("olChamps");ol.textContent="";oc.textContent="";
   if(!b){row(ol,"–","Board unavailable right now","","ex");$("bPlayers").textContent="";return}
   $("bTitle").textContent="";$("bTitle").append("EPOCH ");var eb=document.createElement("b");eb.textContent=String(b.epoch|0);$("bTitle").appendChild(eb);$("bTitle").append(" BOARD");
   if(!b.top.length)row(ol,"–","No scores yet. Be the first.","","ex");
-  b.top.forEach(function(x,i){row(ol,i+1,x.name,fmt(x.score),b.me&&b.me.rank===i+1?"me":"")});
+  b.top.forEach(function(x,i){row(ol,i+1,x.name+(x.team?" · "+x.team:""),fmt(x.score),b.me&&b.me.rank===i+1?"me":"")});
+  battle(b.teams||[]);
   if(b.me&&b.me.rank>10){row(ol,"…","","","ex");row(ol,b.me.rank,b.me.name,fmt(b.me.score),"me")}
   $("bPlayers").textContent=b.players+(b.players===1?" player":" players")+" this epoch · resets every Wednesday 12:00 UTC";
   var ch=b.champions||[];if(!ch.length)row(oc,"♛","First champion crowned "+new Date(b.endsAt).toUTCString().slice(0,11),"","ex");
@@ -390,6 +410,27 @@ $("bPlay").onclick=function(){ac();$("board").classList.remove("on");reset()};
 $("fName").addEventListener("submit",function(e){e.preventDefault();var n=$("iName").value.trim().replace(/\s+/g," ").slice(0,16);if(!n){$("iName").focus();return}nameSet(n);submit(n,true)});
 getBoard();
 
+/* ---------------- teams ---------------- */
+function teamGet(){try{var t=localStorage.getItem("qm_bubble_team")||"";return teamC[t]?t:""}catch(e){return ""}}
+function teamSet(t){try{localStorage.setItem("qm_bubble_team",t)}catch(e){}paintTeams()}
+function paintTeams(){var el=$("teams"),cur=teamGet();el.textContent="";TEAMS.forEach(function(t){var b=document.createElement("button");b.type="button";b.textContent=t[0];b.setAttribute("aria-pressed",t[0]===cur);if(t[0]===cur)b.style.background=t[1];b.onclick=function(){teamSet(t[0]);tone(780,.06,"triangle",.06)};el.appendChild(b)})}
+paintTeams();
+
+/* ---------------- score card image ---------------- */
+function scoreCard(){var W=1200,H=675,k=document.createElement("canvas");k.width=W;k.height=H;var g=k.getContext("2d"),D="'Chakra Petch',system-ui,sans-serif",M="'IBM Plex Mono',monospace";
+  var bg=g.createLinearGradient(0,0,W,H);bg.addColorStop(0,"#0a0f22");bg.addColorStop(1,"#04070c");g.fillStyle=bg;g.fillRect(0,0,W,H);
+  g.strokeStyle="rgba(62,240,255,.06)";for(var x=0;x<=W;x+=60){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke()}for(var y=0;y<=H;y+=60){g.beginPath();g.moveTo(0,y);g.lineTo(W,y);g.stroke()}
+  for(var i=0;i<26;i++){var r=Math.floor(i/6),c=i%6,kk=(i*5+r)%K.length,sp=SPR[i===8?QB:kk];if(sp)g.drawImage(sp.c,760+c*68+(r%2?34:0),70+r*60,64,64)}
+  g.font="700 64px "+D;g.fillStyle="#dfe9f3";g.fillText("QUBIC",80,130);g.fillStyle="#3ef0ff";g.fillText("BUBBLE",80+g.measureText("QUBIC ").width,130);
+  g.font="500 22px "+M;g.fillStyle="#8a9db1";var tm=teamGet();g.fillText("EPOCH "+epochNow()+"  ·  REACHED "+LV[Math.min(9,G.lvl)].n.toUpperCase()+(tm?"  ·  TEAM "+tm.toUpperCase():""),82,175);
+  g.font="400 28px "+M;g.fillText("SCORE",80,330);g.font="700 190px "+D;g.fillStyle="#fff";g.shadowColor="rgba(62,240,255,.5)";g.shadowBlur=30;g.fillText(fmt(G.score),70,505);g.shadowBlur=0;
+  var nm=nameGet();if(nm){g.font="600 34px "+M;g.fillStyle=tm?teamC[tm]:"#62d6a0";g.fillText(nm,84,570)}
+  g.textAlign="right";g.font="700 30px "+D;g.fillStyle="#ffd23f";g.fillText("CAN YOU UNLOCK AIGARTH?",W-80,530);g.font="500 34px "+M;g.fillStyle="#dfe9f3";g.fillText("qubicmap.org/bubble",W-80,585);return k}
+$("card").onclick=function(){var btn=this,k=scoreCard(),txt=shareTxt();k.toBlob(function(bl){if(!bl)return;var f;try{f=new File([bl],"qubic-bubble-"+Math.round(G.score)+".png",{type:"image/png"})}catch(e){}
+  if(f&&navigator.canShare&&navigator.canShare({files:[f]})){navigator.share({files:[f],text:txt}).catch(function(){});return}
+  var u=URL.createObjectURL(bl),a=document.createElement("a");a.href=u;a.download="qubic-bubble-"+Math.round(G.score)+".png";document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);btn.textContent="Image saved ✓";setTimeout(function(){btn.textContent="🖼 Share score card"},2500)},"image/png")};
+function shareTxt(){var tm=teamGet();return "🧠 I reached the "+LV[Math.min(9,G.lvl)].n+" tier and scored "+fmt(G.score)+" pts on Qubic Bubble"+(tm?" for Team "+tm:"")+"! ⚡\nCan you unlock Aigarth?\nPlay now on https://qubicmap.org/bubble"}
+
 /* ---------------- game over ---------------- */
 function gameOver(){if(!G.on)return;G.on=false;G.shot=null;sfx.over();G.shake=22;
   grid.forEach(function(row,r){row&&row.forEach(function(k,c){if(k!=null){fall.push({x:cellX(r,c),y:cellY(r),vx:(Math.random()-.5)*200,vy:-Math.random()*200,k:k,a:0});grid[r][c]=null}})});
@@ -397,7 +438,7 @@ function gameOver(){if(!G.on)return;G.on=false;G.shot=null;sfx.over();G.shake=22
   setTimeout(function(){var tier=LV[Math.min(9,G.lvl)].n;$("rScore").textContent=fmt(G.score);$("rTier").textContent=tier;$("rHi").textContent=fmt(S.hi);$("rHi").className=rec?"rec":"";$("rCombo").textContent="x"+G.bestCombo;
     var nm=nameGet();$("iName").value=nm;$("fName").hidden=G.score<1;$("rRank").textContent=G.score>0?preRank(G.score):"";if(G.score>0&&nm)submit(nm,false);
     $("rMsg").textContent=(rec?"New high score! ":"")+"All-time best level: "+LV[S.max].n+" · streak "+S.streak+" day"+(S.streak>1?"s":"")+" 🔥";$("over").classList.add("on")},900)}
-$("share").onclick=function(){var txt="🧠 I reached the "+LV[Math.min(9,G.lvl)].n+" tier and scored "+fmt(G.score)+" pts on Qubic Bubble! ⚡\nCan you unlock Aigarth?\nPlay now on https://qubicmap.org/bubble";
+$("share").onclick=function(){var txt=shareTxt();
   window.open("https://twitter.com/intent/tweet?text="+encodeURIComponent(txt),"_blank","noopener,width=600,height=520")};
 $("again").onclick=function(){ac();reset()};
 $("play").onclick=function(){ac();$("intro").classList.remove("on");reset()};

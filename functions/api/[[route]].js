@@ -36,8 +36,11 @@ const GAMES = {
   whack: { table: "whack_scores", maxMs: 5 * 60 * 1000, ok: (score, took) => took >= 25000 && score <= (took / 1000) * 15 }, // 30 s rounds
   breaker: { table: "breaker_scores", maxMs: 60 * 60 * 1000, ok: (score, took) => took >= 8000 && score <= 30 + (took / 1000) * 10 }, // bricks plus epoch bonuses
   quorum: { table: "quorum_scores", maxMs: 60 * 60 * 1000, ok: (score, took) => took >= 10000 && score <= 10 + (took / 1000) * 6 }, // ~3 kills a second at most
-  bubble: { table: "bubble_scores", max: 20000000, maxMs: 3 * 60 * 60 * 1000, ok: (score, took) => took >= 15000 && score <= 2000 + (took / 1000) * 6000 }, // pops, drops and combos, a few thousand points a second at most
+  bubble: { table: "bubble_scores", teams: true, max: 20000000, maxMs: 3 * 60 * 60 * 1000, ok: (score, took) => took >= 15000 && score <= 2000 + (took / 1000) * 6000 }, // pops, drops and combos, a few thousand points a second at most
 };
+// Qubic Bubble teams: one per ecosystem project; a team's score is the sum of its players' best scores this epoch.
+const TEAMS = ["QCAP", "qMine", "QSwap", "Coded", "QuHub", "Qearn", "Anna", "Aigarth"];
+const teamOf = (v) => (TEAMS.includes(v) ? v : "");
 const gameOf = (v) => (Object.prototype.hasOwnProperty.call(GAMES, v) ? v : "flappy");
 const BLOCK = /(fuck|shit|bitch|cunt|nigg|fagg|whore|slut|nazi|hitler|porn|pute|salope|connard|encul|merde|bite)/i;
 
@@ -55,13 +58,15 @@ function cleanName(v) {
 }
 async function board(env, voter, g) {
   const T = GAMES[g].table, ep = epochNow();
-  const top = await env.DB.prepare(`SELECT name, score FROM ${T} WHERE epoch = ?1 ORDER BY score DESC, ts ASC LIMIT 10`).bind(ep.n).all();
+  const tm = !!GAMES[g].teams;
+  const top = await env.DB.prepare(`SELECT name, score${tm ? ", team" : ""} FROM ${T} WHERE epoch = ?1 ORDER BY score DESC, ts ASC LIMIT 10`).bind(ep.n).all();
   let me = null;
   if (voter) {
-    const row = await env.DB.prepare(`SELECT name, score, ts FROM ${T} WHERE epoch = ?1 AND voter = ?2`).bind(ep.n, voter).first();
+    const row = await env.DB.prepare(`SELECT name, score, ts${tm ? ", team" : ""} FROM ${T} WHERE epoch = ?1 AND voter = ?2`).bind(ep.n, voter).first();
     if (row) {
       const above = await env.DB.prepare(`SELECT count(*) AS c FROM ${T} WHERE epoch = ?1 AND (score > ?2 OR (score = ?2 AND ts < ?3))`).bind(ep.n, row.score, row.ts).first();
       me = { name: row.name, score: row.score, rank: above.c + 1 };
+      if (tm) me.team = row.team;
     }
   }
   const players = await env.DB.prepare(`SELECT count(*) AS c FROM ${T} WHERE epoch = ?1`).bind(ep.n).first();
@@ -71,8 +76,13 @@ async function board(env, voter, g) {
   const champs = await env.DB.prepare(
     `SELECT epoch, name, score FROM (SELECT epoch, name, score, ROW_NUMBER() OVER (PARTITION BY epoch ORDER BY score DESC, ts ASC) AS r FROM ${T} WHERE epoch < ?1) WHERE r = 1 ORDER BY epoch DESC LIMIT 20`
   ).bind(ep.n).all();
-  return { game: g, epoch: ep.n, endsAt: ep.endsAt, players: players.c, top: top.results, me,
+  const out = { game: g, epoch: ep.n, endsAt: ep.endsAt, players: players.c, top: top.results, me,
            ladder: ladder.results.map((r) => [r.name, r.score, r.me ? 1 : 0]), champions: champs.results };
+  if (tm) {
+    const t = await env.DB.prepare(`SELECT team, sum(score) AS score, count(*) AS players FROM ${T} WHERE epoch = ?1 AND team != '' GROUP BY team ORDER BY score DESC`).bind(ep.n).all();
+    out.teams = t.results;
+  }
+  return out;
 }
 async function game(url, request, env) {
   if (url.pathname === "/api/game/board" && request.method === "GET") {
@@ -98,6 +108,15 @@ async function game(url, request, env) {
     if (!name) return json({ error: "pick another name" }, 400);
     const ep = epochNow(started);
     if (ep.n !== epochNow(now).n) return json({ error: "the epoch changed during this game" }, 409);
+    if (G.teams) {
+      await env.DB.prepare(
+        `INSERT INTO ${G.table} (epoch, voter, name, score, ts, team) VALUES (?1, ?2, ?3, ?4, ?5, ?6) ` +
+        `ON CONFLICT(epoch, voter) DO UPDATE SET name = excluded.name, team = CASE WHEN excluded.team != '' THEN excluded.team ELSE ${G.table}.team END, ` +
+        `ts = CASE WHEN excluded.score > ${G.table}.score THEN excluded.ts ELSE ${G.table}.ts END, ` +
+        `score = max(${G.table}.score, excluded.score)`
+      ).bind(ep.n, voter, name, score, now, teamOf(b && b.team)).run();
+      return json(await board(env, voter, g));
+    }
     await env.DB.prepare(
       `INSERT INTO ${G.table} (epoch, voter, name, score, ts) VALUES (?1, ?2, ?3, ?4, ?5) ` +
       `ON CONFLICT(epoch, voter) DO UPDATE SET name = excluded.name, ` +
