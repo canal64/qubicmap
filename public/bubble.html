@@ -95,7 +95,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
   <ul>
     <li><b>Aim</b> with your finger or mouse, <b>release</b> to shoot. Bounce off the walls for tricky shots.</li>
     <li>Bubbles left hanging with nothing above them <b>fall</b> for a big bonus.</li>
-    <li>Pops in a row make a <b>combo</b>. The ceiling comes down every 7 shots, whatever you hit. You have 4 seconds per shot.</li>
+    <li>Pops in a row make a <b>combo</b>. The ceiling comes down after 7 shots, then faster after every drop. You have 4 seconds per shot.</li>
     <li>Pop a group next to a <b>Qubic bubble</b> to set it off: it blasts everything around it. Make it fall for a bonus too.</li>
     <li>Lucky <b>$CFB</b> coin in your cannon? It takes the colour of what it hits, pops even a pair, and pumps the points x2.</li>
     <li>Pops charge the <b>⚡ Quorum Pulse</b>: it blasts the lowest row.</li>
@@ -156,7 +156,7 @@ var teamC={};TEAMS.forEach(function(t){teamC[t[0]]=t[1]});
 function epochNow(){return 234+Math.floor((Date.now()-Date.UTC(2026,9,7,12,0,0))/(7*864e5))}
 function kindsFor(lv){return Math.min(K.length,5+Math.floor(lv/2))}      /* 4 kinds at level 1, 7 from level 7 */
 function rowsFor(lv){return Math.min(9,6+Math.floor(lv/2))}
-function missLimit(lv){return Math.max(4,7-Math.floor(lv/2))}            /* the ceiling drops every 8 shots, down to 5 (classic Puzzle Bobble rule) */
+function missLimit(lv){return Math.max(3,7-(G.dropN||0))}              /* 7 shots before the first drop, one fewer after each drop, down to 3 */            /* the ceiling drops every 8 shots, down to 5 (classic Puzzle Bobble rule) */
 var SHOT_TIME=4;                                                          /* seconds before the bubble fires by itself */
 
 /* ---------------- storage ---------------- */
@@ -191,7 +191,7 @@ function sndLabel(){$("snd").textContent=S.sound?"♪ ON":"♪ OFF"}
 $("snd").onclick=function(){S.sound=!S.sound;save();sndLabel();if(S.sound)tone(660,.08,"triangle",.08)};sndLabel();
 
 /* ---------------- board geometry (logical units) ---------------- */
-var COLS=11,R=19,AW=COLS*R*2,ROWH=R*Math.sqrt(3),TOPY=R+4,AH=640,SHY=AH-46,DEAD=SHY-58,SPEED=1250;
+var COLS=11,R=19,AW=COLS*R*2,ROWH=R*Math.sqrt(3),TOPY=R+4,AH=640,SHY=AH-46,DEAD=SHY-58-3*ROWH,SPEED=1250;
 var cv=$("cv"),cx=cv.getContext("2d"),SC=1,DPR=1;
 function layout(){var st=$("stage").getBoundingClientRect();DPR=Math.min(2.5,window.devicePixelRatio||1);
   SC=Math.max(.3,Math.min(st.width/AW,st.height/AH));cv.style.width=Math.floor(AW*SC)+"px";cv.style.height=Math.floor(AH*SC)+"px";
@@ -236,7 +236,7 @@ function epochRows(){var d=String(epochNow()).slice(-3).padStart(3,"0"),rows=[];
 function newLevel(){grid=[];off=0;G.drop=0;G.miss=0;G.clock=0;var rows=rowsFor(G.lvl);if(G.lvl===0){grid=epochRows();rows=grid.length}else for(var r=0;r<rows;r++){var row=fillRow();row.length=cols(r);grid.push(row)}
   for(var q=0;q<1+Math.floor(G.lvl/3);q++){var qr=1+Math.floor(Math.random()*(rows-1)),qc=Math.floor(Math.random()*cols(qr));grid[qr][qc]=QB}G.cur=pick();G.next=pick();
   texts.push({x:AW/2,y:AH*.5,s:G.lvl===0?"EPOCH "+epochNow()+" · LEVEL 1":"LEVEL "+(G.lvl+1)+" · "+LV[Math.min(9,G.lvl)].n.toUpperCase(),c:LV[Math.min(9,G.lvl)].c,l:1.8,z:1.3});evo();hud()}
-function reset(){G.on=true;G.score=0;G.lvl=0;G.shots=0;G.combo=0;G.bestCombo=1;G.gauge=0;G.armed=false;G.shot=null;G.shake=0;G.busy=0;parts=[];fall=[];texts=[];rings=[];
+function reset(){G.on=true;G.score=0;G.lvl=0;G.shots=0;G.combo=0;G.bestCombo=1;G.gauge=0;G.dropN=0;G.armed=false;G.shot=null;G.shake=0;G.busy=0;parts=[];fall=[];texts=[];rings=[];
   touchStreak();newLevel();$("over").classList.remove("on");newToken()}
 function hud(){$("score").textContent=fmt(G.score);$("lvl").textContent=G.lvl+1;$("best").textContent=fmt(Math.max(S.hi,G.score));
   $("gauge").style.width=Math.min(100,G.gauge)+"%";var ready=G.gauge>=100&&G.on;$("pulse").disabled=!ready||G.armed;$("pulse").classList.toggle("ready",ready&&!G.armed);$("pulse").classList.toggle("armed",G.armed)}
@@ -318,7 +318,7 @@ function qubicBlast(popped){var seen={},queue=[];popped.forEach(function(p){neig
   return fired}
 function clear(){return grid.every(function(row){return !row||row.every(function(k){return k==null})})}
 function trim(){while(grid.length&&grid[grid.length-1].every(function(k){return k==null}))grid.pop()}
-function ceiling(){off++;var row=fillRow();row.length=cols(0);if(Math.random()<.3)row[Math.floor(Math.random()*row.length)]=QB;grid.unshift(row);G.drop=-ROWH;G.dropV=0;sfx.ceiling();G.shake=Math.max(G.shake,8);texts.push({x:AW/2,y:AH*.6,s:"CEILING DOWN",c:"#ff4e64",l:1.1,z:1.1})}
+function ceiling(){off++;G.dropN=(G.dropN||0)+1;var row=fillRow();row.length=cols(0);if(Math.random()<.3)row[Math.floor(Math.random()*row.length)]=QB;grid.unshift(row);G.drop=-ROWH;G.dropV=0;sfx.ceiling();G.shake=Math.max(G.shake,8);texts.push({x:AW/2,y:AH*.6,s:"CEILING DOWN",c:"#ff4e64",l:1.1,z:1.1})}
 function lowestY(){for(var r=grid.length-1;r>=0;r--)if(grid[r]&&grid[r].some(function(k){return k!=null}))return cellY(r)+R;return 0}
 function check(){if(lowestY()>DEAD&&G.drop>=0)gameOver()}
 function pulseBlast(x,y){var rows=[];for(var r=grid.length-1;r>=0&&rows.length<1;r--)if(grid[r]&&grid[r].some(function(k){return k!=null}))rows.push(r);
