@@ -171,7 +171,18 @@ function touchStreak(){var t=day();if(S.last===t)return;S.streak=S.last===yday()
 
 /* ---------------- audio: one context, resumed on gestures (iOS safe) ---------------- */
 var AC=null,MASTER=null;
-function ac(){if(!S.sound)return null;try{if(!AC){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;AC=new C();MASTER=AC.createGain();MASTER.gain.value=.8;MASTER.connect(AC.destination)}if(AC.state!=="running")AC.resume();return AC}catch(e){return null}}
+/* Same approach as the other arcade games: iOS can leave the context "interrupted" (another app, a call, the keyboard,
+   a few games), so on every touch it is resumed, and re-created if it stays stuck. "playback" also plays with the silent switch on. */
+function mk(){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;var a=new C();MASTER=a.createGain();MASTER.gain.value=.8;MASTER.connect(a.destination);return a}
+function unlock(){try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
+  try{if(AC&&(AC.state==="closed"||AC.state==="interrupted")){if(AC.state!=="closed"){try{var q=AC.close();if(q&&q.catch)q.catch(function(){})}catch(e){}}AC=null}
+    AC=AC||mk();var a=AC;if(!a)return;
+    if(a.state!=="running"){var p=a.resume();if(p&&p.catch)p.catch(function(){});
+      setTimeout(function(){if(AC===a&&a.state!=="running"){try{var q=a.close();if(q&&q.catch)q.catch(function(){})}catch(e){}AC=mk();try{var r=AC.resume();if(r&&r.catch)r.catch(function(){})}catch(e){}}},300)}
+    var b=a.createBuffer(1,1,22050),src=a.createBufferSource();src.buffer=b;src.connect(a.destination);src.start(0)}catch(e){}}
+["pointerdown","touchend","keydown","click"].forEach(function(ev){document.addEventListener(ev,unlock,true)});
+document.addEventListener("visibilitychange",function(){if(!document.hidden&&AC&&AC.state!=="running"){try{AC.resume()}catch(e){}}});
+function ac(){if(!S.sound||!AC||AC.state!=="running")return null;return AC}
 function tone(f,d,type,g,slide,delay){var a=ac();if(!a)return;try{var t=a.currentTime+(delay||0),o=a.createOscillator(),v=a.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);
   v.gain.setValueAtTime(.0001,t);v.gain.exponentialRampToValueAtTime(g||.1,t+.008);v.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(v);v.connect(MASTER);o.start(t);o.stop(t+d+.03)}catch(e){}}
 function noise(d,g,fq){var a=ac();if(!a)return;try{var n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(var i=0;i<n;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
