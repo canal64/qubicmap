@@ -65,6 +65,14 @@ export async function refreshWhales(env) {
   // Approximate time: Bob's log entries carry no timestamp, so place each tick back from now at ~2 ticks a second.
   const fresh = found.filter((w) => !seen.has(w.h + ":" + w.id)).map((w) => ({ ...w, s: now - Math.max(0, tip - w.t) * 500, fl: label(w.f), dl: label(w.d) }));
   const list = [...fresh, ...prev].sort((x, y) => y.t - x.t).slice(0, KEEP);
+  // Biggest transfer of each epoch, for the weekly recap (/week).
+  const ep = 234 + Math.floor((now - Date.UTC(2026, 9, 7, 12, 0, 0)) / (7 * 86400000));
+  const top = fresh.reduce((m, w) => (!m || w.a > m.a ? w : m), null);
+  if (top) {
+    const mx = await env.DB.prepare("SELECT v FROM kv WHERE k = ?1").bind("whale_max:" + ep).first();
+    if (!mx || JSON.parse(mx.v).a < top.a)
+      await env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES (?1, ?2, ?3) ON CONFLICT(k) DO UPDATE SET v = ?2, ts = ?3").bind("whale_max:" + ep, JSON.stringify(top), now).run();
+  }
   const stmts = [env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('whale_state', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind(JSON.stringify({ last: ok, run: now, n: found.length }), now)];
   if (fresh.length || !row) stmts.push(env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('whales', ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind(JSON.stringify(list), now));
   await env.DB.batch(stmts);
