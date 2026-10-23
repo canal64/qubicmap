@@ -298,6 +298,7 @@ async function arcade(request, env, waitUntil) {
   if (cache) waitUntil(cache.put(key, new Response(JSON.stringify(out), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=120" } })));
   return out;
 }
+import { whales } from "./whales.js";
 async function release(request, env) {
   const row = await env.DB.prepare("SELECT v FROM kv WHERE k = 'ghrel'").first();
   return row ? JSON.parse(row.v) : null;
@@ -310,7 +311,7 @@ export async function onRequest(context) {
   const res = await next();
   try {
     if (request.method !== "GET" || !(res.headers.get("content-type") || "").includes("text/html")) return res;
-    const [l, n, k, m, g, r, a] = await Promise.all([
+    const [l, n, k, m, g, r, a, wh] = await Promise.all([
       likes(request, env, waitUntil).catch(() => null),
       news(request, env, waitUntil).catch(() => null),
       links(request, env, waitUntil).catch(() => null),
@@ -318,6 +319,7 @@ export async function onRequest(context) {
       github(request, env, waitUntil).catch(() => null),
       release(request, env).catch(() => null),
       arcade(request, env, waitUntil).catch(() => null),
+      whales(env).catch(() => null),
     ]);
     let script = "";
     if (l) script += "window.__LIKES=" + safe(l) + ";";
@@ -327,6 +329,7 @@ export async function onRequest(context) {
     if (g && g.length) script += "window.__GH=" + safe(g) + ";";
     if (r && r.v) script += "window.__REL=" + safe(r) + ";";
     if (a && (a.lead || a.champ)) script += "window.__ARC=" + safe(a) + ";";
+    if (wh && wh.length) script += "window.__WH=" + safe(wh) + ";";
     if (!script) return res;
     const out = new HTMLRewriter()
       .on("head", { element(el) { el.append("<script>" + script + "</script>", { html: true }); } })

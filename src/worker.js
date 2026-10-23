@@ -3,6 +3,7 @@
 import { onRequest as home, githubIfStale } from "../functions/index.js";
 import { onRequest as api } from "../functions/api/[[route]].js";
 import { serveMedia, mediaBatch } from "../functions/media.js";
+import { refreshWhales } from "../functions/whales.js";
 
 const MAIN = "qubicmap.org";
 
@@ -11,6 +12,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(mediaBatch(env, true).catch(() => {}));
     ctx.waitUntil(githubIfStale(env).catch(() => {}));
+    ctx.waitUntil(refreshWhales(env).catch(() => {}));
   },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
