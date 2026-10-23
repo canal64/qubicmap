@@ -86,7 +86,7 @@ async function weekData(env, ep) {
   const start = epochStart(ep), end = start + WEEK;
   const [champ, teams, wmax, rel] = await Promise.all([
     env.DB.prepare("SELECT name, score, team FROM bubble_scores WHERE epoch = ?1 ORDER BY score DESC, ts ASC LIMIT 1").bind(ep).first().catch(() => null),
-    env.DB.prepare("SELECT team, sum(score) AS score, count(*) AS players FROM bubble_scores WHERE epoch = ?1 AND team != '' GROUP BY team ORDER BY score DESC LIMIT 1").bind(ep).first().catch(() => null),
+    env.DB.prepare("SELECT team, sum(score) AS score, count(*) AS players FROM (SELECT team, score, ROW_NUMBER() OVER (PARTITION BY lower(name) ORDER BY score DESC, ts ASC) AS r FROM bubble_scores WHERE epoch = ?1) WHERE r = 1 AND team != '' GROUP BY team ORDER BY score DESC LIMIT 1").bind(ep).first().catch(() => null),
     env.DB.prepare("SELECT v FROM kv WHERE k = ?1").bind("whale_max:" + ep).first().catch(() => null),
     env.DB.prepare("SELECT v FROM kv WHERE k = 'ghrel'").first().catch(() => null),
   ]);

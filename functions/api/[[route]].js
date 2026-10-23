@@ -59,19 +59,26 @@ function cleanName(v) {
 async function board(env, voter, g) {
   const T = GAMES[g].table, ep = epochNow();
   const tm = !!GAMES[g].teams;
-  const top = await env.DB.prepare(`SELECT name, score${tm ? ", team" : ""} FROM ${T} WHERE epoch = ?1 ORDER BY score DESC, ts ASC LIMIT 10`).bind(ep.n).all();
-  let me = null;
+  // One line per player name: a player whose connection changes (Wi-Fi, mobile data) gets a new visitor code,
+  // so the same name can have several rows. Only each name's best score counts, in the board and in the team battle.
+  const B = `(SELECT name, score, ts, voter${tm ? ", team" : ""}, ROW_NUMBER() OVER (PARTITION BY lower(name) ORDER BY score DESC, ts ASC) AS r FROM ${T} WHERE epoch = ?1)`;
+  const top = await env.DB.prepare(`SELECT name, score${tm ? ", team" : ""} FROM ${B} WHERE r = 1 ORDER BY score DESC, ts ASC LIMIT 10`).bind(ep.n).all();
+  let me = null, myName = "";
   if (voter) {
-    const row = await env.DB.prepare(`SELECT name, score, ts${tm ? ", team" : ""} FROM ${T} WHERE epoch = ?1 AND voter = ?2`).bind(ep.n, voter).first();
-    if (row) {
-      const above = await env.DB.prepare(`SELECT count(*) AS c FROM ${T} WHERE epoch = ?1 AND (score > ?2 OR (score = ?2 AND ts < ?3))`).bind(ep.n, row.score, row.ts).first();
-      me = { name: row.name, score: row.score, rank: above.c + 1 };
-      if (tm) me.team = row.team;
+    const own = await env.DB.prepare(`SELECT name FROM ${T} WHERE epoch = ?1 AND voter = ?2`).bind(ep.n, voter).first();
+    if (own) {
+      myName = own.name;
+      const row = await env.DB.prepare(`SELECT name, score, ts${tm ? ", team" : ""} FROM ${B} WHERE r = 1 AND lower(name) = lower(?2)`).bind(ep.n, myName).first();
+      if (row) {
+        const above = await env.DB.prepare(`SELECT count(*) AS c FROM ${B} WHERE r = 1 AND (score > ?2 OR (score = ?2 AND ts < ?3))`).bind(ep.n, row.score, row.ts).first();
+        me = { name: row.name, score: row.score, rank: above.c + 1 };
+        if (tm) me.team = row.team;
+      }
     }
   }
-  const players = await env.DB.prepare(`SELECT count(*) AS c FROM ${T} WHERE epoch = ?1`).bind(ep.n).first();
-  // Every score this epoch (for the "rival to beat" markers in the game), own row flagged.
-  const ladder = await env.DB.prepare(`SELECT name, score, (voter = ?2) AS me FROM ${T} WHERE epoch = ?1 ORDER BY score DESC, ts ASC LIMIT 300`).bind(ep.n, voter || "").all();
+  const players = await env.DB.prepare(`SELECT count(*) AS c FROM ${B} WHERE r = 1`).bind(ep.n).first();
+  // Every player this epoch (for the "rival to beat" markers in the games), own name flagged.
+  const ladder = await env.DB.prepare(`SELECT name, score, (lower(name) = lower(?2)) AS me FROM ${B} WHERE r = 1 ORDER BY score DESC, ts ASC LIMIT 300`).bind(ep.n, myName).all();
   // Hall of fame: the winner of each finished epoch.
   const champs = await env.DB.prepare(
     `SELECT epoch, name, score FROM (SELECT epoch, name, score, ROW_NUMBER() OVER (PARTITION BY epoch ORDER BY score DESC, ts ASC) AS r FROM ${T} WHERE epoch < ?1) WHERE r = 1 ORDER BY epoch DESC LIMIT 20`
@@ -79,7 +86,7 @@ async function board(env, voter, g) {
   const out = { game: g, epoch: ep.n, endsAt: ep.endsAt, players: players.c, top: top.results, me,
            ladder: ladder.results.map((r) => [r.name, r.score, r.me ? 1 : 0]), champions: champs.results };
   if (tm) {
-    const t = await env.DB.prepare(`SELECT team, sum(score) AS score, count(*) AS players FROM ${T} WHERE epoch = ?1 AND team != '' GROUP BY team ORDER BY score DESC`).bind(ep.n).all();
+    const t = await env.DB.prepare(`SELECT team, sum(score) AS score, count(*) AS players FROM ${B} WHERE r = 1 AND team != '' GROUP BY team ORDER BY score DESC`).bind(ep.n).all();
     out.teams = t.results;
   }
   return out;
