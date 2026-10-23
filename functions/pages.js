@@ -118,7 +118,7 @@ export async function weekPage(request, env) {
 <section><h2>Share card</h2><canvas id="cv" width="1200" height="675" aria-label="Epoch ${ep} recap card"></canvas>
 <div class="btns"><button class="btn main" type="button" id="dl">Download image</button><a class="btn" href="https://x.com/intent/post?text=${encodeURIComponent(xText)}&url=${encodeURIComponent(SITE + "/week?epoch=" + ep)}" target="_blank" rel="noopener">Post on X</a></div></section>
 <script>
-var C=${JSON.stringify(card).replace(/</g, "\\u003c")};
+var C=${JSON.stringify(card).replace(/</g, "\\u003c").replace(/[\u2028\u2029]/g, "")};
 function draw(){var k=document.getElementById("cv"),g=k.getContext("2d"),W=1200,H=675,D="'Chakra Petch',system-ui,sans-serif",M="'IBM Plex Mono',monospace";
   g.fillStyle="#04070c";g.fillRect(0,0,W,H);g.strokeStyle="#0c131d";for(var x=0;x<=W;x+=60){g.beginPath();g.moveTo(x+.5,0);g.lineTo(x+.5,H);g.stroke()}for(var y=0;y<=H;y+=60){g.beginPath();g.moveTo(0,y+.5);g.lineTo(W,y+.5);g.stroke()}
   g.fillStyle="#3ef0ff";g.fillRect(0,0,W,8);

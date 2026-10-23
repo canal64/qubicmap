@@ -33,6 +33,13 @@ export default {
     // HSTS: browsers then always use HTTPS for qubicmap.org
     const out = new Response(res.body, res);
     out.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    // Basic hardening: no MIME sniffing, no framing by other sites (clickjacking), no full URLs leaked to other sites,
+    // and no access to camera, microphone or location for any page.
+    out.headers.set("X-Content-Type-Options", "nosniff");
+    out.headers.set("X-Frame-Options", "SAMEORIGIN");
+    out.headers.set("Content-Security-Policy", "frame-ancestors 'self'");
+    out.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+    out.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()");
     return out;
   },
 };

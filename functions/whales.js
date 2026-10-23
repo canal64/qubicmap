@@ -29,7 +29,7 @@ async function call(method, params) {
 }
 async function logs(from, to, out, depth = 0) {
   const res = await call("qubic_getLogs", [{ fromTick: from, toTick: to, logType: 0 }]);
-  const list = Array.isArray(res) ? res : [];
+  const list = Array.isArray(res) ? res.slice(0, 5000) : [];   // never trust the size of a third-party reply
   // If Bob ever caps a reply, split the range so nothing is missed.
   if (list.length >= 1000 && to > from && depth < 3) {
     const mid = Math.floor((from + to) / 2);
@@ -40,7 +40,8 @@ async function logs(from, to, out, depth = 0) {
   for (const l of list) {
     const amt = Number(l.amount);
     if (l.logType === 0 && amt >= MIN_QU && l.source && l.destination)
-      out.push({ h: String(l.transactionHash || ""), t: l.tick, f: l.source, d: l.destination, a: amt, id: l.logId });
+      if (/^[a-z]{60}$/.test(String(l.transactionHash || "")) && /^[A-Z]{60}$/.test(l.source) && /^[A-Z]{60}$/.test(l.destination) && Number.isFinite(amt))
+        out.push({ h: l.transactionHash, t: Number(l.tick) || 0, f: l.source, d: l.destination, a: amt, id: Number(l.logId) || 0 });
   }
 }
 
