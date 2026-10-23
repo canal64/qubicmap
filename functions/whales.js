@@ -71,6 +71,7 @@ export async function refreshWhales(env) {
 }
 
 export async function whales(env) {
-  const row = await env.DB.prepare("SELECT v FROM kv WHERE k = 'whales'").first();
-  return row ? JSON.parse(row.v).slice(0, 12) : [];
+  const [row, st] = await Promise.all([env.DB.prepare("SELECT v FROM kv WHERE k = 'whales'").first(), env.DB.prepare("SELECT v FROM kv WHERE k = 'whale_state'").first()]);
+  const state = st ? JSON.parse(st.v) : {};
+  return { l: row ? JSON.parse(row.v).slice(0, 12) : [], t: state.last || 0, r: state.run || 0 };
 }

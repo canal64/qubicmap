@@ -329,7 +329,7 @@ export async function onRequest(context) {
     if (g && g.length) script += "window.__GH=" + safe(g) + ";";
     if (r && r.v) script += "window.__REL=" + safe(r) + ";";
     if (a && (a.lead || a.champ)) script += "window.__ARC=" + safe(a) + ";";
-    if (wh && wh.length) script += "window.__WH=" + safe(wh) + ";";
+    if (wh && (wh.l.length || wh.t)) script += "window.__WH=" + safe(wh) + ";";
     if (!script) return res;
     const out = new HTMLRewriter()
       .on("head", { element(el) { el.append("<script>" + script + "</script>", { html: true }); } })
