@@ -194,10 +194,10 @@ if(S.last&&S.last!==day()&&S.last!==yday()){S.streak=0;save()}
 function touchStreak(){var t=day();if(S.last===t)return;S.streak=S.last===yday()?S.streak+1:1;S.last=t;save()}
 
 /* ---------------- audio: one context, resumed on gestures (iOS safe) ---------------- */
-var AC=null,MASTER=null;
+var AC=null,MASTER=null,MUS=null;
 /* Same approach as the other arcade games: iOS can leave the context "interrupted" (another app, a call, the keyboard,
    a few games), so on every touch it is resumed, and re-created if it stays stuck. "playback" also plays with the silent switch on. */
-function mk(){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;var a=new C();MASTER=a.createGain();MASTER.gain.value=.7;
+function mk(){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;var a=new C();MASTER=a.createGain();MASTER.gain.value=.7;MUS=a.createGain();MUS.gain.value=.55;MUS.connect(MASTER);
   /* safety limiter: big chains fire dozens of sounds at once; this keeps the sum from clipping */
   try{var k=a.createDynamicsCompressor();k.threshold.value=-14;k.knee.value=8;k.ratio.value=12;k.attack.value=.003;k.release.value=.2;MASTER.connect(k);k.connect(a.destination)}catch(e){MASTER.connect(a.destination)}return a}
 function unlock(){try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
@@ -214,16 +214,35 @@ function tone(f,d,type,g,slide,delay){var a=ac();if(!a)return;try{var t=a.curren
 function noise(d,g,fq){var a=ac();if(!a)return;try{var n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(var i=0;i<n;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
   var s=a.createBufferSource(),f=a.createBiquadFilter(),v=a.createGain();s.buffer=b;f.type="bandpass";f.frequency.value=fq||1200;v.gain.value=g||.3;s.connect(f);f.connect(v);v.connect(MASTER);s.start()}catch(e){}}
 var SCALE=[0,2,4,7,9,12,14,16,19,21,24,26,28,31];
+/* small random pitch offset so repeated sounds never sound like a machine gun */
+function vr(f,a){return f*(1+(Math.random()*2-1)*(a||.06))}
 var sfx={
- shoot:function(){tone(520,.1,"triangle",.08,260)},
- bounce:function(){tone(900,.04,"square",.03)},
- stick:function(){tone(200,.07,"sine",.08,140)},
- pop:function(i,combo){var st=SCALE[Math.min(SCALE.length-1,i+combo)],f=392*Math.pow(2,st/12);tone(f,.14,"triangle",.09,null,i*.045);noise(.05,.12,2600)},
- drop:function(n){for(var i=0;i<Math.min(n,8);i++)tone(700-i*50,.12,"sine",.05,300,.15+i*.05)},
+ shoot:function(){var f=vr(520);tone(f,.1,"triangle",.08,f/2)},
+ bounce:function(){tone(vr(900),.04,"square",.03)},
+ stick:function(){var f=vr(200);tone(f,.07,"sine",.08,f*.7)},
+ pop:function(i,combo){var st=SCALE[Math.min(SCALE.length-1,i+combo)],f=vr(392*Math.pow(2,st/12),.012);tone(f,.14,"triangle",.09,null,i*.045);noise(.05,.12,vr(2600,.15))},
+ drop:function(n){for(var i=0;i<Math.min(n,8);i++)tone(vr(700-i*50,.04),.12,"sine",.05,300,.15+i*.05)},
  ceiling:function(){tone(120,.35,"sawtooth",.09,70);noise(.3,.3,300)},
  pulse:function(){tone(90,.6,"sawtooth",.12,30);noise(.6,.45,500);[523,659,784,1047,1319].forEach(function(f,i){tone(f,.25,"square",.04,null,i*.05)})},
  level:function(){[523,659,784,1047,1319,1568].forEach(function(f,i){tone(f,.4,"triangle",.08,null,i*.08)})},
  over:function(){[392,330,262,196].forEach(function(f,i){tone(f,.35,"triangle",.1,null,i*.14)});noise(.5,.25,400)}};
+/* adaptive music: a 4-chord loop that speeds up and stacks layers as the bubbles near the red line */
+var CH=[[110,[220,261.6,329.6,440]],[87.31,[174.6,220,261.6,349.2]],[130.8,[261.6,329.6,392,523.3]],[98,[196,246.9,293.7,392]]];
+var M={t:0,step:0};
+function danger(){if(!G.on||!grid.length)return 0;var lo=lowestY(),a=TOPY+ROWH*2;return Math.max(0,Math.min(1,(lo-a)/(DEAD-a)))}
+function mnote(f,t,d,type,g){var a=AC;try{var o=a.createOscillator(),v=a.createGain();o.type=type;o.frequency.setValueAtTime(f,t);v.gain.setValueAtTime(.0001,t);v.gain.exponentialRampToValueAtTime(g,t+.01);v.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(v);v.connect(MUS);o.start(t);o.stop(t+d+.03)}catch(e){}}
+function mhat(t,g){var a=AC;try{var n=Math.floor(a.sampleRate*.03),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(var i=0;i<n;i++)c[i]=(Math.random()*2-1)*(1-i/n);var sr=a.createBufferSource(),f=a.createBiquadFilter(),v=a.createGain();sr.buffer=b;f.type="highpass";f.frequency.value=7000;v.gain.value=g;sr.connect(f);f.connect(v);v.connect(MUS);sr.start(t)}catch(e){}}
+function music(){var a=ac();if(!a||!G.on||document.hidden||!MUS){M.t=0;return}
+  if(M.t<a.currentTime)M.t=a.currentTime+.06;
+  var dg=danger(),bpm=96+dg*48,st=60/bpm/4;
+  while(M.t<a.currentTime+.15){var s16=M.step%16,ch=CH[Math.floor(M.step/16)%4],t=M.t;
+    if(s16===0||s16===8)mnote(ch[0],t,st*7,"sine",.09);                                        /* bass, always */
+    if(s16%4===0)mnote(ch[1][0]/2,t,st*1.5,"triangle",.02+dg*.02);                              /* soft pulse on the beat */
+    if(dg>.25||G.lvl>=2){if(s16%2===0)mhat(t,.025+dg*.03)}                                       /* hats: mid-game or getting close */
+    if(dg>.5)mnote(ch[1][s16%4]*2,t,st*.9,"triangle",.018+dg*.015);                              /* arpeggio when it gets tight */
+    if(dg>.8&&s16%4===2)mnote(ch[0]*4,t,st*1.2,"square",.012);                                   /* alarm layer near the red line */
+    M.step++;M.t+=st}}
+setInterval(music,30);
 function sndLabel(){$("snd").textContent=S.sound?"♪ ON":"♪ OFF"}
 $("snd").onclick=function(){S.sound=!S.sound;save();sndLabel();if(S.sound)tone(660,.08,"triangle",.08)};sndLabel();
 
