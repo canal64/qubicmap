@@ -1,51 +1,51 @@
 {
- "epoch": 235,
- "built": "2026-10-23T09:24:59.312Z",
+ "epoch": 236,
+ "built": "2026-10-24T08:15:42.099Z",
  "items": [
   {
    "rank": 1,
-   "id": "IHZUDLTYHRKIGHIUCPPRHDWIJEZAGZBCEYATWYTEBDXKINBICBKDEMDHBGNK",
-   "epoch": 235,
-   "score": 2564,
-   "steps": 240,
-   "built": "2026-10-23T08:44:25.540Z",
-   "solutions": 240
+   "id": "BLHSRACQYBQVCHOXJBLKGUXORELBCBSXIPQWITSVQCFPBYIUSNQZUYMALMNC",
+   "epoch": 236,
+   "score": 3159,
+   "steps": 133,
+   "built": "2026-10-24T08:05:46.401Z",
+   "solutions": 425
   },
   {
    "rank": 2,
-   "id": "DWZQLPTEVLUTVBVVUQIUWGJRXHKBQRGCYJYCTUMZOAFCHWRYPNUIROLAMFZK",
-   "epoch": 235,
-   "score": 2605,
-   "steps": 217,
-   "built": "2026-10-23T08:37:28.013Z",
-   "solutions": 217
+   "id": "CZJEFDBCMZCZDADMWQQLIYKWFWUCIUQUDLVUDHMMDCMANRWVRUUDJEHAQLDF",
+   "epoch": 236,
+   "score": 3173,
+   "steps": 143,
+   "built": "2026-10-24T08:07:46.068Z",
+   "solutions": 1601
   },
   {
    "rank": 3,
-   "id": "MJCBZXOJAEQLYGWSDPYZPEVINPVBJIDRKFVRBFJXTCBQHPGIKTGQFWMDVLXN",
-   "epoch": 235,
-   "score": 2629,
-   "steps": 347,
-   "built": "2026-10-23T08:52:37.596Z",
-   "solutions": 6079
+   "id": "JRIIZSGLOYVGBEJTIELPXGQYXJUASWFFZUUBQUUKFGVGKGIJROXZFEHBUTAM",
+   "epoch": 236,
+   "score": 3184,
+   "steps": 139,
+   "built": "2026-10-24T08:09:42.476Z",
+   "solutions": 390
   },
   {
-   "rank": 6,
-   "id": "MIQUJXYUUFOJDBYSAJVGAMRZQXPBWFXMFJRAPFFKJEWXEWWMRJNJSNDEIATE",
-   "epoch": 235,
-   "score": 2684,
-   "steps": 196,
-   "built": "2026-10-23T09:07:22.883Z",
-   "solutions": 196
+   "rank": 4,
+   "id": "WXRLGGJZTETWOEYVSLXQQMBCBPVCPFQBNWLVKXDRLGGCOHDSDWITQXRAZCIF",
+   "epoch": 236,
+   "score": 3210,
+   "steps": 131,
+   "built": "2026-10-24T08:10:19.186Z",
+   "solutions": 434
   },
   {
-   "rank": 7,
-   "id": "WEWQWGLNRPQQIHAMMNZVHBRWRRHAXSBFMLVMIYQLHDNYVCOXTWNUZSSDTXTN",
-   "epoch": 235,
-   "score": 2714,
-   "steps": 287,
-   "built": "2026-10-23T09:24:44.350Z",
-   "solutions": 9804
+   "rank": 5,
+   "id": "UXTEUEFRNZDGOGBRUGQOGRHUXTHACIGHUKBOROQNXDCMVRXNFBRPKPAHACEM",
+   "epoch": 236,
+   "score": 3212,
+   "steps": 138,
+   "built": "2026-10-24T08:11:55.903Z",
+   "solutions": 380
   }
  ]
 }
