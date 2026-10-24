@@ -361,11 +361,12 @@ var ADDED={"Match Lords":"2026-10-13"};
 var SEEN={},NEWN=0;
 (function(){var now=Date.now(),st=null;try{st=JSON.parse(localStorage.getItem("qem.seen")||"null")}catch(e){}
   var first=!st||typeof st!=="object"||!Object.keys(st).length;st=first?{}:st;
-  E.forEach(function(e){var k=slug(e[1]);if(!(k in st))st[k]=first?0:now});SEEN=st;
+  /* OLD: long-standing projects added late to the map; they never get the New badge */
+  var OLD=["QDoge"];E.forEach(function(e){var k=slug(e[1]);if(OLD.indexOf(e[1])>=0)st[k]=0;else if(!(k in st))st[k]=first?0:now});SEEN=st;
   try{localStorage.setItem("qem.seen",JSON.stringify(st))}catch(e){}
   NEWN=E.filter(function(e){return isNew(e[1])}).length})();
 function isNew(name){var a=ADDED[name],t=a?Date.parse(a+"T00:00:00Z"):0,s=SEEN[slug(name)]||0,now=Date.now();return (t&&now-t<14*864e5)||(s&&now-s<3*864e5)}
-var DISCORD=[["QLoan", "DeFi"], ["QHeart (Pulse)", "lottery game, SC 24"], ["QTC Quixotic Trade Bot", "trading bot"], ["Qx Monitor", "tool"], ["$STATSY / $HOME", "meme coins"], ["QDoge", "meme coin"], ["Bite", "NFTs, game"], ["Wolf Pack Token", "game token, SC 28"], ["Match Lords [$ML]", "game"], ["QSTEP", "game"], ["Qub'zylthar Nexus", "game"], ["qRace", "game"], ["Den of Misfits", "NFTs"], ["Qubic Church", "NFTs"], ["Glyph", ""], ["tasQ", ""], ["QubicLink", ""], ["Qubic Guardians", "tool"], ["ZK Proofs development", "infrastructure"], ["Qubic TypeScript SDK", "developer tool"], ["Qubic.NET", "developer tool"], ["Mundus audit service", "audits"], ["Qubic Spotlight", "tool"], ["Qubic Listings Board", "listings"], ["Qubic India", "community"], ["Qubic Charity Fund", "community"]];
+var DISCORD=[["QLoan", "DeFi"], ["QHeart (Pulse)", "lottery game, SC 24"], ["QTC Quixotic Trade Bot", "trading bot"], ["Qx Monitor", "tool"], ["$STATSY / $HOME", "meme coins"], ["Bite", "NFTs, game"], ["Wolf Pack Token", "game token, SC 28"], ["Match Lords [$ML]", "game"], ["QSTEP", "game"], ["Qub'zylthar Nexus", "game"], ["qRace", "game"], ["Den of Misfits", "NFTs"], ["Qubic Church", "NFTs"], ["Glyph", ""], ["tasQ", ""], ["QubicLink", ""], ["Qubic Guardians", "tool"], ["ZK Proofs development", "infrastructure"], ["Qubic TypeScript SDK", "developer tool"], ["Qubic.NET", "developer tool"], ["Mundus audit service", "audits"], ["Qubic Spotlight", "tool"], ["Qubic Listings Board", "listings"], ["Qubic India", "community"], ["Qubic Charity Fund", "community"]];
 
 /* hue and rotational symmetry of each category's sigils */
 var IMG={},MEDIA=window.__MEDIA||{};
