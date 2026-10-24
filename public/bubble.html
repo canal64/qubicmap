@@ -206,26 +206,34 @@ $("snd").onclick=function(){S.sound=!S.sound;save();sndLabel();if(S.sound)tone(6
 /* ---------------- board geometry (logical units) ---------------- */
 var COLS=11,R=19,AW=COLS*R*2,ROWH=R*Math.sqrt(3),TOPY=R+4,AH=640,SHY=AH-46,DEAD=SHY-58-1.5*ROWH,SPEED=1250;
 var cv=$("cv"),cx=cv.getContext("2d"),SC=1,DPR=1;
-function layout(){var st=$("stage").getBoundingClientRect();DPR=Math.min(2.5,window.devicePixelRatio||1);
-  SC=Math.max(.3,Math.min(st.width/AW,st.height/AH));cv.style.width=Math.floor(AW*SC)+"px";cv.style.height=Math.floor(AH*SC)+"px";
-  cv.width=Math.floor(AW*SC*DPR);cv.height=Math.floor(AH*SC*DPR);build()}
-addEventListener("resize",layout);
+/* Fit the board in the space left between the HUD and the evolution bar. The stage is watched directly, so the board
+   also refits when fonts load or the phone's toolbar shows/hides. Sprites are rebuilt only when the scale really changes:
+   Safari limits canvas memory and recreating them on every resize could exhaust it (bubbles then vanished). */
+var lastKey="";
+function layout(){var st=$("stage").getBoundingClientRect();if(st.width<20||st.height<20)return;DPR=Math.min(2,window.devicePixelRatio||1);
+  SC=Math.max(.3,Math.min(st.width/AW,st.height/AH));var w=Math.floor(AW*SC),h=Math.floor(AH*SC);cv.style.width=w+"px";cv.style.height=h+"px";
+  var key=w+"x"+h+"@"+DPR;if(key===lastKey)return;lastKey=key;cv.width=Math.floor(AW*SC*DPR);cv.height=Math.floor(AH*SC*DPR);build()}
+var lt=0;function relayout(){clearTimeout(lt);lt=setTimeout(layout,60)}
+addEventListener("resize",relayout);addEventListener("orientationchange",relayout);
+if(window.ResizeObserver)try{new ResizeObserver(relayout).observe($("stage"))}catch(e){}
 var SPR=[];
-function build(){SPR=K.map(function(k,i){var pad=8,sz=(R+pad)*2,px=Math.ceil(sz*SC*DPR),c=document.createElement("canvas");c.width=c.height=px;var g=c.getContext("2d"),s=px/sz;g.scale(s,s);var m=sz/2;
+var POOL={};function cvs(id,px){var c=POOL[id]||(POOL[id]=document.createElement("canvas"));c.width=c.height=px;return c}
+function build(){try{build0()}catch(e){}}
+function build0(){SPR=K.map(function(k,i){var pad=8,sz=(R+pad)*2,px=Math.ceil(sz*SC*DPR),c=cvs("k"+i,px);var g=c.getContext("2d");if(!g)return null;var s=px/sz;g.scale(s,s);var m=sz/2;
   g.shadowColor=k.c;g.shadowBlur=9;var gr=g.createRadialGradient(m-R*.35,m-R*.4,R*.1,m,m,R);gr.addColorStop(0,"#fff");gr.addColorStop(.28,k.c);gr.addColorStop(1,k.g);
   g.fillStyle=gr;g.beginPath();g.arc(m,m,R-.5,0,Math.PI*2);g.fill();g.shadowBlur=0;
   g.strokeStyle="rgba(255,255,255,.5)";g.lineWidth=1.3;g.beginPath();g.arc(m,m,R*.84,0,Math.PI*2);g.stroke();
   var fs=k.l.length>3?9.5:k.l.length>2?11:13;g.font="700 "+fs+"px 'Chakra Petch',system-ui,sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillStyle=k.dark?"rgba(10,14,24,.85)":"rgba(255,255,255,.95)";g.fillText(k.l,m,m+.5);
   return {c:c,h:sz/2}});
-  var rb=document.createElement("canvas"),sz=(R+8)*2,px=Math.ceil(sz*SC*DPR);rb.width=rb.height=px;var g=rb.getContext("2d");g.scale(px/sz,px/sz);var m=sz/2;   /* pulse bubble */
+  var sz=(R+8)*2,px=Math.ceil(sz*SC*DPR),rb=cvs("pulse",px);var g=rb.getContext("2d");g.scale(px/sz,px/sz);var m=sz/2;   /* pulse bubble */
   g.shadowColor="#3ef0ff";g.shadowBlur=12;var cg=g.createConicGradient?g.createConicGradient(0,m,m):null;if(cg){["#3ef0ff","#a46bff","#ff4fd8","#ffd23f","#2fe39a","#3ef0ff"].forEach(function(c,i,a){cg.addColorStop(i/(a.length-1),c)});g.fillStyle=cg}else g.fillStyle="#3ef0ff";
   g.beginPath();g.arc(m,m,R,0,Math.PI*2);g.fill();g.shadowBlur=0;g.fillStyle="#fff";g.font="700 16px 'Chakra Petch',system-ui,sans-serif";g.textAlign="center";g.textBaseline="middle";g.fillText("⚡",m,m+1);SPR.pulse={c:rb,h:sz/2};
-  var qb=document.createElement("canvas");qb.width=qb.height=px;var q=qb.getContext("2d");q.scale(px/sz,px/sz);
+  var qb=cvs("qb",px);var q=qb.getContext("2d");q.scale(px/sz,px/sz);
   q.shadowColor="#3ef0ff";q.shadowBlur=14;var qg=q.createRadialGradient(m-R*.3,m-R*.35,R*.1,m,m,R);qg.addColorStop(0,"#1d3a5c");qg.addColorStop(1,"#050b16");q.fillStyle=qg;q.beginPath();q.arc(m,m,R,0,Math.PI*2);q.fill();q.shadowBlur=0;
   q.strokeStyle="#3ef0ff";q.lineWidth=2;q.beginPath();q.arc(m,m,R-1.5,0,Math.PI*2);q.stroke();
   q.fillStyle="#cfe6ff";q.shadowColor="#cfe6ff";q.shadowBlur=6;function bar(x,y,w,h){q.beginPath();q.moveTo(x+1.5,y);q.arcTo(x+w,y,x+w,y+h,1.5);q.arcTo(x+w,y+h,x,y+h,1.5);q.arcTo(x,y+h,x,y,1.5);q.arcTo(x,y,x+w,y,1.5);q.closePath();q.fill()}
   bar(m-8,m-10,6.5,16);bar(m+1.5,m-10,6.5,21);SPR[QB]={c:qb,h:sz/2};
-  var cf=document.createElement("canvas");cf.width=cf.height=px;var f=cf.getContext("2d");f.scale(px/sz,px/sz);f.shadowColor="#ffd23f";f.shadowBlur=14;
+  var cf=cvs("cfb",px);var f=cf.getContext("2d");f.scale(px/sz,px/sz);f.shadowColor="#ffd23f";f.shadowBlur=14;
   var fg=f.createRadialGradient(m-R*.35,m-R*.4,R*.1,m,m,R);fg.addColorStop(0,"#fff7c2");fg.addColorStop(.35,"#ffd23f");fg.addColorStop(1,"#a86b00");f.fillStyle=fg;f.beginPath();f.arc(m,m,R,0,Math.PI*2);f.fill();f.shadowBlur=0;
   f.strokeStyle="#7a4a00";f.lineWidth=1.6;f.beginPath();f.arc(m,m,R*.8,0,Math.PI*2);f.stroke();f.fillStyle="#4a2a00";f.font="700 12px 'Chakra Petch',system-ui,sans-serif";f.textAlign="center";f.textBaseline="middle";f.fillText("CFB",m,m+.5);SPR.cfb={c:cf,h:sz/2}}
 
@@ -356,7 +364,7 @@ function frame(now){var rdt=Math.min(1/30,(now-last)/1000);last=now;var dt=rdt;i
   for(var i=fall.length-1;i>=0;i--){var f=fall[i];f.vy+=1400*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.a+=dt*4;if(f.y>AH+R*2){fall.splice(i,1);if(Math.random()<.5)burst(f.x,AH-4,4,[kc(f.k)],.5)}}
   G.shake=Math.max(0,G.shake-rdt*26);              /* trauma decays linearly; the offset uses its square */
   draw(now/1000,dt);requestAnimationFrame(frame)}
-function spr(k,x,y,a,sc){var sp=k==="pulse"?SPR.pulse:k==="cfb"?SPR.cfb:SPR[k];if(!sp)return;var hs=sp.h*(sc||1);if(a){cx.save();cx.translate(x,y);cx.rotate(a);cx.drawImage(sp.c,-hs,-hs,hs*2,hs*2);cx.restore()}else cx.drawImage(sp.c,x-hs,y-hs,hs*2,hs*2)}
+function spr(k,x,y,a,sc){var sp=k==="pulse"?SPR.pulse:k==="cfb"?SPR.cfb:SPR[k];if(!sp){if(k==null)return;cx.fillStyle=k==="cfb"?"#ffd23f":k==="pulse"?"#3ef0ff":k===QB?"#0b1a2e":(K[k]||K[0]).c;cx.beginPath();cx.arc(x,y,R*(sc||1)-1,0,6.283);cx.fill();if(K[k]){cx.fillStyle="#04070c";cx.font="700 12px system-ui";cx.textAlign="center";cx.textBaseline="middle";cx.fillText(K[k].l,x,y);cx.textBaseline="alphabetic"}return}var hs=sp.h*(sc||1);if(a){cx.save();cx.translate(x,y);cx.rotate(a);cx.drawImage(sp.c,-hs,-hs,hs*2,hs*2);cx.restore()}else cx.drawImage(sp.c,x-hs,y-hs,hs*2,hs*2)}
 function guide(){var x=AW/2,y=SHY,vx=Math.cos(G.aim),vy=Math.sin(G.aim),pts=[[x,y]],len=0,max=AH*1.25;
   for(var s=0;s<400&&len<max;s++){x+=vx*4;y+=vy*4;len+=4;if(x<R){x=R;vx=-vx;pts.push([x,y])}else if(x>AW-R){x=AW-R;vx=-vx;pts.push([x,y])}
     if(y<=TOPY+G.drop)break;var hit=false;for(var r=0;r<grid.length&&!hit;r++){if(!grid[r])continue;var yy=cellY(r);if(Math.abs(yy-y)>2*R)continue;for(var c=0;c<grid[r].length;c++){if(grid[r][c]==null)continue;var dx=cellX(r,c)-x,dy=yy-y;if(dx*dx+dy*dy<(2*R-4)*(2*R-4)){hit=true;break}}}if(hit)break}
