@@ -22,7 +22,7 @@
 [hidden]{display:none!important}
 html,body{height:100%}
 body{background:var(--void);color:var(--ink);font:400 14px/1.45 var(--sans);overflow:hidden}
-.app{height:100%;display:grid;grid-template-rows:auto 1fr auto;background:var(--void)}
+.app{position:relative;height:100%;display:grid;grid-template-rows:auto 1fr auto;background:var(--void)}
 header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--rule);background:var(--panel)}
 .brand{display:flex;flex-direction:column;gap:1px;min-width:0}
 .brand b{font:700 17px var(--display);letter-spacing:.06em;text-transform:uppercase;text-wrap:balance}
@@ -43,8 +43,10 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-bloc
 .home{margin-left:auto;font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);text-decoration:none;border:1px solid var(--rule);padding:7px 11px}
 .home:hover{border-color:var(--muted)}
 main{position:relative;min-height:0}
-canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;display:block}
-canvas.drag{cursor:grabbing}
+#cy,#g3{position:absolute;inset:0}
+#g3{background:var(--void);display:grid;place-items:center;font:400 13px var(--mono);color:var(--muted)}
+.hollow{display:inline-block;width:8px;height:8px;border-radius:50%;border:2px solid var(--muted)}
+.ftog{display:none}
 .pitch{position:absolute;left:max(16px,env(safe-area-inset-left,0px));top:12px;max-width:min(420px,calc(100% - 32px));font:400 12px var(--mono);color:var(--muted);pointer-events:none}
 .pitch b{display:block;font:600 13px var(--display);letter-spacing:.05em;text-transform:uppercase;color:var(--ink);margin-bottom:2px}
 .zoom{position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:14px;display:flex;flex-direction:column;border:1px solid var(--rule);background:var(--panel)}
@@ -74,7 +76,12 @@ canvas.drag{cursor:grabbing}
 .chip u{display:inline-block;width:16px;height:0;border-top:2px solid;text-decoration:none}
 .chip u.dash{border-top-style:dashed}
 .draft{color:var(--f-mk)}
-@media (max-width:640px){.home{display:none}.pitch{display:none}.panel{top:auto;bottom:10px;max-height:46%}.brand small{display:none}}
+@media (max-width:640px){.home{display:none}.pitch{display:none}.panel{top:auto;bottom:10px;max-height:46%;z-index:6}.brand small{display:none}
+  .app{grid-template-rows:auto 1fr}
+  .ftog{display:block;position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:10px;z-index:5;font:500 12px var(--mono);letter-spacing:.05em;padding:7px 10px;background:var(--panel);color:var(--ink);border:1px solid var(--rule);cursor:pointer}
+  .legend{display:none;position:absolute;left:0;right:0;bottom:0;z-index:7;max-height:60%;overflow:auto;box-shadow:0 -10px 30px rgba(0,0,0,.3)}
+  .legend.open{display:flex}
+  .mode button{padding:7px 9px}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head><body>
@@ -91,22 +98,25 @@ canvas.drag{cursor:grabbing}
     <button id="mA" type="button" aria-pressed="true" data-m="A">Constellation</button>
     <button id="mB" type="button" aria-pressed="false" data-m="B">Orbits</button>
     <button id="mC" type="button" aria-pressed="false" data-m="C">Islands</button>
+    <button id="m3D" type="button" aria-pressed="false" data-m="3D">3D</button>
   </div>
   <div class="search"><input id="q" type="search" placeholder="Find a project…" autocomplete="off" aria-label="Find a project"><div class="res" id="res" hidden></div></div>
   <a class="home" href="/">▦ Map</a>
 </header>
 <main>
-  <canvas id="cv" aria-label="Interactive map of how Qubic projects connect"></canvas>
+  <div id="cy" role="img" aria-label="Interactive map of how Qubic projects connect"></div><div id="g3" hidden></div><button class="ftog" id="ftog" type="button" aria-expanded="false" aria-controls="legend">☰ Filters</button>
   <div class="pitch" id="pitch"></div>
   <div class="zoom"><button id="zin" type="button" aria-label="Zoom in">+</button><button id="zout" type="button" aria-label="Zoom out">−</button><button id="zfit" type="button" aria-label="Show the whole map" title="Show the whole map">◎</button><button id="zfs" type="button" aria-label="Full screen" title="Full screen">⛶</button></div>
   <aside class="panel" id="panel" hidden></aside>
 </main>
-<div class="legend">
+<div class="legend" id="legend">
   <div class="grp"><span class="lab">Families</span><span id="fams" class="grp"></span></div>
   <div class="grp"><span class="lab">Links</span><span id="ets" class="grp"></span></div>
+  <span class="grp"><span class="hollow"></span>not live yet</span>
   <span class="draft">Links come from each project's own description and from the community</span>
 </div>
 </div>
+<script src="/vendor/cytoscape-3.34.3.min.js"></script>
 <script>
 (function(){
 var D={"cats": [["buy", "Buy with cash"], ["cex", "Centralised exchanges"], ["trade", "Decentralised exchanges"], ["earn", "Earn"], ["launch", "Launch"], ["bridge", "Bridges"], ["play", "Predict and play"], ["custody", "Wallets and custody"], ["assets", "Real-world assets"], ["nft", "NFTs"], ["pay", "Pay"], ["explorer", "Explorers"], ["mining", "Mining pools"], ["tokens", "Tokens"], ["games", "Games"], ["dev", "Developer tools"], ["community", "Community and media"], ["data", "Data"]], "p": [{"s": "alchemy-pay", "n": "Alchemy Pay", "c": "buy", "st": "live", "sc": 0, "d": "Buy QUBIC in 173 countries, including the US, with cards, Apple Pay, Google Pay, bank transfer and local methods such as PIX, UPI or SEPA Instant."}, {"s": "banxa", "n": "Banxa", "c": "buy", "st": "na", "sc": 0, "d": "Card and bank-transfer on-ramp named by qubic.org as a way to buy QUBIC."}, {"s": "mexc", "n": "MEXC", "c": "cex", "st": "live", "sc": 0, "d": "QUBIC against USDT and USDC. Described by qubic.org as the highest-volume venue."}, {"s": "gate", "n": "Gate", "c": "cex", "st": "live", "sc": 0, "d": "QUBIC against USDT."}, {"s": "bitget", "n": "Bitget", "c": "cex", "st": "live", "sc": 0, "d": "QUBIC against USDT."}, {"s": "lbank", "n": "LBank", "c": "cex", "st": "live", "sc": 0, "d": "QUBIC against USDT."}, {"s": "xt-com", "n": "XT.COM", "c": "cex", "st": "live", "sc": 0, "d": "QUBIC against USDT."}, {"s": "safetrade", "n": "SafeTrade", "c": "cex", "st": "live", "sc": 0, "d": "QUBIC against USDT and BTC."}, {"s": "digifinex", "n": "DigiFinex", "c": "cex", "st": "live", "sc": 0, "d": "QUBIC against USDT."}, {"s": "bitpanda", "n": "Bitpanda", "c": "cex", "st": "na", "sc": 0, "d": "European broker that lists QUBIC."}, {"s": "ourbit", "n": "Ourbit", "c": "cex", "st": "na", "sc": 0, "d": "QUBIC against USDT."}, {"s": "qxboard", "n": "QXBoard", "c": "trade", "st": "live", "sc": 0, "d": "A trading interface for Qx. Presented as an interim screen until Qx gets a final one."}, {"s": "qubictrade", "n": "QubicTrade", "c": "trade", "st": "live", "sc": 0, "d": "Exchange built on Qx. Signs with WalletConnect or the MetaMask Snap, so your seed stays in your wallet."}, {"s": "qfront", "n": "QFront", "c": "trade", "st": "live", "sc": 0, "d": "Dashboard that brings together Qx order-book trading, QSwap pools, wallet and asset explorers and live market data. Its own page warns that a seed typed there is sent to its server: use a dedicated trading wallet."}, {"s": "quhub", "n": "QuHub", "c": "trade", "st": "live", "sc": 0, "d": "Trade on the Qx markets and buy or sell QU, tokens and contract shares from one app, with OTC escrow and wallet tools."}, {"s": "qubic-portal", "n": "Qubic Portal", "c": "trade", "st": "live", "sc": 0, "d": "Decentralised trading of Qubic smart-contract assets, with real-time markets, portfolio tracking and wallet connection."}, {"s": "qmax", "n": "QMax", "c": "trade", "st": "early", "sc": 0, "d": "Router that looks for the best price across Qx and QSwap, with an API for AI agents. Its authors say trades are not yet tested with real funds: start very small."}, {"s": "qswap", "n": "QSwap", "c": "trade", "st": "live", "sc": 13, "d": "QubicSwap, the app of the QSwap contract: instant swaps, token discovery, order-book trading and liquidity management in one place."}, {"s": "qearn", "n": "Qearn", "c": "earn", "st": "live", "sc": 9, "d": "Lock QUBIC to earn rewards. The more you lock, the more you earn."}, {"s": "qbond", "n": "QBond", "c": "earn", "st": "live", "sc": 17, "d": "Liquid version of Qearn: your locked position becomes an asset you can trade."}, {"s": "qubic-capital", "n": "Qubic Capital", "c": "earn", "st": "live", "sc": 0, "d": "Pools members' funds to buy contract shares at IPO, then pays out the dividends weekly."}, {"s": "nostromo", "n": "Nostromo", "c": "launch", "st": "hold", "sc": 14, "d": "Launchpad where new projects raise funds by selling tokens, governed by its community. Listed as upgrading."}, {"s": "the-yard", "n": "The Yard", "c": "launch", "st": "early", "sc": 0, "d": "Meme-coin launchpad on a bonding curve, powered by the QPump contract. Tested on a devnet and submitted to the Qubic core."}, {"s": "qubic-auctions", "n": "Qubic Auctions", "c": "launch", "st": "live", "sc": 0, "d": "Browse current and past contract IPOs and their bids, with search, export and a chart of minimum bids."}, {"s": "qubic-ico-portal", "n": "Qubic ICO Portal", "c": "launch", "st": "na", "sc": 18, "d": "Web portal for token sales run by the QIP contract, Qubic's contract for initial coin offerings."}, {"s": "solana-bridge", "n": "Solana Bridge", "c": "bridge", "st": "test", "sc": 0, "d": "Bridge between Qubic and Solana. On testnet."}, {"s": "quottery", "n": "Quottery", "c": "play", "st": "live", "sc": 2, "d": "Peer-to-peer prediction market. Create a bet or take one; results are settled by oracles."}, {"s": "random-lottery", "n": "Random Lottery", "c": "play", "st": "live", "sc": 16, "d": "One ticket per player per round. A random winner takes the largest share of the pot."}, {"s": "qraffle", "n": "QRaffle", "c": "play", "st": "live", "sc": 19, "d": "Raffles run by contract, with winners drawn by Qubic's native random contract."}, {"s": "qusino", "n": "Qusino", "c": "play", "st": "na", "sc": 26, "d": "Social casino and game launch portal on Qubic."}, {"s": "qubic-wallet", "n": "Qubic Wallet", "c": "custody", "st": "live", "sc": 0, "d": "The official web wallet."}, {"s": "hashwallet", "n": "HASHWallet", "c": "custody", "st": "live", "sc": 0, "d": "Hardware wallet that supports Qubic tokens, shares, Qearn locking and swaps."}, {"s": "qubic-connect", "n": "Qubic-Connect", "c": "custody", "st": "live", "sc": 0, "d": "MetaMask Snap that lets MetaMask hold and sign for Qubic."}, {"s": "msvault", "n": "MSVault", "c": "custody", "st": "live", "sc": 11, "d": "Shared vault: funds move only when a set number of co-owners approve. Supports QUBIC, tokens in development."}, {"s": "rubic", "n": "Rubic", "c": "custody", "st": "live", "sc": 0, "d": "A Qubic wallet written in Rust."}, {"s": "onyze", "n": "Onyze", "c": "custody", "st": "live", "sc": 0, "d": "Wallet creation and custody of digital assets for institutions."}, {"s": "qmine-qrwa", "n": "qMine / qRWA", "c": "assets", "st": "live", "sc": 20, "d": "Token backed by physical mining hardware. Gives exposure to the wider Qubic ecosystem: mining, smart-contract shares, My Last Match assets and revenue from mining other cryptocurrencies."}, {"s": "qubicbay", "n": "QubicBay", "c": "nft", "st": "live", "sc": 12, "d": "The first NFT marketplace on Qubic, for buying and selling digital art."}, {"s": "aeon-pay", "n": "AEON Pay", "c": "pay", "st": "live", "sc": 0, "d": "Spend QUBIC at about 50 million merchants in Asia, Latin America and Africa through local QR payments. Runs as a Telegram mini app; merchants are paid in local currency."}, {"s": "q-pay", "n": "Q+Pay", "c": "pay", "st": "live", "sc": 0, "d": "Payment gateway to accept QUBIC without giving up custody: invoices, checkout links, tip jars, point of sale, WooCommerce and Shopify plugins."}, {"s": "anna-aigarth", "n": "Anna Aigarth", "c": "nft", "st": "live", "sc": 0, "d": "Collection of 200 NFTs set in the Qubic Church universe, traded on QubicBay. The link opens its rarity guide."}, {"s": "qubic-report", "n": "Qubic Report", "c": "explorer", "st": "live", "sc": 0, "d": "Each tick relayed live: its leader, transactions, burns, mining solutions and contract calls. Also has pages on burn, price and mining. Beta."}, {"s": "ann-explorer", "n": "ANN Explorer", "c": "explorer", "st": "live", "sc": 0, "d": "Archive of the network's AI mining solutions, with re-verified scores and reconstructed neural networks."}, {"s": "jetski-tracker", "n": "Jetski Tracker", "c": "data", "st": "live", "sc": 0, "d": "Monitors Qubic mining pools and hashrate."}, {"s": "qubic-metrics", "n": "Qubic Metrics", "c": "data", "st": "live", "sc": 0, "d": "Data and analytics on ecosystem activity."}, {"s": "qubic-tools-qools", "n": "Qubic Tools (Qools)", "c": "data", "st": "live", "sc": 0, "d": "Mining profit calculator, vanity addresses and other utilities."}, {"s": "qubic-live", "n": "Qubic Live", "c": "data", "st": "live", "sc": 0, "d": "Interactive display of the packets moving across the network."}, {"s": "myledger", "n": "myLedger", "c": "data", "st": "live", "sc": 0, "d": "Record and analyse your transactions by hand."}, {"s": "qubic-li", "n": "qubic.li", "c": "mining", "st": "live", "sc": 0, "d": "Described by the Qubic Academy as the official pool."}, {"s": "jetskipool", "n": "JetskiPool", "c": "mining", "st": "live", "sc": 0, "d": "Community pool. Also runs the ANN Explorer, listed under Explorers, and the Jetski Tracker, listed under Data."}, {"s": "minerlab", "n": "MinerLab", "c": "mining", "st": "live", "sc": 0, "d": "Community pool."}, {"s": "cfb", "n": "$CFB", "c": "tokens", "st": "live", "sc": 0, "d": "The first meme coin on Qubic."}, {"s": "garth", "n": "GARTH", "c": "tokens", "st": "live", "sc": 0, "d": "Meme token with stated utility."}, {"s": "coded", "n": "Coded", "c": "tokens", "st": "live", "sc": 0, "d": "Fair-launched meme coin ($CODED)."}, {"s": "my-last-match", "n": "My Last Match", "c": "games", "st": "dev", "sc": 5, "d": "Web3 game with its own contract in the core."}, {"s": "match-lords", "n": "Match Lords", "c": "games", "st": "live", "sc": 0, "d": "A clan of over 50 players in My Last Match selling in-game services: convoy escorts, transport, field repairs, medical help and mercenary contracts. 70% of the QU it earns goes to $ML holders, 15% to active players and 15% to a treasury for buyback and burn."}, {"s": "qubic-core-lite", "n": "Qubic Core Lite", "c": "dev", "st": "live", "sc": 0, "d": "Lightweight version of the Qubic core node."}, {"s": "qubic-core-bob", "n": "Qubic Core Bob", "c": "dev", "st": "dev", "sc": 0, "d": "Lightweight independent node and indexer."}, {"s": "qbuild", "n": "qbuild", "c": "dev", "st": "live", "sc": 0, "d": "Audit, analyse and test C++ smart contracts."}, {"s": "qforge", "n": "qforge", "c": "dev", "st": "dev", "sc": 0, "d": "Interface to deploy and interact with Qubic contracts."}, {"s": "qubipy", "n": "QubiPy", "c": "dev", "st": "live", "sc": 0, "d": "Python library for the Qubic RPC API."}, {"s": "qubicj", "n": "QubicJ", "c": "dev", "st": "live", "sc": 0, "d": "Java infrastructure for Qubic."}, {"s": "qatum-protocol", "n": "Qatum Protocol", "c": "dev", "st": "live", "sc": 0, "d": "Stratum-like mining protocol for Qubic."}, {"s": "qubihub", "n": "Qubihub", "c": "dev", "st": "dev", "sc": 0, "d": "All-in-one platform to interact with the network."}, {"s": "qubic-academy", "n": "Qubic Academy", "c": "community", "st": "live", "sc": 0, "d": "Learning platform for Qubic."}, {"s": "qsletter", "n": "Qsletter", "c": "community", "st": "dev", "sc": 0, "d": "A Qubic newsletter."}, {"s": "cointribune-read-to-earn", "n": "Cointribune Read to Earn", "c": "community", "st": "live", "sc": 0, "d": "Earn rewards for reading about Qubic."}, {"s": "information-distribution-tool", "n": "Information Distribution Tool", "c": "community", "st": "live", "sc": 0, "d": "Decentralised tool for real-time updates."}, {"s": "qubic-merch-shop", "n": "Qubic Merch Shop", "c": "community", "st": "live", "sc": 0, "d": "Community-owned shop for Qubic merchandise."}, {"s": "qubic-church", "n": "Qubic Church", "c": "community", "st": "live", "sc": 0, "d": "Nonprofit organization preparing humanity for the emergence of AGI."}, {"s": "contract-reserve-tracker", "n": "Contract Reserve Tracker", "c": "data", "st": "live", "sc": 0, "d": "Shows the reserve each smart contract holds. Beta, for analysis only."}, {"s": "tick-unlocked", "n": "Tick Unlocked", "c": "data", "st": "live", "sc": 0, "d": "Live on-chain analytics: exchange flows, DEX trades, mining pools, contract reserves and dividends."}, {"s": "qubic-dividends", "n": "Qubic Dividends", "c": "data", "st": "live", "sc": 0, "d": "Dividend payouts of the contract shares it tracks."}, {"s": "qubicflow", "n": "QubicFlow", "c": "data", "st": "live", "sc": 0, "d": "Wallet tracker you host yourself, with cost-basis calculations for tax records and CSV export."}, {"s": "qubic-explorer", "n": "Qubic Explorer", "c": "explorer", "st": "live", "sc": 0, "d": "The official explorer for addresses, transactions and ticks."}, {"s": "easy-connect", "n": "Easy Connect", "c": "data", "st": "live", "sc": 0, "d": "Simplified access to the data of any Qubic smart contract, for apps and developers."}]};
@@ -160,16 +170,6 @@ ln("qubic.li","Qubic Core Bob","team","its team builds Bob","built by the qubic.
 D.p.forEach(function(p){if(FAM[p.c]==="mk"&&p.c!=="bridge")ln(p.n,"QU coin","market",p.c==="pay"?"spend or accept QU":p.c==="buy"?"buy QU with cash":"lists QU","")});
 ln("Solana Bridge","QU coin","market","moves QU to Solana","");
 ln("QU coin","Qubic network","contract","the network's coin","");
-/* ---- state ---- */
-var cv=document.getElementById("cv"),cx=cv.getContext("2d"),W=0,H=0,DPR=1;
-var cam={x:0,y:0,k:.6},camT=null,mode="A",hot=null,sel=null,famOn={},etOn={},dirty=true,anim=0;
-FAMS.forEach(function(f){famOn[f[0]]=true});famOn.core=true;ET.forEach(function(e){etOn[e[0]]=true});
-var tok={};function readTok(){var s=getComputedStyle(document.documentElement);["void","panel","rule","ink","muted","accent","f-mk","f-defi","f-wal","f-app","f-inf","f-com","f-core","e-contract","e-network","e-built","e-uses","e-team","e-market"].forEach(function(k){tok[k]=s.getPropertyValue("--"+k).trim()});dirty=true}
-readTok();try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",readTok)}catch(e){}
-new MutationObserver(readTok).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
-function col(n){return tok["f-"+n.f]}
-function rad(n){return n.hub?[0,12,16,26][n.hub]:5+Math.min(5,n.e.length*.9)}
-/* ---- layouts: each returns target positions; nodes glide there ---- */
 var famAng={};FAMS.forEach(function(f,i){famAng[f[0]]=-Math.PI/2+i*2*Math.PI/FAMS.length});
 function layoutA(){var P={};N.forEach(function(n,i){var a=n.f==="core"?0:famAng[n.f],r=n.id==="core"?0:n.f==="core"?90:330;P[n.id]={x:Math.cos(a)*r+(Math.random()-.5)*120,y:Math.sin(a)*r+(Math.random()-.5)*120,vx:0,vy:0}});
   P.core.x=0;P.core.y=0;
@@ -204,118 +204,154 @@ function layoutC(){var groups={};N.forEach(function(n){var g=n.f==="core"?"core"
   var P={};ISL.forEach(function(s){var m=s.m.slice().sort(function(a,b){return (b.hub||0)-(a.hub||0)||b.e.length-a.e.length});
     m.forEach(function(n,i){var rr=i===0?0:Math.sqrt(i)*(s.r-14)/Math.sqrt(Math.max(1,m.length-1)+.6),a=i*2.39996;P[n.id]={x:s.x+Math.cos(a)*rr,y:s.y+Math.sin(a)*rr}})});
   return P}
+PITCH["3D"]=["3D","The same links in three dimensions. Drag to turn the ecosystem, scroll or pinch to zoom, tap a project to fly to it."];
 var LAY={A:layoutA(),B:layoutB(),C:layoutC()};
-N.forEach(function(n){var p=LAY.A[n.id];n.x=p.x;n.y=p.y});
-function setMode(m){mode=m;["A","B","C"].forEach(function(k){document.getElementById("m"+k).setAttribute("aria-pressed",k===m)});
+/* ---- theme tokens ---- */
+var tok={};
+function readTok(){var s=getComputedStyle(document.documentElement);["void","panel","rule","ink","muted","accent","f-mk","f-defi","f-wal","f-app","f-inf","f-com","f-core","e-contract","e-network","e-built","e-uses","e-team","e-market"].forEach(function(k){tok[k]=s.getPropertyValue("--"+k).trim()})}
+readTok();
+function fcol(f){return tok["f-"+f]}
+function size(n){return n.hub?[0,24,32,54][n.hub]:11+Math.min(11,n.e.length*1.8)}
+function logoURI(c){return "data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -1 26 30"><path fill="'+c+'" d="M5.25 2H0.75C0.34 2 0 2.34 0 2.75V19.25C0 19.66 0.34 20 0.75 20H5.25C5.66 20 6 19.66 6 19.25V2.75C6 2.34 5.66 2 5.25 2Z"/><path fill="'+c+'" d="M13.25 2H8.75C8.34 2 8 2.34 8 2.75V25.25C8 25.66 8.34 26 8.75 26H13.25C13.66 26 14 25.66 14 25.25V2.75C14 2.34 13.66 2 13.25 2Z"/></svg>')}
+/* ---- elements: projects + links, plus the decor each map style needs (rings, sector names, islands) ---- */
+var els=[];
+N.forEach(function(n){els.push({group:"nodes",data:{id:n.id,label:n.n,f:n.f,sz:size(n)},classes:"p f-"+n.f+(n.hub?" hub":"")+(n.id==="core"?" core":"")+(n.st&&n.st!=="live"?" soon":""),position:{x:LAY.A[n.id].x,y:LAY.A[n.id].y}})});
+L.forEach(function(e,i){e.id="e"+i;els.push({group:"edges",data:{id:e.id,source:e.a.id,target:e.b.id,t:e.t},classes:"l t-"+e.t})});
+[1,2,3].forEach(function(r){els.push({group:"nodes",data:{id:"ring"+r,d:ringR[r]*2},classes:"ring decoB",position:{x:0,y:0},grabbable:false,selectable:false})});
+FAMS.forEach(function(f){var s=layoutB.sec[f[0]],a=(s[0]+s[1])/2,rr=ringR[3]+95;els.push({group:"nodes",data:{id:"sec-"+f[0],label:f[1].toUpperCase()},classes:"seclab decoB",position:{x:Math.cos(a)*rr,y:Math.sin(a)*rr},grabbable:false,selectable:false})});
+["","CORE CONTRACTS","APPS · WALLETS · TOOLS","MARKETS · COMMUNITY"].forEach(function(s,r){if(r)els.push({group:"nodes",data:{id:"rl"+r,label:s},classes:"seclab ringlab decoB",position:{x:0,y:-ringR[r]-14},grabbable:false,selectable:false})});
+ISL.forEach(function(s){els.push({group:"nodes",data:{id:"isl-"+s.g,label:s.n,label2:s.n+"\n"+s.m.length+(s.m.length>1?" projects":" project"),f:s.f,d:s.r*2},classes:"island decoC",position:{x:s.x,y:s.y},grabbable:false,selectable:false})});
+ISL.links.forEach(function(l,i){els.push({group:"edges",data:{id:"m"+i,source:"isl-"+l.a.g,target:"isl-"+l.b.g,w:Math.min(14,1.5+l.w*1.6)},classes:"meta decoC"})});
+function sheet(){var famSel=[["mk"],["defi"],["wal"],["app"],["inf"],["com"],["core"]];
+  var st=[
+  {selector:"node",style:{"label":"","events":"no","overlay-opacity":0}},
+  {selector:"node.p",style:{"events":"yes","width":"data(sz)","height":"data(sz)","background-color":tok["f-core"],"label":"data(label)","font-family":"IBM Plex Sans, system-ui, sans-serif","font-size":11.5,"font-weight":500,"color":tok.ink,
+    "text-valign":"center","text-halign":"right","text-margin-x":5,"text-outline-color":tok.void,"text-outline-width":3,"text-outline-opacity":1,"min-zoomed-font-size":8,"z-index":10,"transition-property":"opacity","transition-duration":"0.2s"}},
+  {selector:"node.hub",style:{"font-family":"Chakra Petch, system-ui, sans-serif","font-size":14,"font-weight":700,"min-zoomed-font-size":0,"border-width":2,"border-opacity":.45,"z-index":12}},
+  {selector:"node.core",style:{"background-image":logoURI(tok.void),"background-fit":"contain","background-clip":"none","border-width":3,"border-opacity":.35,"font-size":16}},
+  {selector:"node.soon",style:{"background-opacity":0,"border-width":2,"border-opacity":1}},
+  {selector:"edge.l",style:{"width":1.3,"curve-style":"straight","opacity":.55,"line-color":tok["e-uses"],"z-index":5,"events":"no"}},
+  {selector:"edge.t-network",style:{"width":.8,"opacity":.25}},
+  {selector:"edge.t-contract",style:{"opacity":.42}},
+  {selector:"edge.t-team",style:{"line-style":"dashed","line-dash-pattern":[5,4]}},
+  {selector:"node.ring",style:{"shape":"ellipse","width":"data(d)","height":"data(d)","background-opacity":0,"border-width":1.5,"border-color":tok.muted,"border-opacity":.35,"z-index":0}},
+  {selector:"node.seclab",style:{"width":1,"height":1,"background-opacity":0,"label":"data(label)","font-family":"IBM Plex Mono, monospace","font-size":24,"color":tok.muted,"text-valign":"center","text-halign":"center","min-zoomed-font-size":5}},
+  {selector:"node.island",style:{"shape":"ellipse","width":"data(d)","height":"data(d)","background-opacity":.07,"border-width":1,"border-opacity":.35,"label":"data(label)","font-family":"Chakra Petch, system-ui, sans-serif","font-size":15,"font-weight":600,"color":tok.muted,"text-valign":"top","text-halign":"center","text-margin-y":-4,"z-index":1}},
+  {selector:"edge.meta",style:{"width":"data(w)","line-color":tok.muted,"opacity":.45,"curve-style":"straight","z-index":2}},
+  {selector:".out",style:{"display":"none"}},
+  {selector:"node.p.faded",style:{"opacity":.14}},
+  {selector:"edge.l.faded",style:{"opacity":.05}},
+  {selector:"edge.l.hl",style:{"opacity":1,"width":2.6,"line-style":"dashed","line-dash-pattern":[9,5],"z-index":20}},
+  {selector:"node.p.on",style:{"border-width":3,"border-color":tok.ink,"border-opacity":1}},
+  /* islands seen from afar: one bubble per category with its project count */
+  {selector:"node.island.far",style:{"label":"data(label2)","text-wrap":"wrap","text-valign":"center","color":tok.ink,"font-size":"mapData(d,100,400,15,24)","background-opacity":.18,"border-opacity":.6}}];
+  famSel.forEach(function(f){st.push({selector:".f-"+f[0]+",node.island[f='"+f[0]+"']",style:{"background-color":fcol(f[0]),"border-color":fcol(f[0])}})});
+  ET.forEach(function(e){st.push({selector:"edge.t-"+e[0],style:{"line-color":tok["e-"+e[0]]}})});
+  return st}
+var cy=cytoscape({container:document.getElementById("cy"),elements:els,style:sheet(),minZoom:.12,maxZoom:4,wheelSensitivity:.35,boxSelectionEnabled:false,autounselectify:true,layout:{name:"preset"}});
+function repaint(){readTok();cy.style(sheet())}
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",repaint)}catch(e){}
+new MutationObserver(repaint).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
+/* ---- map styles ---- */
+var mode="A",kFit=1,still=matchMedia("(prefers-reduced-motion: reduce)").matches,famOn={},etOn={},sel=null,hot=null;
+FAMS.forEach(function(f){famOn[f[0]]=true});famOn.core=true;ET.forEach(function(e){etOn[e[0]]=true});
+function shown(){return cy.nodes(".p").not(".out")}
+function fit(anim){var e=shown();if(mode==="B")e=e.union(cy.$("#ring3")).union(cy.nodes(".seclab"));if(mode==="C")e=e.union(cy.nodes(".island"));
+  if(anim&&!still)cy.animate({fit:{eles:e,padding:28},duration:500,complete:function(){kFit=cy.zoom();far()}});else{cy.fit(e,28);kFit=cy.zoom();far()}}
+function setMode(m){if(m==="3D"){open3D();return}close3D();mode=m;
+  ["A","B","C","3D"].forEach(function(k){document.getElementById("m"+k).setAttribute("aria-pressed",k===m)});
   document.getElementById("pitch").innerHTML="<b>"+PITCH[m][0]+"</b>"+PITCH[m][1];
-  N.forEach(function(n){n.tx=LAY[m][n.id].x;n.ty=LAY[m][n.id].y});anim=1;fit(true)}
-/* ---- camera ---- */
-function bounds(){var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;N.forEach(function(n){var x=n.tx!=null?n.tx:n.x,y=n.ty!=null?n.ty:n.y;x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)});return [x0-40,y0-40,x1+40,y1+40]}
-var kFit=0;function fit(smooth){var b=bounds(),k=Math.min(W/(b[2]-b[0]),H/(b[3]-b[1]))*.94;kFit=k;go((b[0]+b[2])/2,(b[1]+b[3])/2,k,smooth)}
-function go(x,y,k,smooth){k=Math.max(.18,Math.min(4,k));var t={x:W/2-x*k,y:H/2-y*k,k:k};if(smooth&&!still)camT=t;else{cam=t;camT=null}dirty=true}
-function zoomAt(sx,sy,f){var k=Math.max(.18,Math.min(4,cam.k*f));cam.x=sx-(sx-cam.x)*k/cam.k;cam.y=sy-(sy-cam.y)*k/cam.k;cam.k=k;camT=null;dirty=true}
-var still=matchMedia("(prefers-reduced-motion: reduce)").matches;
-function resize(){var r=cv.getBoundingClientRect();W=r.width;H=r.height;DPR=Math.min(2,devicePixelRatio||1);cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);dirty=true}
-/* ---- drawing ---- */
-function visible(n){return famOn[n.f==="core"?"core":n.f]!==false}
-function lit(n){if(!hot)return true;if(n===hot)return true;return hot.e.some(function(e){return e.a===n||e.b===n})}
-function sx(x){return x*cam.k+cam.x}function sy(y){return y*cam.k+cam.y}
-function alpha(c,a){if(!c)return "rgba(128,128,128,"+a+")";if(c[0]==="#"){var v=parseInt(c.slice(1),16);return "rgba("+(v>>16&255)+","+(v>>8&255)+","+(v&255)+","+a+")"}return c}
-var t0=performance.now();
-var QB1=new Path2D("M5.25 2H0.75C0.335786 2 0 2.33579 0 2.75V19.25C0 19.6642 0.335786 20 0.75 20H5.25C5.66421 20 6 19.6642 6 19.25V2.75C6 2.33579 5.66421 2 5.25 2Z"),QB2=new Path2D("M13.25 2H8.75C8.33579 2 8 2.33579 8 2.75V25.25C8 25.6642 8.33579 26 8.75 26H13.25C13.6642 26 14 25.6642 14 25.25V2.75C14 2.33579 13.6642 2 13.25 2Z");
-function draw(now){var t=(now-t0)/1000;cx.setTransform(DPR,0,0,DPR,0,0);cx.fillStyle=tok.void;cx.fillRect(0,0,W,H);
-  var k=cam.k;
-  if(mode==="B"){cx.strokeStyle=tok.rule;cx.lineWidth=1;for(var r=1;r<4;r++){cx.beginPath();cx.arc(sx(0),sy(0),ringR[r]*k,0,6.283);cx.stroke()}
-    cx.font="500 10.5px "+getComputedStyle(document.body).getPropertyValue("--mono");cx.fillStyle=tok.muted;cx.textAlign="center";
-    var S=layoutB.sec;FAMS.forEach(function(f){var s=S[f[0]],a=(s[0]+s[1])/2,rr=(ringR[3]+90)*k;cx.fillText(f[1].toUpperCase(),sx(0)+Math.cos(a)*rr,sy(0)+Math.sin(a)*rr)});
-    ["","CORE CONTRACTS","APPS · WALLETS · TOOLS","MARKETS · COMMUNITY"].forEach(function(s,r){if(r)cx.fillText(s,sx(0),sy(0)-ringR[r]*k-6)})}
-  var semantic=mode==="C"?Math.max(0,Math.min(1,(k/(kFit||k)-1.25)/.45)):1;
-  if(mode==="C"){ISL.forEach(function(s){if(!famOn[s.f])return;cx.beginPath();cx.arc(sx(s.x),sy(s.y),s.r*k,0,6.283);cx.fillStyle=alpha(col(s),.06+.12*(1-semantic));cx.fill();cx.strokeStyle=alpha(col(s),.35);cx.lineWidth=1;cx.stroke()});
-    if(semantic<1){cx.globalAlpha=1-semantic;ISL.links.forEach(function(l){if(!famOn[l.a.f]||!famOn[l.b.f])return;cx.strokeStyle=alpha(tok.muted,.5);cx.lineWidth=Math.min(10,1+l.w*1.4);cx.beginPath();cx.moveTo(sx(l.a.x),sy(l.a.y));cx.lineTo(sx(l.b.x),sy(l.b.y));cx.stroke()});
-      ISL.forEach(function(s){if(!famOn[s.f])return;cx.textAlign="center";cx.fillStyle=tok.ink;cx.font="600 "+Math.max(11,Math.min(17,s.r*k*.28))+"px Chakra Petch, system-ui, sans-serif";cx.fillText(s.n,sx(s.x),sy(s.y));cx.font="400 11px IBM Plex Mono, monospace";cx.fillStyle=tok.muted;cx.fillText(s.m.length+(s.m.length>1?" projects":" project"),sx(s.x),sy(s.y)+16)});cx.globalAlpha=1}}
-  cx.globalAlpha=semantic;
-  /* edges */
-  L.forEach(function(e){if(!etOn[e.t]||!visible(e.a)||!visible(e.b))return;var on=hot&&(e.a===hot||e.b===hot),dim=hot&&!on;
-    var c=tok["e-"+e.t],x1=sx(e.a.x),y1=sy(e.a.y),x2=sx(e.b.x),y2=sy(e.b.y);cx.strokeStyle=alpha(c,dim?.06:on?.95:e.t==="network"?.28:e.t==="contract"?.4:.55);cx.lineWidth=on?2.2:e.t==="network"?.8:1.3;
-    if(e.t==="team")cx.setLineDash([5,4]);cx.beginPath();cx.moveTo(x1,y1);
-    if(mode==="B"){var mx=(x1+x2)/2,my=(y1+y2)/2;cx.quadraticCurveTo(mx+(sx(0)-mx)*.3,my+(sy(0)-my)*.3,x2,y2)}else cx.lineTo(x2,y2);cx.stroke();cx.setLineDash([]);
-    if(on&&!still){var p=(t*.6+(e.a.n.length%7)/7)%1;var px,py;if(mode==="B"){var mx2=(x1+x2)/2,my2=(y1+y2)/2,qx=mx2+(sx(0)-mx2)*.3,qy=my2+(sy(0)-my2)*.3,u=1-p;px=u*u*x1+2*u*p*qx+p*p*x2;py=u*u*y1+2*u*p*qy+p*p*y2}else{px=x1+(x2-x1)*p;py=y1+(y2-y1)*p}
-      cx.fillStyle=c;cx.beginPath();cx.arc(px,py,2.6,0,6.283);cx.fill()}});
-  /* nodes */
-  var labels=[];
-  N.forEach(function(n){if(!visible(n))return;var r=rad(n)*Math.max(.7,Math.min(1.6,k)),x=sx(n.x),y=sy(n.y);if(x<-40||y<-40||x>W+40||y>H+40)return;var L1=lit(n);
-    cx.globalAlpha=semantic*(L1?1:.18);cx.fillStyle=col(n);cx.beginPath();cx.arc(x,y,r,0,6.283);cx.fill();
-    if(n.id==="core"){var sc2=r*1.25/24;cx.save();cx.translate(x-7*sc2,y-14*sc2);cx.scale(sc2,sc2);cx.fillStyle=tok.void;cx.fill(QB1);cx.fill(QB2);cx.restore()}
-    if(n.hub){cx.strokeStyle=col(n);cx.lineWidth=1.5;cx.beginPath();cx.arc(x,y,r+4,0,6.283);cx.stroke()}
-    if(n.st&&n.st!=="live"){cx.strokeStyle=tok.void;cx.lineWidth=2;cx.beginPath();cx.arc(x,y,r*.45,0,6.283);cx.stroke()}
-    if(n===sel){cx.strokeStyle=tok.ink;cx.lineWidth=2;cx.beginPath();cx.arc(x,y,r+7,0,6.283);cx.stroke()}
-    var show=n.hub||n===hot||n===sel||(hot&&L1)||k>(mode==="C"?kFit*2.2:1.05)||(k>.7&&n.e.length>=3);if(show&&L1)labels.push([n,x,y,r])});
-  cx.globalAlpha=semantic;cx.textAlign="left";cx.textBaseline="middle";
-  labels.forEach(function(l){var n=l[0];cx.font=(n.hub?"600 13px Chakra Petch, system-ui, sans-serif":"500 11.5px IBM Plex Sans, system-ui, sans-serif");var tx=l[1]+l[3]+5;cx.lineWidth=3;cx.strokeStyle=tok.void;cx.strokeText(n.n,tx,l[2]);cx.fillStyle=n===hot||n===sel?tok.ink:alpha(tok.ink,.82);cx.fillText(n.n,tx,l[2])});
-  cx.textBaseline="alphabetic";cx.globalAlpha=1}
-function frame(now){var moving=false;
-  if(anim){var done=true;N.forEach(function(n){if(n.tx==null)return;var dx=n.tx-n.x,dy=n.ty-n.y;if(Math.abs(dx)+Math.abs(dy)>.3){done=false;var f=still?1:.12;n.x+=dx*f;n.y+=dy*f}else{n.x=n.tx;n.y=n.ty}});if(done)anim=0;moving=true}
-  if(camT){var f=.16;cam.x+=(camT.x-cam.x)*f;cam.y+=(camT.y-cam.y)*f;cam.k+=(camT.k-cam.k)*f;if(Math.abs(camT.k-cam.k)<.001&&Math.abs(camT.x-cam.x)<.5){cam=camT;camT=null}moving=true}
-  if(dirty||moving||hot){draw(now);dirty=false}requestAnimationFrame(frame)}
-/* ---- interaction: drag to pan, wheel/pinch to zoom, hover/tap a dot ---- */
-function pick(px,py){var best=null,bd=1e9;N.forEach(function(n){if(!visible(n))return;if(mode==="C"&&cam.k<kFit*1.3)return;var d=Math.hypot(sx(n.x)-px,sy(n.y)-py),r=rad(n)*Math.max(.7,Math.min(1.6,cam.k))+6;if(d<r&&d<bd){bd=d;best=n}});return best}
-function pickIsland(px,py){if(mode!=="C")return null;var w=(px-cam.x)/cam.k,h=(py-cam.y)/cam.k;for(var i=0;i<ISL.length;i++){var s=ISL[i];if(Math.hypot(s.x-w,s.y-h)<s.r)return s}return null}
-var ptr={},drag=null,moved=0,pinch=null;
-function lp(e){var r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]}
-cv.addEventListener("pointerdown",function(e){var p=lp(e);ptr[e.pointerId]=p;moved=0;cv.setPointerCapture(e.pointerId);
-  var ids=Object.keys(ptr);if(ids.length===2){var a=ptr[ids[0]],b=ptr[ids[1]];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),k:cam.k};drag=null;return}
-  var n=pick(p[0],p[1]);drag={p:p,node:n,cx:cam.x,cy:cam.y};if(n)hot=n;cv.classList.add("drag")});
-cv.addEventListener("pointermove",function(e){var p=lp(e);if(ptr[e.pointerId])ptr[e.pointerId]=p;
-  var ids=Object.keys(ptr);if(pinch&&ids.length===2){var a=ptr[ids[0]],b=ptr[ids[1]],d=Math.hypot(a[0]-b[0],a[1]-b[1]);zoomAt((a[0]+b[0])/2,(a[1]+b[1])/2,(pinch.k*d/pinch.d)/cam.k);return}
-  if(drag){var dx=p[0]-drag.p[0],dy=p[1]-drag.p[1];moved=Math.max(moved,Math.abs(dx)+Math.abs(dy));
-    if(drag.node&&moved>4){drag.node.x+=(p[0]-(drag.lx||drag.p[0]))/cam.k;drag.node.y+=(p[1]-(drag.ly||drag.p[1]))/cam.k;drag.node.tx=drag.node.x;drag.node.ty=drag.node.y;drag.lx=p[0];drag.ly=p[1];dirty=true}
-    else if(!drag.node){cam.x=drag.cx+dx;cam.y=drag.cy+dy;camT=null;dirty=true}return}
-  if(e.pointerType==="mouse"){var n=pick(p[0],p[1]);if(n!==hot){hot=n||sel;dirty=true}cv.style.cursor=n?"pointer":""}});
-function up(e){var p=lp(e);delete ptr[e.pointerId];if(pinch){if(Object.keys(ptr).length<2)pinch=null;drag=null;return}
-  if(drag&&moved<5){var n=pick(p[0],p[1]);if(n)select(n);else{var s=pickIsland(p[0],p[1]);if(s&&cam.k<kFit*1.3)go(s.x,s.y,Math.min(W,H)/(s.r*2.6),true);else select(null)}}
-  drag=null;cv.classList.remove("drag")}
-cv.addEventListener("pointerup",up);cv.addEventListener("pointercancel",function(e){delete ptr[e.pointerId];drag=null;pinch=null});
-cv.addEventListener("pointerleave",function(e){if(e.pointerType==="mouse"&&!drag){hot=sel;dirty=true}});
-cv.addEventListener("wheel",function(e){e.preventDefault();var p=lp(e);zoomAt(p[0],p[1],Math.exp(-e.deltaY*.0016))},{passive:false});
-document.getElementById("zin").onclick=function(){zoomAt(W/2,H/2,1.35)};document.getElementById("zout").onclick=function(){zoomAt(W/2,H/2,1/1.35)};document.getElementById("zfit").onclick=function(){fit(true)};
-["A","B","C"].forEach(function(m){document.getElementById("m"+m).onclick=function(){setMode(m)}});
-/* ---- detail panel ---- */
+  cy.nodes(".decoB").toggleClass("out",m!=="B");isFar=false;cy.nodes(".island").removeClass("far");applyFilters();
+  var P=LAY[m];cy.nodes(".p").layout({name:"preset",positions:function(n){return P[n.id()]},animate:!still,animationDuration:650,animationEasing:"ease-in-out-cubic",fit:false,stop:function(){fit(true)}}).run();
+}
+/* islands: zoomed out shows categories and how they link; zoom in to see every project */
+var isFar=false;
+function far(){var f=mode==="C"&&cy.zoom()<kFit*1.3;if(f===isFar)return;isFar=f;cy.nodes(".island").toggleClass("far",f);applyFilters()}
+cy.on("zoom",far);
+/* ---- highlight, select, detail panel ---- */
+function light(n){cy.batch(function(){cy.elements().removeClass("faded hl");if(!n)return;var node=cy.$id(n.id),nb=node.closedNeighborhood();
+  cy.nodes(".p").not(nb).addClass("faded");cy.edges(".l").not(node.connectedEdges()).addClass("faded");node.connectedEdges().addClass("hl")})}
+cy.on("mouseover","node.p",function(e){hot=byId[e.target.id()];light(hot);document.getElementById("cy").style.cursor="pointer"});
+cy.on("mouseout","node.p",function(){hot=null;light(sel);document.getElementById("cy").style.cursor=""});
+cy.on("tap","node.p",function(e){select(byId[e.target.id()])});
+cy.on("tap",function(e){if(e.target!==cy)return;if(mode==="C"&&isFar){var p=e.position,hit=null;ISL.forEach(function(s){if(Math.hypot(s.x-p.x,s.y-p.y)<s.r)hit=s});
+    if(hit){var es=cy.collection();hit.m.forEach(function(n){es=es.union(cy.$id(n.id))});cy.animate({fit:{eles:es.union(cy.$id("isl-"+hit.g)),padding:40},duration:still?0:500});return}}select(null)});
+/* marching dashes on the links of the highlighted project */
+var off=0;(function ants(){if(!still){off=(off+.6)%28;var h=cy.edges(".hl");if(h.length)h.style("line-dash-offset",-off)}requestAnimationFrame(ants)})();
 var panel=document.getElementById("panel");
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
-function select(n,focus){sel=n;hot=n;dirty=true;if(!n){panel.hidden=true;return}
+function select(n,focus){sel=n;cy.nodes(".p").removeClass("on");if(n)cy.$id(n.id).addClass("on");light(n);if(G3)paint3D();if(!n){panel.hidden=true;return}
   var fam=FAMS.filter(function(f){return f[0]===n.f})[0],st={live:"Live",early:"Early",test:"Testnet",dev:"In development",hold:"On hold",na:"Unconfirmed"}[n.st];
-  var h='<button class="x" type="button" aria-label="Close" id="px">×</button><h2>'+esc(n.n)+'</h2><div class="meta"><span class="fam" style="background:'+col(n)+'">'+esc(fam?fam[1]:"Core")+'</span><span>'+esc(CATN[n.c]||"")+'</span>'+(st?'<span>'+st+'</span>':"")+(n.sc?'<span>Contract #'+n.sc+'</span>':"")+'</div><p>'+esc(n.d||"")+'</p>';
+  var h='<button class="x" type="button" aria-label="Close" id="px">×</button><h2>'+esc(n.n)+'</h2><div class="meta"><span class="fam" style="background:'+fcol(n.f)+'">'+esc(fam?fam[1]:"Core")+'</span><span>'+esc(CATN[n.c]||"")+'</span>'+(st?'<span>'+st+'</span>':"")+(n.sc?'<span>Contract #'+n.sc+'</span>':"")+'</div><p>'+esc(n.d||"")+'</p>';
   var ls=n.e.slice().sort(function(a,b){return ET.findIndex(function(x){return x[0]===a.t})-ET.findIndex(function(x){return x[0]===b.t})});
   h+='<h3>'+ls.length+(ls.length===1?" connection":" connections")+'</h3><div class="links">';
-  ls.forEach(function(e,i){var o=e.a===n?e.b:e.a,lab=e.a===n?(e.l||ETN[e.t]):(e.il||ETN[e.t]);h+='<button class="lk" type="button" data-i="'+o.id+'"><i style="color:'+tok["e-"+e.t]+'">'+lab+'</i><b>'+esc(o.n)+'</b></button>'});
+  ls.forEach(function(e){var o=e.a===n?e.b:e.a,lab=e.a===n?(e.l||ETN[e.t]):(e.il||ETN[e.t]);h+='<button class="lk" type="button" data-i="'+o.id+'"><i style="color:'+tok["e-"+e.t]+'">'+esc(lab)+'</i><b>'+esc(o.n)+'</b></button>'});
   h+='</div>'+(n.s?'<a class="open" href="/p/'+encodeURIComponent(n.s)+'">Open its project page →</a>':"");
   panel.innerHTML=h;panel.hidden=false;document.getElementById("px").onclick=function(){select(null)};
-  panel.querySelectorAll(".lk").forEach(function(b){b.onclick=function(){var o=byId[b.dataset.i];select(o,true)}});
-  if(focus)go(n.x,n.y,Math.max(cam.k,1.25),true)}
+  panel.querySelectorAll(".lk").forEach(function(b){b.onclick=function(){select(byId[b.dataset.i],true)}});
+  if(focus)goTo(n)}
+function goTo(n){if(G3&&g3on){var o=G3.graphData().nodes.filter(function(x){return x.id===n.id})[0];if(o){var d=1+140/Math.hypot(o.x||1,o.y||1,o.z||1);G3.cameraPosition({x:o.x*d,y:o.y*d,z:o.z*d},o,still?0:900)}return}
+  cy.animate({center:{eles:cy.$id(n.id)},zoom:Math.max(cy.zoom(),1.3)},{duration:still?0:500})}
+/* ---- filters ---- */
+function applyFilters(){cy.batch(function(){cy.nodes(".p").forEach(function(x){x.toggleClass("out",!famOn[x.data("f")]||(mode==="C"&&isFar))});
+  cy.edges(".l").forEach(function(x){x.toggleClass("out",!etOn[x.data("t")])});
+  cy.nodes(".island").forEach(function(x){x.toggleClass("out",mode!=="C"||!famOn[x.data("f")])});
+  cy.edges(".meta").forEach(function(x){x.toggleClass("out",mode!=="C"||!isFar||!famOn[x.source().data("f")]||!famOn[x.target().data("f")])})});if(G3)paint3D()}
+var fams=document.getElementById("fams"),ets=document.getElementById("ets");
+FAMS.forEach(function(f){var b=document.createElement("button");b.type="button";b.className="chip";b.setAttribute("aria-pressed","true");b.innerHTML='<s style="background:var(--f-'+f[0]+')"></s>'+f[1];b.onclick=function(){famOn[f[0]]=!famOn[f[0]];b.setAttribute("aria-pressed",famOn[f[0]]);applyFilters()};fams.appendChild(b)});
+ET.forEach(function(t){var b=document.createElement("button");b.type="button";b.className="chip";b.setAttribute("aria-pressed","true");b.innerHTML='<u class="'+(t[0]==="team"?"dash":"")+'" style="border-color:var(--e-'+t[0]+')"></u>'+t[1];b.onclick=function(){etOn[t[0]]=!etOn[t[0]];b.setAttribute("aria-pressed",etOn[t[0]]);applyFilters()};ets.appendChild(b)});
+var fb=document.getElementById("ftog"),leg=document.getElementById("legend");
+fb.onclick=function(){var o=leg.classList.toggle("open");fb.setAttribute("aria-expanded",o);fb.textContent=o?"✕ Filters":"☰ Filters"};
 /* ---- search ---- */
 var q=document.getElementById("q"),res=document.getElementById("res");
 function norm(s){return s.toLowerCase().normalize("NFD").replace(/[^a-z0-9]/g,"")}
 q.addEventListener("input",function(){var v=norm(q.value);res.textContent="";if(!v){res.hidden=true;return}
   var m=N.filter(function(n){return norm(n.n).indexOf(v)>=0||norm(CATN[n.c]||"").indexOf(v)>=0}).slice(0,8);
-  m.forEach(function(n,i){var b=document.createElement("button");b.type="button";if(!i)b.className="on";b.innerHTML=esc(n.n)+"<small>"+esc(CATN[n.c]||"")+"</small>";b.onclick=function(){res.hidden=true;q.value=n.n;select(n,true)};res.appendChild(b)});res.hidden=!m.length});
+  m.forEach(function(n,i){var b=document.createElement("button");b.type="button";if(!i)b.className="on";b.innerHTML=esc(n.n)+"<small>"+esc(CATN[n.c]||"")+"</small>";b.onclick=function(){res.hidden=true;q.value=n.n;if(!famOn[n.f]){famOn[n.f]=true;applyFilters()}if(mode==="C"&&isFar){cy.zoom(kFit*1.4)}select(n,true)};res.appendChild(b)});res.hidden=!m.length});
 q.addEventListener("keydown",function(e){if(e.key==="Enter"){var b=res.querySelector("button");if(b)b.click()}else if(e.key==="Escape"){res.hidden=true;q.blur()}});
 document.addEventListener("pointerdown",function(e){if(!e.target.closest(".search"))res.hidden=true});
-/* ---- legend filters ---- */
-var fams=document.getElementById("fams"),ets=document.getElementById("ets");
-FAMS.forEach(function(f){var b=document.createElement("button");b.type="button";b.className="chip";b.setAttribute("aria-pressed","true");b.innerHTML='<s style="background:var(--f-'+f[0]+')"></s>'+f[1];b.onclick=function(){famOn[f[0]]=!famOn[f[0]];b.setAttribute("aria-pressed",famOn[f[0]]);dirty=true};fams.appendChild(b)});
-ET.forEach(function(t){var b=document.createElement("button");b.type="button";b.className="chip";b.setAttribute("aria-pressed","true");b.innerHTML='<u class="'+(t[0]==="team"?"dash":"")+'" style="border-color:var(--e-'+t[0]+')"></u>'+t[1];b.onclick=function(){etOn[t[0]]=!etOn[t[0]];b.setAttribute("aria-pressed",etOn[t[0]]);dirty=true};ets.appendChild(b)});
-addEventListener("resize",function(){resize();fit(false)});
-/* full screen: the real thing where the browser allows it, otherwise hide the header and legend so the map fills the page */
+/* ---- zoom buttons ---- */
+function zoomBy(f){if(G3&&g3on){var c=G3.camera().position;G3.cameraPosition({x:c.x/f,y:c.y/f,z:c.z/f},null,still?0:300);return}
+  var w=cy.width()/2,h=cy.height()/2;cy.animate({zoom:{level:Math.max(.12,Math.min(4,cy.zoom()*f)),renderedPosition:{x:w,y:h}}},{duration:still?0:200})}
+document.getElementById("zin").onclick=function(){zoomBy(1.35)};document.getElementById("zout").onclick=function(){zoomBy(1/1.35)};
+document.getElementById("zfit").onclick=function(){if(G3&&g3on)G3.zoomToFit(600,30);else fit(true)};
+["A","B","C","3D"].forEach(function(m){document.getElementById("m"+m).onclick=function(){setMode(m)}});
+/* ---- 3D view: loaded only when asked for ---- */
+var G3=null,g3on=false,g3el=document.getElementById("g3");
+function paint3D(){if(!G3)return;var nb={};if(sel){nb[sel.id]=1;sel.e.forEach(function(e){nb[e.a.id]=1;nb[e.b.id]=1})}
+  G3.nodeColor(function(o){var n=byId[o.id];return sel&&!nb[o.id]?tok.rule:fcol(n.f)}).nodeVisibility(function(o){return famOn[byId[o.id].f]})
+    .linkVisibility(function(l){return etOn[l.t]}).linkColor(function(l){return tok["e-"+l.t]}).linkWidth(function(l){return sel&&(l.a===sel.id||l.b===sel.id)?2:0})
+    .linkDirectionalParticles(function(l){return sel&&(l.a===sel.id||l.b===sel.id)?4:0}).backgroundColor(tok.void)}
+function open3D(){["A","B","C","3D"].forEach(function(k){document.getElementById("m"+k).setAttribute("aria-pressed",k==="3D")});
+  document.getElementById("pitch").innerHTML="<b>"+PITCH["3D"][0]+"</b>"+PITCH["3D"][1];g3el.hidden=false;g3on=true;
+  if(G3){G3.resumeAnimation();size3D();return}
+  g3el.textContent="Loading the 3D view…";var s=document.createElement("script");s.src="/vendor/3d-force-graph-1.80.1.min.js";
+  s.onload=function(){g3el.textContent="";var nodes=N.map(function(n){return {id:n.id,name:n.n,val:n.hub?[0,6,10,22][n.hub]:1+n.e.length*.5}}),links=L.map(function(e){return {source:e.a.id,target:e.b.id,a:e.a.id,b:e.b.id,t:e.t}});
+    nodes[0].fx=0;nodes[0].fy=0;nodes[0].fz=0;
+    G3=ForceGraph3D()(g3el).graphData({nodes:nodes,links:links}).nodeLabel(function(o){return '<span style="font:500 12px IBM Plex Sans,sans-serif;background:'+tok.panel+';color:'+tok.ink+';padding:3px 7px;border:1px solid '+tok.rule+'">'+esc(o.name)+'</span>'})
+      .nodeRelSize(4).nodeOpacity(.95).linkOpacity(.45).linkDirectionalParticleWidth(2.2).linkDirectionalParticleSpeed(.008).showNavInfo(false)
+      .onNodeClick(function(o){select(byId[o.id],true)}).onBackgroundClick(function(){select(null)});
+    G3.d3Force("link").distance(function(l){return l.t==="network"||l.t==="contract"?70:35});
+    /* a gentle pull to the centre so projects without links stay in the picture */
+    var pn=[];function pull(a){pn.forEach(function(o){o.vx-=(o.x||0)*.012*a;o.vy-=(o.y||0)*.012*a;o.vz-=(o.z||0)*.012*a})}pull.initialize=function(ns){pn=ns};G3.d3Force("pull",pull);
+    var fitted=false;G3.onEngineStop(function(){if(!fitted){fitted=true;G3.zoomToFit(700,40)}});paint3D();size3D()};
+  s.onerror=function(){g3el.textContent="The 3D view could not load. Check your connection and try again."};document.body.appendChild(s)}
+function close3D(){if(!g3on)return;g3on=false;g3el.hidden=true;if(G3)G3.pauseAnimation()}
+function size3D(){if(G3){var r=g3el.getBoundingClientRect();G3.width(r.width).height(r.height)}}
+/* ---- full screen ---- */
 var app=document.querySelector(".app"),fsb=document.getElementById("zfs");
 function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement}
-function fsSync(){var on=!!fsEl()||app.classList.contains("max");fsb.textContent=on?"✕":"⛶";fsb.setAttribute("aria-label",on?"Exit full screen":"Full screen");fsb.title=fsb.getAttribute("aria-label");setTimeout(function(){resize();fit(false)},60)}
+function relay(){setTimeout(function(){cy.resize();size3D();if(!g3on)fit(false)},80)}
+function fsSync(){var on=!!fsEl()||app.classList.contains("max");fsb.textContent=on?"✕":"⛶";fsb.setAttribute("aria-label",on?"Exit full screen":"Full screen");fsb.title=fsb.getAttribute("aria-label");relay()}
 function pseudo(on){app.classList.toggle("max",on);fsSync()}
 fsb.onclick=function(){if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}if(app.classList.contains("max")){pseudo(false);return}
   var req=app.requestFullscreen||app.webkitRequestFullscreen;if(!req){pseudo(true);return}
   try{var r=req.call(app);if(r&&r.then)r.then(fsSync,function(){pseudo(true)});else setTimeout(function(){if(!fsEl())pseudo(true)},250)}catch(e){pseudo(true)}};
 document.addEventListener("fullscreenchange",fsSync);document.addEventListener("webkitfullscreenchange",fsSync);
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&app.classList.contains("max"))pseudo(false)});
-resize();setMode("A");N.forEach(function(n){n.x=n.tx;n.y=n.ty});anim=0;fit(false);requestAnimationFrame(frame);
+addEventListener("resize",relay);
+setMode("A");
+
 })();
 </script>
 </body></html>
