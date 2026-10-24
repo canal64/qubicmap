@@ -173,7 +173,9 @@ function touchStreak(){var t=day();if(S.last===t)return;S.streak=S.last===yday()
 var AC=null,MASTER=null;
 /* Same approach as the other arcade games: iOS can leave the context "interrupted" (another app, a call, the keyboard,
    a few games), so on every touch it is resumed, and re-created if it stays stuck. "playback" also plays with the silent switch on. */
-function mk(){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;var a=new C();MASTER=a.createGain();MASTER.gain.value=.8;MASTER.connect(a.destination);return a}
+function mk(){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;var a=new C();MASTER=a.createGain();MASTER.gain.value=.7;
+  /* safety limiter: big chains fire dozens of sounds at once; this keeps the sum from clipping */
+  try{var k=a.createDynamicsCompressor();k.threshold.value=-14;k.knee.value=8;k.ratio.value=12;k.attack.value=.003;k.release.value=.2;MASTER.connect(k);k.connect(a.destination)}catch(e){MASTER.connect(a.destination)}return a}
 function unlock(){try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
   try{if(AC&&(AC.state==="closed"||AC.state==="interrupted")){if(AC.state!=="closed"){try{var q=AC.close();if(q&&q.catch)q.catch(function(){})}catch(e){}}AC=null}
     AC=AC||mk();var a=AC;if(!a)return;
@@ -247,7 +249,7 @@ function epochRows(){var d=String(epochNow()).slice(-3).padStart(3,"0"),rows=[];
 function newLevel(){grid=[];off=0;G.drop=0;G.miss=0;G.clock=0;var rows=rowsFor(G.lvl);if(G.lvl===0){grid=epochRows();rows=grid.length}else for(var r=0;r<rows;r++){var row=fillRow();row.length=cols(r);grid.push(row)}
   for(var q=0;q<1+Math.floor(G.lvl/3);q++){var qr=1+Math.floor(Math.random()*(rows-1)),qc=Math.floor(Math.random()*cols(qr));grid[qr][qc]=QB}G.cur=pick();G.next=pick();
   texts.push({x:AW/2,y:AH*.5,s:G.lvl===0?"EPOCH "+epochNow()+" · LEVEL 1":"LEVEL "+(G.lvl+1)+" · "+LV[Math.min(9,G.lvl)].n.toUpperCase(),c:LV[Math.min(9,G.lvl)].c,l:1.8,z:1.3});evo();hud()}
-function reset(){G.on=true;G.score=0;G.lvl=0;G.shots=0;G.combo=0;G.bestCombo=1;G.gauge=0;G.dropN=0;G.armed=false;G.shot=null;G.shake=0;G.busy=0;parts=[];fall=[];texts=[];rings=[];
+function reset(){G.on=true;G.score=0;G.lvl=0;G.shots=0;G.combo=0;G.bestCombo=1;G.gauge=0;G.dropN=0;G.armed=false;G.shot=null;G.shake=0;G.freeze=0;G.busy=0;parts=[];fall=[];texts=[];rings=[];
   touchStreak();newLevel();$("over").classList.remove("on");newToken()}
 function hud(){$("score").textContent=fmt(G.score);$("lvl").textContent=G.lvl+1;$("best").textContent=fmt(Math.max(S.hi,G.score));
   $("gauge").style.width=Math.min(100,G.gauge)+"%";var ready=G.gauge>=100&&G.on;$("pulse").disabled=!ready||G.armed;$("pulse").classList.toggle("ready",ready&&!G.armed);$("pulse").classList.toggle("armed",G.armed)}
@@ -290,7 +292,7 @@ function land(s){G.shot=null;var cell=nearestFree(s.x,s.y);if(!cell){gameOver();
   var pump=1;
   if(s.k==="cfb"){var best=-1,bn=0;neighbors(r,c).forEach(function(q){var k=get(q[0],q[1]);if(k==null||k===QB)return;var n=flood(q[0],q[1],function(x){return x===k}).length;if(n>bn){bn=n;best=k}});
     if(best<0){var pr=present();best=pr?pr[Math.floor(Math.random()*pr.length)]:0}s.k=best;grid[r][c]=best;pump=2;
-    burst(s.x,s.y,40,["#ffd23f","#fff7c2","#ff9a3c"],1.4);texts.push({x:AW/2,y:AH*.56,s:"🚀 $CFB PUMP x2",c:"#ffd23f",l:1.5,z:1.3});tone(1046,.12,"square",.06);tone(1568,.25,"triangle",.06,null,.08)}
+    burst(s.x,s.y,40,["#ffd23f","#fff7c2","#ff9a3c"],1.4);stop(.08);texts.push({x:AW/2,y:AH*.56,s:"🚀 $CFB PUMP x2",c:"#ffd23f",l:1.5,z:1.3});tone(1046,.12,"square",.06);tone(1568,.25,"triangle",.06,null,.08)}
   var same=flood(r,c,function(k){return k===s.k});
   if(same.length>=3||(pump>1&&same.length>=2)){G.combo++;G.bestCombo=Math.max(G.bestCombo,G.combo);var mult=(1+(G.combo-1)*.5)*pump;
     same.forEach(function(p,i){var x=cellX(p[0],p[1]),y=cellY(p[0]),k=grid[p[0]][p[1]];grid[p[0]][p[1]]=null;burst(x,y,10,[K[k].c,"#ffffff"],1);sfx.pop(i,G.combo-1)});
@@ -301,7 +303,7 @@ function land(s){G.shot=null;var cell=nearestFree(s.x,s.y);if(!cell){gameOver();
     if(dropped.length)texts.push({x:s.x,y:s.y+34,s:"DROP x"+dropped.length+"!",c:"#62d6a0",l:1.2,z:1.1});
     if(G.combo>=2)texts.push({x:AW/2,y:AH*.42,s:(G.combo>=3?"QUORUM CHAIN x":"COMBO x")+G.combo+"!",c:G.combo>=3?"#ff4fd8":"#ffd23f",l:1.3,z:1.25+G.combo*.06});
     rings.push({x:s.x,y:s.y,r:R,max:R*4+dropped.length*6,c:K[s.k].c,l:1});
-    G.shake=Math.max(G.shake,3+same.length+dropped.length*.7);if(navigator.vibrate)try{navigator.vibrate(15)}catch(e){}
+    G.shake=Math.max(G.shake,3+same.length+dropped.length*.7);if(same.length+dropped.length>=8||G.combo>=3)stop(.07);if(navigator.vibrate)try{navigator.vibrate(15)}catch(e){}
     if(!clear()&&!present())qubicLeft();
     if(clear()){levelUp();return}}
   else G.combo=0;
@@ -324,7 +326,7 @@ function qubicBlast(popped){var seen={},queue=[];popped.forEach(function(p){neig
     burst(ox,oy,40,["#3ef0ff","#cfe6ff","#a46bff","#ffffff"],1.6);rings.push({x:ox,y:oy,r:R,max:R*6,c:"#3ef0ff",l:1});
     grid.forEach(function(row,r){row&&row.forEach(function(k,c){if(k==null)return;if(Math.hypot(cellX(r,c)-ox,cellY(r)-oy)>R*3.2)return;if(k===QB){if(!seen[[r,c]]){seen[[r,c]]=1;queue.push([r,c])}return}
       burst(cellX(r,c),cellY(r),8,[K[k].c,"#ffffff"],1);grid[r][c]=null;n++})})}
-  if(fired){var b=Math.round((500*fired+n*20)*(1+G.lvl*.25));G.score+=b;G.gauge=Math.min(100,G.gauge+15*fired);G.shake=Math.max(G.shake,14);
+  if(fired){var b=Math.round((500*fired+n*20)*(1+G.lvl*.25));G.score+=b;G.gauge=Math.min(100,G.gauge+15*fired);G.shake=Math.max(G.shake,14);stop(.1);
     texts.push({x:AW/2,y:AH*.5,s:"QUBIC BONUS +"+fmt(b),c:"#3ef0ff",l:1.5,z:1.35});sfx.pulse();if(navigator.vibrate)try{navigator.vibrate([30,20,50])}catch(e){}}
   return fired}
 function clear(){return grid.every(function(row){return !row||row.every(function(k){return k==null})})}
@@ -334,9 +336,10 @@ function lowestY(){for(var r=grid.length-1;r>=0;r--)if(grid[r]&&grid[r].some(fun
 function check(){if(lowestY()>DEAD&&G.drop>=0)gameOver()}
 function pulseBlast(x,y){var rows=[];for(var r=grid.length-1;r>=0&&rows.length<1;r--)if(grid[r]&&grid[r].some(function(k){return k!=null}))rows.push(r);
   var n=0;rows.forEach(function(r){grid[r].forEach(function(k,c){if(k!=null){burst(cellX(r,c),cellY(r),12,[kc(k),"#3ef0ff","#ffffff"],1.3);grid[r][c]=null;n++}})});
-  var d=drops();G.score+=n*15+d.length*30;sfx.pulse();G.shake=Math.max(G.shake,16);rings.push({x:x,y:y,r:10,max:AW,c:"#3ef0ff",l:1});texts.push({x:AW/2,y:AH*.45,s:"⚡ QUORUM PULSE",c:"#3ef0ff",l:1.4,z:1.4});
+  var d=drops();G.score+=n*15+d.length*30;sfx.pulse();G.shake=Math.max(G.shake,16);stop(.1);rings.push({x:x,y:y,r:10,max:AW,c:"#3ef0ff",l:1});texts.push({x:AW/2,y:AH*.45,s:"⚡ QUORUM PULSE",c:"#3ef0ff",l:1.4,z:1.4});
   if(navigator.vibrate)try{navigator.vibrate([40,30,60])}catch(e){}trim();if(clear()){levelUp();return}hud()}
-function levelUp(){var bonus=Math.round(1000*(G.lvl+1));G.score+=bonus;texts.push({x:AW/2,y:AH*.36,s:"BOARD CLEAR +"+fmt(bonus),c:"#62d6a0",l:1.6,z:1.3});sfx.level();G.shake=12;
+function levelUp(){var bonus=Math.round(1000*(G.lvl+1));G.score+=bonus;stop(.12);
+  if((G.dropN||0)>0){G.dropN=Math.max(0,G.dropN-2);texts.push({x:AW/2,y:AH*.44,s:"CEILING SLOWS DOWN",c:"#3ef0ff",l:1.5,z:1})}texts.push({x:AW/2,y:AH*.36,s:"BOARD CLEAR +"+fmt(bonus),c:"#62d6a0",l:1.6,z:1.3});sfx.level();G.shake=12;
   G.lvl++;if(G.lvl>9){G.lvl=9;texts.push({x:AW/2,y:AH*.28,s:"AIGARTH REACHED ✦",c:"#ffd23f",l:2.2,z:1.5})}if(G.lvl>S.max){S.max=G.lvl;save()}G.busy=1.2;setTimeout(newLevel,900);hud()}
 
 /* ---------------- effects ---------------- */
@@ -345,12 +348,13 @@ function burst(x,y,n,cols_,sp){if(still)n=Math.ceil(n/4);for(var i=0;i<n;i++){va
 
 /* ---------------- loop ---------------- */
 var last=performance.now();
-function frame(now){var dt=Math.min(1/30,(now-last)/1000);last=now;
+function stop(d){if(!still)G.freeze=Math.max(G.freeze||0,d)}
+function frame(now){var rdt=Math.min(1/30,(now-last)/1000);last=now;var dt=rdt;if(G.freeze>0){G.freeze-=rdt;dt=rdt*.06}
   if(G.on){if(G.shot)fly(dt);G.busy=Math.max(0,G.busy-dt);
     if(G.busy<=0&&!G.shot&&G.drop>=0&&G.on){G.clock=(G.clock||0)+dt;if(G.clock>=SHOT_TIME){down=false;shoot()}}
     if(G.drop<0){G.dropV+=900*dt;G.drop=Math.min(0,G.drop+G.dropV*dt);if(G.drop===0){G.shake=Math.max(G.shake,4);check()}}}
   for(var i=fall.length-1;i>=0;i--){var f=fall[i];f.vy+=1400*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.a+=dt*4;if(f.y>AH+R*2){fall.splice(i,1);if(Math.random()<.5)burst(f.x,AH-4,4,[kc(f.k)],.5)}}
-  G.shake*=Math.pow(.02,dt);if(G.shake<.2)G.shake=0;
+  G.shake=Math.max(0,G.shake-rdt*26);              /* trauma decays linearly; the offset uses its square */
   draw(now/1000,dt);requestAnimationFrame(frame)}
 function spr(k,x,y,a,sc){var sp=k==="pulse"?SPR.pulse:k==="cfb"?SPR.cfb:SPR[k];if(!sp)return;var hs=sp.h*(sc||1);if(a){cx.save();cx.translate(x,y);cx.rotate(a);cx.drawImage(sp.c,-hs,-hs,hs*2,hs*2);cx.restore()}else cx.drawImage(sp.c,x-hs,y-hs,hs*2,hs*2)}
 function guide(){var x=AW/2,y=SHY,vx=Math.cos(G.aim),vy=Math.sin(G.aim),pts=[[x,y]],len=0,max=AH*1.25;
@@ -358,7 +362,7 @@ function guide(){var x=AW/2,y=SHY,vx=Math.cos(G.aim),vy=Math.sin(G.aim),pts=[[x,
     if(y<=TOPY+G.drop)break;var hit=false;for(var r=0;r<grid.length&&!hit;r++){if(!grid[r])continue;var yy=cellY(r);if(Math.abs(yy-y)>2*R)continue;for(var c=0;c<grid[r].length;c++){if(grid[r][c]==null)continue;var dx=cellX(r,c)-x,dy=yy-y;if(dx*dx+dy*dy<(2*R-4)*(2*R-4)){hit=true;break}}}if(hit)break}
   pts.push([x,y]);return pts}
 function draw(t,dt){var s=SC*DPR;cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,cv.width,cv.height);
-  var sx=G.shake?(Math.random()-.5)*G.shake:0,sy=G.shake?(Math.random()-.5)*G.shake:0;cx.setTransform(s,0,0,s,sx*s,sy*s);
+  var tr=Math.min(1,G.shake/22),sh=still?0:tr*tr,sx=sh*13*Math.sin(t*47),sy=sh*9*Math.sin(t*61+1.3);cx.setTransform(s,0,0,s,sx*s,sy*s);
   var bg=cx.createLinearGradient(0,0,0,AH);bg.addColorStop(0,"#0a0f22");bg.addColorStop(1,"#050811");cx.fillStyle=bg;cx.fillRect(0,0,AW,AH);
   cx.strokeStyle="rgba(62,240,255,.05)";cx.lineWidth=1;cx.beginPath();for(var gx=38;gx<AW;gx+=38){cx.moveTo(gx,0);cx.lineTo(gx,AH)}for(var gy=38;gy<AH;gy+=38){cx.moveTo(0,gy);cx.lineTo(AW,gy)}cx.stroke();
   /* ceiling bar */
