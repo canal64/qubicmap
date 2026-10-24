@@ -73,6 +73,14 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
 .tb{display:grid;gap:4px}.tb div{display:grid;grid-template-columns:5.2em 1fr auto;gap:8px;align-items:center;font-size:12.5px}
 .tb i{display:block;height:10px;border-radius:3px;min-width:3px}.tb span{font-variant-numeric:tabular-nums;color:var(--muted)}
 .tag{font-size:11px;color:var(--muted)}
+/* phones: give the board every pixel (compact header, HUD and evolution bar) */
+@media (max-width:600px),(max-height:760px){
+  body{padding-top:max(4px,env(safe-area-inset-top));padding-bottom:max(4px,env(safe-area-inset-bottom))}
+  .back{padding:5px 8px;font-size:11px}.title{font-size:12.5px}.icon{min-height:28px;min-width:34px;font-size:12px}
+  .hud{margin-top:5px;gap:5px}.st{padding:3px 8px}.st small{font-size:8.5px}.st b{font-size:14.5px}
+  #pulse{font-size:10.5px;padding:2px 5px}
+  .stage{margin-top:4px}.evo{margin-top:4px}.evo span{width:min(100%,20px)}.evo small{display:none}.evo .now small{display:block}
+}
 @media (prefers-reduced-motion:reduce){#pulse.ready{animation:none}}
 </style></head><body>
 <div class="top">
