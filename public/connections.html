@@ -45,7 +45,7 @@ header{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding-bloc
 main{position:relative;min-height:0}
 #cy,#g3{position:absolute;inset:0}
 #g3{background:var(--void);display:grid;place-items:center;font:400 13px var(--mono);color:var(--muted)}
-.lbl3{position:absolute;inset:0;pointer-events:none;overflow:hidden}.lbl3 span{position:absolute;left:0;top:0;white-space:nowrap;font:500 11px var(--sans);color:var(--ink);text-shadow:0 0 3px var(--void),0 0 3px var(--void),0 0 2px var(--void);will-change:transform}.lbl3 span.h{font:700 13px var(--display);letter-spacing:.03em}
+.lbl3{position:absolute;inset:0;pointer-events:none;overflow:hidden}.lbl3 span{position:absolute;left:0;top:0;white-space:nowrap;font:500 11px var(--sans);color:var(--ink);text-shadow:0 0 3px var(--void),0 0 3px var(--void),0 0 2px var(--void);will-change:transform}.lbl3 .lg3{position:absolute;left:0;top:0}.lbl3 span.h{font:700 13px var(--display);letter-spacing:.03em}
 .hollow{display:inline-block;width:8px;height:8px;border-radius:50%;border:2px solid var(--muted)}
 .ftog{display:none}
 .pitch{position:absolute;left:max(16px,env(safe-area-inset-left,0px));top:12px;max-width:min(420px,calc(100% - 32px));font:400 12px var(--mono);color:var(--muted);pointer-events:none}
@@ -212,8 +212,8 @@ var tok={};
 function readTok(){var s=getComputedStyle(document.documentElement);["void","panel","rule","ink","muted","accent","f-mk","f-defi","f-wal","f-app","f-inf","f-com","f-core","e-contract","e-network","e-built","e-uses","e-team","e-market"].forEach(function(k){tok[k]=s.getPropertyValue("--"+k).trim()})}
 readTok();
 function fcol(f){return tok["f-"+f]}
-function size(n){return n.hub?[0,24,32,54][n.hub]:11+Math.min(11,n.e.length*1.8)}
-function logoURI(c){return "data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -1 26 30"><path fill="'+c+'" d="M5.25 2H0.75C0.34 2 0 2.34 0 2.75V19.25C0 19.66 0.34 20 0.75 20H5.25C5.66 20 6 19.66 6 19.25V2.75C6 2.34 5.66 2 5.25 2Z"/><path fill="'+c+'" d="M13.25 2H8.75C8.34 2 8 2.34 8 2.75V25.25C8 25.66 8.34 26 8.75 26H13.25C13.66 26 14 25.66 14 25.25V2.75C14 2.34 13.66 2 13.25 2Z"/></svg>')}
+function size(n){return n.hub?[0,24,32,76][n.hub]:11+Math.min(11,n.e.length*1.8)}
+function logoURI(c){return "data:image/svg+xml;utf8,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="260" height="300" viewBox="-6 -1 26 30"><path fill="'+c+'" d="M5.25 2H0.75C0.34 2 0 2.34 0 2.75V19.25C0 19.66 0.34 20 0.75 20H5.25C5.66 20 6 19.66 6 19.25V2.75C6 2.34 5.66 2 5.25 2Z"/><path fill="'+c+'" d="M13.25 2H8.75C8.34 2 8 2.34 8 2.75V25.25C8 25.66 8.34 26 8.75 26H13.25C13.66 26 14 25.66 14 25.25V2.75C14 2.34 13.66 2 13.25 2Z"/></svg>')}
 /* ---- elements: projects + links, plus the decor each map style needs (rings, sector names, islands) ---- */
 var els=[];
 N.forEach(function(n){els.push({group:"nodes",data:{id:n.id,label:n.n,f:n.f,sz:size(n)},classes:"p f-"+n.f+(n.hub?" hub":"")+(n.id==="core"?" core":"")+(n.st&&n.st!=="live"?" soon":""),position:{x:LAY.A[n.id].x,y:LAY.A[n.id].y}})});
@@ -229,7 +229,7 @@ function sheet(){var famSel=[["mk"],["defi"],["wal"],["app"],["inf"],["com"],["c
   {selector:"node.p",style:{"events":"yes","width":"data(sz)","height":"data(sz)","background-color":tok["f-core"],"label":"data(label)","font-family":"IBM Plex Sans, system-ui, sans-serif","font-size":11.5,"font-weight":500,"color":tok.ink,
     "text-valign":"center","text-halign":"right","text-margin-x":5,"text-outline-color":tok.void,"text-outline-width":3,"text-outline-opacity":1,"min-zoomed-font-size":8,"z-index":10,"transition-property":"opacity","transition-duration":"0.2s"}},
   {selector:"node.hub",style:{"font-family":"Chakra Petch, system-ui, sans-serif","font-size":14,"font-weight":700,"min-zoomed-font-size":0,"border-width":2,"border-opacity":.45,"z-index":12}},
-  {selector:"node.core",style:{"background-image":logoURI(tok.void),"background-fit":"contain","background-clip":"none","border-width":3,"border-opacity":.35,"font-size":16}},
+  {selector:"node.core",style:{"background-image":logoURI(tok.void),"background-fit":"none","background-width":"62%","background-height":"62%","background-position-x":"50%","background-position-y":"50%","background-clip":"node","border-width":3,"border-opacity":.35,"font-size":16}},
   {selector:"node.soon",style:{"background-opacity":0,"border-width":2,"border-opacity":1}},
   {selector:"edge.l",style:{"width":1.3,"curve-style":"straight","opacity":.55,"line-color":tok["e-uses"],"z-index":5,"events":"no"}},
   {selector:"edge.t-network",style:{"width":.8,"opacity":.25}},
@@ -327,7 +327,7 @@ function open3D(){["A","B","C","3D"].forEach(function(k){document.getElementById
   document.getElementById("pitch").innerHTML="<b>"+PITCH["3D"][0]+"</b>"+PITCH["3D"][1];g3el.hidden=false;g3on=true;
   if(G3){G3.resumeAnimation();size3D();return}
   g3el.textContent="Loading the 3D view…";var s=document.createElement("script");s.src="/vendor/3d-force-graph-1.80.1.min.js";
-  s.onload=function(){g3el.textContent="";var nodes=N.map(function(n){return {id:n.id,name:n.n,val:n.hub?[0,6,10,22][n.hub]:1+n.e.length*.5}}),links=L.map(function(e){return {source:e.a.id,target:e.b.id,a:e.a.id,b:e.b.id,t:e.t}});
+  s.onload=function(){g3el.textContent="";var nodes=N.map(function(n){return {id:n.id,name:n.n,val:n.hub?[0,6,10,46][n.hub]:1+n.e.length*.5}}),links=L.map(function(e){return {source:e.a.id,target:e.b.id,a:e.a.id,b:e.b.id,t:e.t}});
     nodes[0].fx=0;nodes[0].fy=0;nodes[0].fz=0;
     G3=ForceGraph3D()(g3el).graphData({nodes:nodes,links:links}).nodeLabel(function(o){return '<span style="font:500 12px IBM Plex Sans,sans-serif;background:'+tok.panel+';color:'+tok.ink+';padding:3px 7px;border:1px solid '+tok.rule+'">'+esc(o.name)+'</span>'})
       .nodeRelSize(4).nodeOpacity(.95).linkOpacity(.45).linkDirectionalParticleWidth(2.2).linkDirectionalParticleSpeed(.008).showNavInfo(false)
@@ -339,9 +339,13 @@ function open3D(){["A","B","C","3D"].forEach(function(k){document.getElementById
   s.onerror=function(){g3el.textContent="The 3D view could not load. Check your connection and try again."};document.body.appendChild(s)}
 /* names in 3D: HTML labels that follow each sphere; nearer projects read stronger, far ones fade */
 function labels3D(){var box=document.createElement("div");box.className="lbl3";g3el.appendChild(box);var map={};
+  var lg=document.createElement("img");lg.className="lg3";lg.alt="";box.appendChild(lg);var lgc="";
   G3.graphData().nodes.forEach(function(o){var d=document.createElement("span");d.textContent=o.name;if(byId[o.id].hub)d.className="h";box.appendChild(d);map[o.id]=d});
   (function tick(){if(g3on&&G3){var cam=G3.camera().position,W=g3el.clientWidth,H=g3el.clientHeight,nb=null,list=[],dmin=1e9,dmax=0;
       if(sel){nb={};nb[sel.id]=1;sel.e.forEach(function(e){nb[e.a.id]=1;nb[e.b.id]=1})}
+      /* the Qubic mark on the central sphere, sized to the sphere as the camera moves */
+      var co=G3.graphData().nodes[0];if(co.x!=null){var cc=G3.graph2ScreenCoords(co.x,co.y,co.z),ce=G3.graph2ScreenCoords(co.x,co.y+4*Math.cbrt(46),co.z),pr=Math.hypot(ce.x-cc.x,ce.y-cc.y),dim=sel&&!nb.core;
+        var want=dim?tok.panel:tok.void;if(want!==lgc){lgc=want;lg.src=logoURI(want)}lg.style.width=lg.style.height=(pr*1.25)+"px";lg.style.transform="translate("+(cc.x-pr*.625)+"px,"+(cc.y-pr*.625)+"px)";lg.style.display=pr>3?"":"none"}
       G3.graphData().nodes.forEach(function(o){var d=map[o.id],n=byId[o.id];d.style.display="none";if(o.x==null||!famOn[n.f]||(nb&&!nb[o.id]))return;
         var c=G3.graph2ScreenCoords(o.x,o.y,o.z);if(c.x<4||c.y<8||c.x>W-20||c.y>H-8)return;
         var dist=Math.hypot(cam.x-o.x,cam.y-o.y,cam.z-o.z);dmin=Math.min(dmin,dist);dmax=Math.max(dmax,dist);list.push([o,n,c,dist])});
