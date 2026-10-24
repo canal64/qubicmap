@@ -77,7 +77,7 @@ main{position:relative;min-height:0}
 .chip u{display:inline-block;width:16px;height:0;border-top:2px solid;text-decoration:none}
 .chip u.dash{border-top-style:dashed}
 .draft{color:var(--f-mk)}
-@media (max-width:640px){.home{display:none}.pitch{display:none}.panel{top:auto;bottom:10px;max-height:46%;z-index:6}.brand small{display:none}
+@media (max-width:640px){.brand{order:0;flex:1 1 0}.home{order:1;padding:6px 9px;font-size:11px;white-space:nowrap}.home .hl{display:none}.mode{order:2}.search{order:3}.pitch{display:none}.panel{top:auto;bottom:10px;max-height:46%;z-index:6}.brand small{display:none}
   .app{grid-template-rows:auto 1fr}
   .ftog{display:block;position:absolute;right:max(12px,env(safe-area-inset-right,0px));top:10px;z-index:5;font:500 12px var(--mono);letter-spacing:.05em;padding:7px 10px;background:var(--panel);color:var(--ink);border:1px solid var(--rule);cursor:pointer}
   .legend{display:none;position:absolute;left:0;right:0;bottom:0;z-index:7;max-height:60%;overflow:auto;box-shadow:0 -10px 30px rgba(0,0,0,.3)}
@@ -102,7 +102,7 @@ main{position:relative;min-height:0}
     <button id="m3D" type="button" aria-pressed="false" data-m="3D">3D</button>
   </div>
   <div class="search"><input id="q" type="search" placeholder="Find a project…" autocomplete="off" aria-label="Find a project"><div class="res" id="res" hidden></div></div>
-  <a class="home" href="/">▦ Map</a>
+  <a class="home" href="/" title="Back to the Qubic Ecosystem Map">← <span class="hl">Ecosystem </span>map</a>
 </header>
 <main>
   <div id="cy" role="img" aria-label="Interactive map of how Qubic projects connect"></div><div id="g3" hidden></div><button class="ftog" id="ftog" type="button" aria-expanded="false" aria-controls="legend">☰ Filters</button>
