@@ -52,6 +52,10 @@ async function sign(text, env) {
   return [...mac.slice(0, 12)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 const tokenText = (t, voter, g) => t + "|" + voter + (g === "flappy" ? "" : "|" + g);
+// Start tokens are not tied to the visitor's IP: a phone switching between Wi-Fi and mobile data (or rotating
+// its IPv6 address) mid-game would otherwise lose its score ("bad token"). The plausibility check still applies,
+// and the score is still recorded under the visitor submitting it. Old IP-bound tokens stay valid.
+const tokenText2 = (t, g) => t + "|" + g + "|v2";
 function cleanName(v) {
   const n = String(v == null ? "" : v).normalize("NFC").replace(/[^\p{L}\p{N} _.\-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 16);
   return n.length && !BLOCK.test(n.replace(/[\s_.\-]/g, "")) ? n : "";
@@ -101,14 +105,14 @@ async function game(url, request, env) {
   const voter = await voterOf(request, env), now = Date.now();
   if (url.pathname === "/api/game/start") {
     const g = gameOf(url.searchParams.get("g"));
-    return json({ token: now + "." + (await sign(tokenText(now, voter, g), env)) });
+    return json({ token: now + "." + (await sign(tokenText2(now, g), env)) });
   }
   if (url.pathname === "/api/game/score") {
     let b; try { b = await request.json(); } catch { return json({ error: "bad request" }, 400); }
     const g = gameOf(b && b.g), G = GAMES[g];
     const [t, mac] = String((b && b.token) || "").split(".");
     const started = Number(t), score = Number(b && b.score), name = cleanName(b && b.name);
-    if (!started || mac !== (await sign(tokenText(started, voter, g), env))) return json({ error: "bad token" }, 400);
+    if (!started || (mac !== (await sign(tokenText2(started, g), env)) && mac !== (await sign(tokenText(started, voter, g), env)))) return json({ error: "bad token" }, 400);
     if (!Number.isInteger(score) || score < 1 || score > (G.max || MAX_SCORE)) return json({ error: "bad score" }, 400);
     const took = now - started;
     if (took > G.maxMs || !G.ok(score, took)) return json({ error: "score not accepted" }, 400);
