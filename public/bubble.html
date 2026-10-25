@@ -107,7 +107,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
     <li>Pops in a row make a <b>combo</b>. The ceiling comes down one row every 8 shots (a little sooner on higher levels). You have 4 seconds per shot.</li>
     <li>Pop a group next to a <b>Qubic bubble</b> to set it off: it blasts everything around it. Make it fall for a bonus too.</li>
     <li>Lucky <b>$CFB</b> coin in your cannon? It takes the colour of what it hits, pops even a pair, and pumps the points x2.</li>
-    <li>Rare <b>GOD</b> bubble (rainbow ring): wherever it lands, <b>every bubble of that colour</b> on the board is wiped out.</li>
+    <li>Drop <b>10 or more</b> bubbles in one shot to earn the <b>GOD</b> bubble (once per board): wherever it lands, <b>every bubble of that colour</b> on the board is wiped out.</li>
     <li>Pops charge the <b>⚡ Quorum Pulse</b>: it blasts the lowest row.</li>
     <li>Every level has a <b>goal</b>: clear the board, rescue the caged <b>Computors</b>, reach the <b>Tick</b> at the top, or vote a <b>Quorum</b> before your shots run out.</li>
     <li>New blocks show up as you climb: <b>ice</b>, <b>locked SCs</b>, <b>burn blocks</b> and <b>bombs</b>. Reach each goal to climb from <b>Trit</b> all the way to <b>Aigarth</b>.</li>
@@ -317,7 +317,7 @@ function prune(){var seen={},st=[];if(grid[0])for(var c=0;c<grid[0].length;c++)i
 function plainCells(rmin){var a=[];grid.forEach(function(row,r){if(r>=rmin&&row)row.forEach(function(k,c){if(isPlain(k))a.push([r,c])})});return a}
 function scatter(n,rmin,f){var a=plainCells(rmin);for(var i=0;i<n&&a.length;i++){var j=Math.floor(Math.random()*a.length),p=a.splice(j,1)[0];grid[p[0]][p[1]]=f(grid[p[0]][p[1]])}}
 function counts(){var o={res:0,tgt:0,bmb:0,all:0,solid:0};grid.forEach(function(row){row&&row.forEach(function(k){if(k==null)return;o.all++;if(k!==BRN)o.solid++;if(k===RES)o.res++;else if(k===TGT)o.tgt++;else if(k===BMB)o.bmb++})});return o}
-function newLevel(){grid=[];off=0;G.ceil=0;G.drop=0;G.miss=0;G.clock=0;var P=G.plan=planFor(G.stage||0),ob=P.ob||[],rows=rowsFor(G.lvl)+(P.m==="tick"?1:0);
+function newLevel(){grid=[];off=0;G.ceil=0;G.god=false;G.drop=0;G.miss=0;G.clock=0;var P=G.plan=planFor(G.stage||0),ob=P.ob||[],rows=rowsFor(G.lvl)+(P.m==="tick"?1:0);
   if(P.sh==="epoch")grid=epochRows();else if(P.sh)grid=shapeRows(P.sh);else for(var r=0;r<rows;r++){var row=fillRow();row.length=cols(r);grid.push(row)}
   prune();rows=grid.length;
   scatter(1+Math.floor(G.lvl/3),1,function(){return QB});
@@ -357,7 +357,7 @@ cv.addEventListener("pointercancel",function(){down=false});
 document.addEventListener("keydown",function(e){if(!G.on)return;if(e.key==="ArrowLeft")G.aim=Math.max(-Math.PI+.12,G.aim-.05);else if(e.key==="ArrowRight")G.aim=Math.min(-.12,G.aim+.05);else if(e.code==="Space"||e.key==="Enter"){e.preventDefault();shoot()}else if(e.key==="s"||e.key==="S")swap();else if(e.key==="q"||e.key==="Q")arm()});
 function swap(){if(G.shot||G.armed)return;var t=G.cur;G.cur=G.next;G.next=t;tone(660,.05,"triangle",.05)}
 function shoot(){if(!G.on||G.shot||G.busy>0)return;G.clock=0;G.shot={x:AW/2,y:SHY,vx:Math.cos(G.aim)*SPEED,vy:Math.sin(G.aim)*SPEED,k:G.armed?"pulse":G.cur};
-  if(!G.armed){G.cur=G.next;var rn=Math.random();G.next=rn<.06?"cfb":rn<.06+1/18?"god":pick()}G.shots++;sfx.shoot()}
+  if(!G.armed){G.cur=G.next;G.next=Math.random()<.06?"cfb":pick()}G.shots++;sfx.shoot()}
 $("pulse").onclick=function(){ac();arm()};
 function arm(){if(!G.on||G.gauge<100||G.armed)return;G.armed=true;texts.push({x:AW/2,y:SHY-90,s:"⚡ PULSE LOADED",c:"#3ef0ff",l:1.1,z:1});tone(880,.15,"square",.05);hud()}
 
@@ -393,6 +393,8 @@ function land(s){G.shot=null;var cell=nearestFree(s.x,s.y);if(!cell){gameOver();
     G.gauge=Math.min(100,G.gauge+same.length*2+dropped.length*3);
     texts.push({x:s.x,y:s.y,s:"+"+fmt(pts),c:K[s.k].c,l:1,z:1});
     if(dropped.length)texts.push({x:s.x,y:s.y+34,s:"DROP x"+dropped.length+"!",c:"#62d6a0",l:1.2,z:1.1});
+    /* GOD is earned, not random (like the bomb in classic Bubble Shooter): drop 10+ bubbles in one shot, once per board */
+    if(dropped.length>=10&&!G.god&&!wipe){G.god=true;G.next="god";texts.push({x:AW/2,y:AH*.48,s:"✨ GOD BUBBLE EARNED",c:"#ffffff",l:1.6,z:1.25});tone(784,.12,"triangle",.05);tone(1175,.2,"triangle",.05,null,.1)}
     if(G.combo>=2)texts.push({x:AW/2,y:AH*.42,s:(G.combo>=3?"QUORUM CHAIN x":"COMBO x")+G.combo+"!",c:G.combo>=3?"#ff4fd8":"#ffd23f",l:1.3,z:1.25+G.combo*.06});
     rings.push({x:s.x,y:s.y,r:R,max:R*4+dropped.length*6,c:K[s.k].c,l:1});
     G.shake=Math.max(G.shake,3+same.length+dropped.length*.7);if(same.length+dropped.length>=8||G.combo>=3)stop(.07);if(navigator.vibrate)try{navigator.vibrate(15)}catch(e){}
