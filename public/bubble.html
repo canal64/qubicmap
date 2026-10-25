@@ -199,21 +199,24 @@ function touchStreak(){var t=day();if(S.last===t)return;S.streak=S.last===yday()
 var AC=null,MASTER=null,MUS=null;
 /* Same approach as the other arcade games: iOS can leave the context "interrupted" (another app, a call, the keyboard,
    a few games), so on every touch it is resumed, and re-created if it stays stuck. "playback" also plays with the silent switch on. */
-function mk(){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;var a=new C();MASTER=a.createGain();MASTER.gain.value=.7;MUS=a.createGain();MUS.gain.value=.55;MUS.connect(MASTER);
+/* iOS: after a while without any sound, Safari can drop the audio session while the context still says "running",
+   and nothing is heard any more. So on the first tap after a quiet spell (or a hidden tab) we start a fresh context. */
+var LAST=0,QUIET=20000,WAS_HIDDEN=false;
+function mk(){var C=window.AudioContext||window.webkitAudioContext;if(!C)return null;var a=new C();LAST=performance.now();WAS_HIDDEN=false;if(typeof M!=="undefined")M.t=0;MASTER=a.createGain();MASTER.gain.value=.7;MUS=a.createGain();MUS.gain.value=.55;MUS.connect(MASTER);
   /* safety limiter: big chains fire dozens of sounds at once; this keeps the sum from clipping */
   try{var k=a.createDynamicsCompressor();k.threshold.value=-14;k.knee.value=8;k.ratio.value=12;k.attack.value=.003;k.release.value=.2;MASTER.connect(k);k.connect(a.destination)}catch(e){MASTER.connect(a.destination)}return a}
 function unlock(){try{if(navigator.audioSession)navigator.audioSession.type="playback"}catch(e){}
-  try{if(AC&&(AC.state==="closed"||AC.state==="interrupted")){if(AC.state!=="closed"){try{var q=AC.close();if(q&&q.catch)q.catch(function(){})}catch(e){}}AC=null}
+  try{if(AC&&(AC.state==="closed"||AC.state==="interrupted"||(S.sound&&(WAS_HIDDEN||performance.now()-LAST>QUIET)))){if(AC.state!=="closed"){try{var q=AC.close();if(q&&q.catch)q.catch(function(){})}catch(e){}}AC=null}
     AC=AC||mk();var a=AC;if(!a)return;
     if(a.state!=="running"){var p=a.resume();if(p&&p.catch)p.catch(function(){});
       setTimeout(function(){if(AC===a&&a.state!=="running"){try{var q=a.close();if(q&&q.catch)q.catch(function(){})}catch(e){}AC=mk();try{var r=AC.resume();if(r&&r.catch)r.catch(function(){})}catch(e){}}},300)}
     var b=a.createBuffer(1,1,22050),src=a.createBufferSource();src.buffer=b;src.connect(a.destination);src.start(0)}catch(e){}}
 ["pointerdown","touchend","keydown","click"].forEach(function(ev){document.addEventListener(ev,unlock,true)});
-document.addEventListener("visibilitychange",function(){if(!document.hidden&&AC&&AC.state!=="running"){try{AC.resume()}catch(e){}}});
+document.addEventListener("visibilitychange",function(){if(document.hidden){WAS_HIDDEN=true;return}if(AC&&AC.state!=="running"){try{AC.resume()}catch(e){}}});
 function ac(){if(!S.sound||!AC||AC.state!=="running")return null;return AC}
-function tone(f,d,type,g,slide,delay){var a=ac();if(!a)return;try{var t=a.currentTime+(delay||0),o=a.createOscillator(),v=a.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);
+function tone(f,d,type,g,slide,delay){var a=ac();if(!a)return;LAST=performance.now();try{var t=a.currentTime+(delay||0),o=a.createOscillator(),v=a.createGain();o.type=type||"sine";o.frequency.setValueAtTime(f,t);if(slide)o.frequency.exponentialRampToValueAtTime(slide,t+d);
   v.gain.setValueAtTime(.0001,t);v.gain.exponentialRampToValueAtTime(g||.1,t+.008);v.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(v);v.connect(MASTER);o.start(t);o.stop(t+d+.03)}catch(e){}}
-function noise(d,g,fq){var a=ac();if(!a)return;try{var n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(var i=0;i<n;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
+function noise(d,g,fq){var a=ac();if(!a)return;LAST=performance.now();try{var n=Math.floor(a.sampleRate*d),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(var i=0;i<n;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/n,2);
   var s=a.createBufferSource(),f=a.createBiquadFilter(),v=a.createGain();s.buffer=b;f.type="bandpass";f.frequency.value=fq||1200;v.gain.value=g||.3;s.connect(f);f.connect(v);v.connect(MASTER);s.start()}catch(e){}}
 var SCALE=[0,2,4,7,9,12,14,16,19,21,24,26,28,31];
 /* small random pitch offset so repeated sounds never sound like a machine gun */
@@ -235,7 +238,7 @@ function danger(){if(!G.on||!grid.length)return 0;var lo=lowestY(),a=TOPY+ROWH*2
 function mnote(f,t,d,type,g){var a=AC;try{var o=a.createOscillator(),v=a.createGain();o.type=type;o.frequency.setValueAtTime(f,t);v.gain.setValueAtTime(.0001,t);v.gain.exponentialRampToValueAtTime(g,t+.01);v.gain.exponentialRampToValueAtTime(.0001,t+d);o.connect(v);v.connect(MUS);o.start(t);o.stop(t+d+.03)}catch(e){}}
 function mhat(t,g){var a=AC;try{var n=Math.floor(a.sampleRate*.03),b=a.createBuffer(1,n,a.sampleRate),c=b.getChannelData(0);for(var i=0;i<n;i++)c[i]=(Math.random()*2-1)*(1-i/n);var sr=a.createBufferSource(),f=a.createBiquadFilter(),v=a.createGain();sr.buffer=b;f.type="highpass";f.frequency.value=7000;v.gain.value=g;sr.connect(f);f.connect(v);v.connect(MUS);sr.start(t)}catch(e){}}
 function music(){var a=ac();if(!a||!G.on||document.hidden||!MUS){M.t=0;return}
-  if(M.t<a.currentTime)M.t=a.currentTime+.06;
+  if(M.t<a.currentTime)M.t=a.currentTime+.06;LAST=performance.now();
   var dg=danger(),bpm=96+dg*48,st=60/bpm/4;
   while(M.t<a.currentTime+.15){var s16=M.step%16,ch=CH[Math.floor(M.step/16)%4],t=M.t;
     if(s16===0||s16===8)mnote(ch[0],t,st*7,"sine",.09);                                        /* bass, always */
