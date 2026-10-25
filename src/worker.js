@@ -5,6 +5,7 @@ import { onRequest as api } from "../functions/api/[[route]].js";
 import { serveMedia, mediaBatch } from "../functions/media.js";
 import { refreshWhales } from "../functions/whales.js";
 import { projectPage, weekPage, feed } from "../functions/pages.js";
+import { galleryPage } from "../functions/gallery.js";
 
 const MAIN = "qubicmap.org";
 
@@ -51,6 +52,7 @@ async function route(request, env, ctx, url) {
     const pm = url.pathname.match(/^\/p\/([a-z0-9-]{1,60})\/?$/);
     if (pm) { const r = await projectPage(request, env, pm[1]); if (r) return r; }
     if (url.pathname === "/week") return weekPage(request, env);
+    if (url.pathname === "/gallery" || url.pathname === "/gallery/") return galleryPage();
     if (url.pathname === "/feed.xml" || url.pathname === "/rss") return feed(request, env);
     if (url.pathname === "/" || url.pathname === "/index.html")
       return home({ request, env, waitUntil, next: () => env.ASSETS.fetch(request) });
