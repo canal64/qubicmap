@@ -150,7 +150,7 @@ async function links(request, env, waitUntil) {
 }
 
 // Which tiles have a site preview and a logo yet; refreshes a few sites in the background.
-async function media(request, env, waitUntil) {
+export async function media(request, env, waitUntil) {
   waitUntil(mediaBatch(env).catch(() => {}));
   const origin = new URL(request.url).origin;
   const cache = typeof caches !== "undefined" && caches.default;
