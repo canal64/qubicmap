@@ -1,6 +1,6 @@
 // Worker entry: serves the site from public/ and runs the same server code that
 // used to run as Pages Functions (functions/), so both layouts stay in sync.
-import { onRequest as home, githubIfStale } from "../functions/index.js";
+import { onRequest as home, githubIfStale, newsIfStale } from "../functions/index.js";
 import { onRequest as api } from "../functions/api/[[route]].js";
 import { serveMedia, mediaBatch } from "../functions/media.js";
 import { refreshWhales } from "../functions/whales.js";
@@ -14,6 +14,7 @@ export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(mediaBatch(env, true).catch(() => {}));
     ctx.waitUntil(githubIfStale(env).catch(() => {}));
+    ctx.waitUntil(newsIfStale(env).catch(() => {}));
     ctx.waitUntil(refreshWhales(env).catch(() => {}));
   },
   async fetch(request, env, ctx) {

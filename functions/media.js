@@ -9,13 +9,17 @@ import LIST from "../lib/media.js";
 const DAY = 86400000;
 const RUN_EVERY = 90000;            // at most one refresh batch every 90 s (cron every 2 min, plus visits)
 const BATCH = 5;                    // sites handled per batch (each costs a few fetches)
-const SHOT_TTL = 7 * DAY, LOGO_TTL = 30 * DAY;
+const SHOT_TTL = DAY, LOGO_TTL = 30 * DAY;     // previews follow the sites daily (new articles, prices, banners)
 const SHOT_RETRY = 4 * 60000;       // mShots needs a minute or two to render a new page
 const LOGO_RETRY = DAY;
 const MAX_SHOT = 900000, MAX_LOGO = 300000;
 const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36";
 
-const shotUrl = (u) => "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(u) + "?w=600&h=900&vpw=1280&vph=1920";
+// mShots keeps serving its first capture of a URL, so the address carries the day (qm=YYYYMMDD):
+// a new capture each day, and the retry a few minutes later asks for the same one.
+const dayTag = () => new Date().toISOString().slice(0, 10).replace(/-/g, "");
+const fresh = (u) => { try { const x = new URL(u); x.searchParams.set("qm", dayTag()); return x.toString(); } catch (e) { return u; } };
+const shotUrl = (u) => "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(fresh(u)) + "?w=600&h=900&vpw=1280&vph=1920";
 const googleIcon = (host) => "https://s2.googleusercontent.com/s2/favicons?domain=" + encodeURIComponent(host) + "&sz=128";
 
 // ---- image sniffing -------------------------------------------------------------------------

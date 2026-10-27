@@ -71,6 +71,12 @@ async function refreshNews(env) {
     await env.DB.batch([log, env.DB.prepare("UPDATE kv SET ts = ?1 WHERE k = 'news'").bind(now - NEWS_MAX_AGE + NEWS_RETRY)]);
 }
 
+// Cron: keeps the blog headlines fresh even when nobody visits.
+export async function newsIfStale(env) {
+  const row = await env.DB.prepare("SELECT ts FROM kv WHERE k = 'news'").first();
+  if (!row || Date.now() - row.ts > NEWS_MAX_AGE) await refreshNews(env);
+}
+
 // Never waits for the blog: serves the last good list and refreshes in the background.
 async function news(request, env, waitUntil) {
   const origin = new URL(request.url).origin;
