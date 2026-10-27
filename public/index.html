@@ -119,7 +119,9 @@ h1 em{font-style:normal;color:transparent;-webkit-text-stroke:1.5px var(--ice)}
 @media (max-width:1100px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .lede{color:var(--muted);margin:-8px 0 0;font-size:13px;line-height:1.5;max-width:110ch}
 .lede b{color:var(--ink);font-weight:500}
-.lede .newn{color:var(--warn);white-space:nowrap}
+.lede .newn{color:var(--warn)}
+.lede .newn a{color:inherit;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.lede .newn a:hover{color:var(--ink)}
 @media (max-width:600px){.lede .lmore{display:none}}
 [data-tip]{cursor:help}
 #tip{position:fixed;z-index:200;max-width:260px;font:12.5px/1.4 var(--sans);color:var(--ink);background:var(--panel);border:1px solid var(--rule);padding:7px 10px;pointer-events:none;opacity:0;transform:translateY(4px);transition:opacity .15s,transform .15s;box-shadow:0 8px 24px rgba(0,0,0,.5)}
@@ -602,7 +604,9 @@ function applyLang(){
   [].forEach.call($("langs").children,function(b){b.setAttribute("aria-pressed",b.getAttribute("data-l")===lang?"true":"false")});
   $("q").placeholder=tr("Search a name or a keyword");$("q").setAttribute("aria-label",$("q").placeholder);
   $("lede").innerHTML="<b>"+tr("{n} projects, {m} of them on their own smart contract.").replace("{n}",E.length).replace("{m}",E.filter(function(e){return e[2]}).length)+"</b> "
-    +(NEWN?'<span class="newn">'+esc(tr("{n} new on the map").replace("{n}",NEWN))+'</span> ':"")
+    +(NEWN?'<span class="newn">'+esc(tr("{n} new on the map").replace("{n}",NEWN))+(function(){var nw=E.filter(function(e){return isNew(e[1])}).map(function(e){return e[1]});
+      /* name the new projects, each linked to its qubicmap page (first three, then "+N") */
+      return ": "+nw.slice(0,3).map(function(n){return '<a href="/p/'+slug(n)+'">'+esc(n)+'</a>'}).join(", ")+(nw.length>3?" +"+(nw.length-3):"")})()+'</span> ':"")
     +'<span class="lmore">'+(NEWN?'· ':'')+tr("Each project carries its own sigil, drawn from its name. Hover a tile, or tap it, to open its record.")+" <b>SC</b> "+tr("marks a smart contract of the Qubic core, numbered as in the protocol.")+'</span>';
   $("disc").innerHTML=DISCORD.map(function(r){return '<div><span>'+esc(r[0])+'</span><span class="sc">'+esc(r[1]?tr(r[1]):"")+'</span></div>'}).join("");
   if(snap)$("netT").textContent=tr("snapshot · 9 Oct 2026, 21:28 CEST");
