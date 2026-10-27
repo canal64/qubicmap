@@ -1,51 +1,51 @@
 {
  "epoch": 236,
- "built": "2026-10-26T09:01:55.768Z",
+ "built": "2026-10-27T09:10:34.220Z",
  "items": [
   {
    "rank": 1,
-   "id": "YKMPDAFIJVDCPFAJFQCAMDQKDCUCFVAIVUIWFGJSJFAPYBYJRRWENRPETTIL",
+   "id": "HNTFFKGMPBQIUBQSSGYSCQYKCPQBQKRCJRMQUAWTWEJATNEGZWLWVZZFPSZM",
    "epoch": 236,
-   "score": 3127,
-   "steps": 112,
-   "built": "2026-10-26T08:50:34.533Z",
-   "solutions": 1796
+   "score": 3135,
+   "steps": 138,
+   "built": "2026-10-27T08:58:41.752Z",
+   "solutions": 5139
   },
   {
    "rank": 2,
-   "id": "IRSRPOAZUVUXSEURVPLMDJCWDDACROGTIZRPWIKCJHHZNFMBKZURAXCETZPM",
+   "id": "CAIOUEMHUQLZZDOUYVRCPXJQCTMASVGIAJPZPHNOWERZIARWNMERSYVAKVCO",
    "epoch": 236,
-   "score": 3146,
-   "steps": 137,
-   "built": "2026-10-26T08:49:45.348Z",
-   "solutions": 865
+   "score": 3136,
+   "steps": 124,
+   "built": "2026-10-27T08:56:15.810Z",
+   "solutions": 2174
   },
   {
    "rank": 3,
-   "id": "SEOCKRJLPDEMEFXMODEQCNRHWONANMZONUFXOMAZPDOZWPCRCTRSKEQBZYUN",
+   "id": "PADTCYZACKJWJGJKQYZINUTBQADDZJEYVGXTDHJMLEYYOJUHQLUKWWJBQELK",
    "epoch": 236,
-   "score": 3160,
-   "steps": 130,
-   "built": "2026-10-26T08:52:51.461Z",
-   "solutions": 1418
+   "score": 3142,
+   "steps": 135,
+   "built": "2026-10-27T09:00:20.244Z",
+   "solutions": 1323
   },
   {
    "rank": 4,
-   "id": "PPXRWELUAHNZUBCCNRSHWPXKEXDDKABBKECZYYKZLCWHJCQYTQBLWZPAQIAB",
+   "id": "DHEGTDQJUMQMADXFLLUNZKGWSDDDFNEHNWNCXLLHMGNOVSGLLZDTVPIFZMII",
    "epoch": 236,
-   "score": 3163,
-   "steps": 130,
-   "built": "2026-10-26T08:55:21.032Z",
-   "solutions": 3422
+   "score": 3161,
+   "steps": 132,
+   "built": "2026-10-27T09:03:05.292Z",
+   "solutions": 2435
   },
   {
    "rank": 5,
-   "id": "ARIYWOXSWGRGOATLJCBAQIPHQPVCKRLNHJPGSCEXKCPFKIXYUTDSMTTGRCPH",
+   "id": "AQKDWVLDTCDKRCIVBUPRGLSRUWPDTHSDFZXMCASHTDSHMKENCLIELBQDHSIL",
    "epoch": 236,
-   "score": 3168,
-   "steps": 143,
-   "built": "2026-10-26T08:57:13.170Z",
-   "solutions": 2351
+   "score": 3182,
+   "steps": 225,
+   "built": "2026-10-27T09:04:24.488Z",
+   "solutions": 713
   }
  ]
 }
