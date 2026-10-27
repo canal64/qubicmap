@@ -433,7 +433,7 @@ function mostLiked(){return E.filter(function(e){return(COUNTS[slug(e[1])]||0)>=
 function popular(){return E.filter(function(e){return(WEEK[slug(e[1])]||0)>=2}).sort(function(a,b){return WEEK[slug(b[1])]-WEEK[slug(a[1])]}).slice(0,6)}
 /* Site preview and logo, when the server has them; the sigil underneath stays as the fallback. */
 /* Logos set by hand (public/logos/<slug>.png): they win over the automatic ones. */
-var FIXLOGO={"qmine-qrwa":1,"qxboard":1,"qfront":1,"quhub":1,"qubic-portal":1},DARKLOGO={"qxboard":1,"qfront":1,"quhub":1,"qubic-portal":1};
+var FIXLOGO={"qmine-qrwa":1,"qxboard":1,"qfront":1,"quhub":1,"qubic-portal":1},DARKLOGO={"qxboard":1,"qfront":1,"quhub":1,"qubic-portal":1,"glyph":1};
 /* Captures that show an error page instead of the site: keep the sigil. */
 var NOSHOT={"safetrade":1,"digifinex":1};
 function mediaHTML(e){var k=slug(e[1]),m=(MEDIA[k]||[0,0]).slice();if(NOSHOT[k])m[0]=0;if(!m[0]&&!m[1]&&!FIXLOGO[k])return "";var h="";
