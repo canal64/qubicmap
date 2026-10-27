@@ -1,0 +1,40 @@
+# Share images (public/og/<slug>.png) with each project's site preview.
+# The previews live in the site's database (qubicmap.org/m/s/<slug>.jpg), so they are downloaded here,
+# composed by scripts/og.py and committed when an image changed (push to main -> Cloudflare deploy).
+name: og-images
+on:
+  schedule:
+    - cron: "41 6 * * *"
+  push:
+    branches: [main]
+    paths: [public/index.html]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: og-images
+jobs:
+  og:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for new previews to be captured
+        if: github.event_name == 'push'
+        run: sleep 480
+      - name: Download site previews
+        run: |
+          mkdir -p /tmp/shots
+          for k in $(python3 -c "import re,json;s=open('public/index.html').read();k=s.find('var E=[');e=s.find('];',k);print(' '.join(re.sub(r'^-|-$','',re.sub(r'[^a-z0-9]+','-',x[1].lower())) for x in json.loads(s[k+6:e+1])))"); do
+            curl -fsS -m 20 -o /tmp/shots/$k.jpg "https://qubicmap.org/m/s/$k.jpg" || rm -f /tmp/shots/$k.jpg
+          done
+          ls /tmp/shots | wc -l
+      - name: Build share images
+        run: |
+          pip install --quiet pillow
+          python3 scripts/og.py /tmp/shots
+      - name: Publish
+        run: |
+          git add public/og
+          if git diff --cached --quiet; then echo "no change"; exit 0; fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -q -m "OG: share images with site previews"
+          git pull -q --rebase origin main && git push -q origin HEAD:main

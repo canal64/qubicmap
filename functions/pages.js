@@ -62,7 +62,7 @@ export async function projectPage(request, env, slug) {
   const snippet = `<a href="${url}"><img src="${SITE}/badge.svg" alt="Listed on qubicmap.org" width="190" height="40"></a>`;
   const shot = m && m.shot_ts ? `<div class="shot"><img src="/m/s/${slug}.jpg?v=${Math.round(m.shot_ts / 1000)}" alt="${esc(p.n)} website" loading="lazy"></div>` : "";
   const xText = `${p.n} on the Qubic Ecosystem Map: ${p.d}`.slice(0, 220);
-  return html(HEAD(title, p.d, url, SITE + "/og/" + slug + ".png") + `
+  return html(HEAD(title, p.d, url, SITE + "/og/" + slug + ".png" + (m && m.shot_ts ? "?v=" + Math.round(m.shot_ts / 1000) : "")) + `
 <div class="back"><a href="/#${slug}">← Qubic Ecosystem Map</a></div>
 <div class="k" style="margin-top:26px">${esc(c[1])}</div>
 <h1>${esc(p.n)}</h1>
