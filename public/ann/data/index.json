@@ -1,51 +1,51 @@
 {
  "epoch": 236,
- "built": "2026-10-27T09:10:34.220Z",
+ "built": "2026-10-28T10:01:06.986Z",
  "items": [
   {
    "rank": 1,
-   "id": "HNTFFKGMPBQIUBQSSGYSCQYKCPQBQKRCJRMQUAWTWEJATNEGZWLWVZZFPSZM",
+   "id": "CXYFAJFICUKKNEUSLWPXKERFMSRAEQZCNOPNKUKSJBANARDFGOACTLYDGQOH",
    "epoch": 236,
-   "score": 3135,
-   "steps": 138,
-   "built": "2026-10-27T08:58:41.752Z",
-   "solutions": 5139
+   "score": 3105,
+   "steps": 146,
+   "built": "2026-10-28T09:39:56.355Z",
+   "solutions": 3658
   },
   {
    "rank": 2,
-   "id": "CAIOUEMHUQLZZDOUYVRCPXJQCTMASVGIAJPZPHNOWERZIARWNMERSYVAKVCO",
+   "id": "JCLOHADAPCKWPEEPOYLWMEFZDHMCIXVZDYWFJUMLQDEDSCDSCFYQEVNEXDCN",
    "epoch": 236,
-   "score": 3136,
-   "steps": 124,
-   "built": "2026-10-27T08:56:15.810Z",
-   "solutions": 2174
+   "score": 3138,
+   "steps": 178,
+   "built": "2026-10-28T09:36:51.805Z",
+   "solutions": 967
   },
   {
    "rank": 3,
-   "id": "PADTCYZACKJWJGJKQYZINUTBQADDZJEYVGXTDHJMLEYYOJUHQLUKWWJBQELK",
+   "id": "APQHRGUCLWQMHAHIKTKRLNEEKGTAFLOTTRHCSYYAOCUKMHHIWYXEDLSAJCIL",
    "epoch": 236,
-   "score": 3142,
-   "steps": 135,
-   "built": "2026-10-27T09:00:20.244Z",
-   "solutions": 1323
+   "score": 3147,
+   "steps": 118,
+   "built": "2026-10-28T09:53:01.340Z",
+   "solutions": 2441
   },
   {
    "rank": 4,
-   "id": "DHEGTDQJUMQMADXFLLUNZKGWSDDDFNEHNWNCXLLHMGNOVSGLLZDTVPIFZMII",
+   "id": "SHTHQRQQVVXGVBODNSBEVQDHCHGCVKTZFBGHSJHSLDZARRWKABTDOOXECYSE",
    "epoch": 236,
-   "score": 3161,
-   "steps": 132,
-   "built": "2026-10-27T09:03:05.292Z",
-   "solutions": 2435
+   "score": 3150,
+   "steps": 146,
+   "built": "2026-10-28T09:44:28.836Z",
+   "solutions": 1401
   },
   {
    "rank": 5,
-   "id": "AQKDWVLDTCDKRCIVBUPRGLSRUWPDTHSDFZXMCASHTDSHMKENCLIELBQDHSIL",
+   "id": "YJKQRPLIQCGDSECNMBRCPHANLPRBLULIJDTOVVGOZGZTBOTMZEWKPKVFMVVJ",
    "epoch": 236,
-   "score": 3182,
-   "steps": 225,
-   "built": "2026-10-27T09:04:24.488Z",
-   "solutions": 713
+   "score": 3150,
+   "steps": 96,
+   "built": "2026-10-28T09:57:34.033Z",
+   "solutions": 10000
   }
  ]
 }
