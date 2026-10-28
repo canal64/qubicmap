@@ -39,7 +39,7 @@ const GAMES = {
   bubble: { table: "bubble_scores", teams: true, max: 20000000, maxMs: 3 * 60 * 60 * 1000, ok: (score, took) => took >= 4000 && score <= 2000 + (took / 1000) * 6000 }, // pops, drops and combos, a few thousand points a second at most
 };
 // Qubic Bubble teams: one per ecosystem project; a team's score is the sum of its players' best scores this epoch.
-const TEAMS = ["QCAP", "qMine", "QSwap", "Coded", "QuHub", "Qearn", "Anna", "Aigarth", "QDoge"];
+const TEAMS = ["QCAP", "qMine", "QSwap", "Coded", "QuHub", "Qearn", "Anna", "Garth", "QDoge"];
 const teamOf = (v) => (TEAMS.includes(v) ? v : "");
 const gameOf = (v) => (Object.prototype.hasOwnProperty.call(GAMES, v) ? v : "flappy");
 const BLOCK = /(fuck|shit|bitch|cunt|nigg|fagg|whore|slut|nazi|hitler|porn|pute|salope|connard|encul|merde|bite)/i;

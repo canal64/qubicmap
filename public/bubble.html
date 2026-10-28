@@ -177,7 +177,7 @@ var SHAPES={
  col:["###########","##########","....###....","...####...","...#####...","..######..","..#######..",".########.","###########"]};
 function planFor(st){if(st<PLAN.length)return PLAN[st];var ms=["clear","rescue","tick","quorum"],shs=["Q","V","cube","col",null,null],ob=["ice","lock","burn","bomb"].sort(function(){return Math.random()-.5}).slice(0,2);
   return {m:ms[Math.floor(Math.random()*ms.length)],sh:shs[Math.floor(Math.random()*shs.length)],ob:ob}}
-var TEAMS=[["QCAP","#ffd23f"],["qMine","#ff8a2a"],["QSwap","#3ef0ff"],["Coded","#2fe39a"],["QuHub","#8fd0ff"],["Qearn","#a46bff"],["Anna","#ff3b55"],["Aigarth","#fff6d6"],["QDoge","#e3a64b"]];
+var TEAMS=[["QCAP","#ffd23f"],["qMine","#ff8a2a"],["QSwap","#3ef0ff"],["Coded","#2fe39a"],["QuHub","#8fd0ff"],["Qearn","#a46bff"],["Anna","#ff3b55"],["Garth","#fff6d6"],["QDoge","#e3a64b"]];
 var teamC={};TEAMS.forEach(function(t){teamC[t[0]]=t[1]});
 function epochNow(){return 234+Math.floor((Date.now()-Date.UTC(2026,9,7,12,0,0))/(7*864e5))}
 function kindsFor(lv){return Math.min(K.length,5+Math.floor(lv/2))}      /* 4 kinds at level 1, 7 from level 7 */
@@ -582,7 +582,7 @@ $("fName").addEventListener("submit",function(e){e.preventDefault();var n=$("iNa
 getBoard();
 
 /* ---------------- teams ---------------- */
-function teamGet(){try{var t=localStorage.getItem("qm_bubble_team")||"";return teamC[t]?t:""}catch(e){return ""}}
+function teamGet(){try{var t=localStorage.getItem("qm_bubble_team")||"";if(t==="Aigarth"){t="Garth";localStorage.setItem("qm_bubble_team",t)}return teamC[t]?t:""}catch(e){return ""}}
 function teamSet(t){try{localStorage.setItem("qm_bubble_team",t)}catch(e){}paintTeams()}
 function paintTeams(){var el=$("teams"),cur=teamGet();el.textContent="";TEAMS.forEach(function(t){var b=document.createElement("button");b.type="button";b.textContent=t[0];b.setAttribute("aria-pressed",t[0]===cur);if(t[0]===cur)b.style.background=t[1];b.onclick=function(){teamSet(t[0]);tone(780,.06,"triangle",.06)};el.appendChild(b)})}
 paintTeams();
