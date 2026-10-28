@@ -372,7 +372,11 @@ function nearestFree(x,y){var best=null,bd=1e9;var r0=Math.max(0,Math.floor((y-t
   for(var r=r0;r<=r0+3;r++){var nc=cols(r);for(var c=0;c<nc;c++){if(get(r,c)!=null)continue;
     var attached=r===0||neighbors(r,c).some(function(p){return get(p[0],p[1])!=null});if(!attached)continue;
     var d=Math.hypot(cellX(r,c)-x,cellY(r)-y);if(d<bd){bd=d;best=[r,c]}}}return best}
-function land(s){G.shot=null;var cell=nearestFree(s.x,s.y);if(!cell){gameOver();return}var r=cell[0],c=cell[1];
+/* fallback when the shot ends up away from the rows next to it (fast shot, board moving): nearest free attached cell anywhere */
+function anyFree(x,y){var best=null,bd=1e9;for(var r=0;r<=grid.length;r++){var nc=cols(r);for(var c=0;c<nc;c++){if(get(r,c)!=null)continue;
+    var attached=r===0||neighbors(r,c).some(function(p){return get(p[0],p[1])!=null});if(!attached)continue;
+    var d=Math.hypot(cellX(r,c)-x,cellY(r)-y);if(d<bd){bd=d;best=[r,c]}}}return best}
+function land(s){G.shot=null;var cell=nearestFree(s.x,s.y)||anyFree(s.x,s.y);if(!cell){gameOver();return}var r=cell[0],c=cell[1];
   while(grid.length<=r){var nr=[];nr.length=cols(grid.length);grid.push(nr)}
   if(s.k==="pulse"){G.armed=false;G.gauge=0;pulseBlast(cellX(r,c),cellY(r));hud();return}
   var before=counts().all;grid[r][c]=s.k;sfx.stick();
