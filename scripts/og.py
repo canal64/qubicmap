@@ -13,6 +13,7 @@ s = open(os.path.join(OUT, 'index.html'), encoding='utf-8').read()
 def arr(name):
     k = s.find('var %s=[' % name); e = s.find('];', k); return json.loads(s[k + len(name) + 5:e + 1])
 E, CATS = arr('E'), arr('CATS')
+E = [e for e in E if e[0] not in ('buy', 'cex')]  # exchanges and card on-ramps have no project page
 LOOK = {k: int(v) for k, v in re.findall(r'(\w+):\[(\d+),\d+\]', re.search(r'var LOOK=\{[^}]*\}', s).group(0))}
 ST = dict(re.findall(r'(\w+):"([^"]+)"', re.search(r'var ST=\{[^}]*\}', s).group(0)))
 NOSHOT = set(re.findall(r'"([a-z0-9-]+)":1', re.search(r'var NOSHOT=\{[^}]*\}', s).group(0)))

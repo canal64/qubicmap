@@ -1,5 +1,5 @@
 // Server-rendered pages: one page per project (/p/<slug>), the weekly epoch recap (/week) and an RSS feed (/feed.xml).
-import P, { CATS } from "../lib/projects.js";
+import P, { CATS, ACCESS } from "../lib/projects.js";
 
 const SITE = "https://qubicmap.org";
 const EPOCH0 = Date.UTC(2026, 9, 7, 12, 0, 0), EPOCH0_N = 234, WEEK = 7 * 86400000;
@@ -52,6 +52,8 @@ const html = (body, status = 200, maxAge = 300) => new Response(body, { status, 
 
 export async function projectPage(request, env, slug) {
   const p = P.find((x) => x.s === slug);
+  // exchanges and card on-ramps are no longer project pages: send their old address to the list on the home page
+  if (!p && (ACCESS || []).includes(slug)) return new Response(null, { status: 301, headers: { Location: SITE + "/#get", "Cache-Control": "public, max-age=86400" } });
   if (!p) return null;
   const c = CAT[p.c] || [p.c, p.c, ""];
   const [m, lk] = await Promise.all([
