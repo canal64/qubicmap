@@ -198,11 +198,20 @@ export async function atom(url, kind) {
 // Latest qubic/core release with its epoch and notes, for the release box on the home page.
 const relNotes = (lines) => lines.map((x) => decode(x.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim()).filter(Boolean).slice(0, 8).map((x) => x.slice(0, 160));
 const relItem = (title, tag, date, url, notes) => ({ ep: +((String(title).match(/\bEP\s?(\d{2,4})\b/i) || [])[1] || 0) || null, v: tag, t: String(title).slice(0, 200), d: date, u: url, n: notes });
+// Release notes come as "- item", "* item", "+ item" or "1. item"; when there is no list, the plain lines are used.
+const LIST_RE = /^\s*(?:[-*+]|\d{1,2}[.)])\s+/;
+function bodyNotes(body) {
+  const lines = String(body || "").replace(/\r/g, "").split("\n");
+  const clean = (l) => l.replace(LIST_RE, "").replace(/^#+\s*/, "").replace(/\[([^\]]+)\]\([^)]*\)/g, "$1").replace(/[*_`]/g, "").trim();
+  let out = lines.filter((l) => LIST_RE.test(l)).map(clean);
+  if (!out.length) out = lines.filter((l) => l.trim() && !/^\s*#/.test(l) && !/^\s*(---|\*\*\*)\s*$/.test(l)).map(clean);
+  return out.filter((x) => x.length > 3);
+}
 async function latestRelease(env) {
   try {
     const r = (await ghJson("repos/qubic/core/releases?per_page=5", env)).find((x) => !x.draft && !x.prerelease && x.published_at);
     if (r) return relItem(r.name || r.tag_name, r.tag_name, r.published_at, r.html_url,
-      relNotes(String(r.body || "").split("\n").filter((l) => /^\s*[-*] /.test(l)).map((l) => l.replace(/^\s*[-*] /, "").replace(/[*_`]/g, ""))));
+      relNotes(bodyNotes(r.body)));
   } catch (e) {}
   const res = await fetch("https://github.com/qubic/core/releases.atom", { headers: { "User-Agent": GH_HEAD["User-Agent"], Accept: "application/atom+xml" }, signal: AbortSignal.timeout(8000) });
   if (!res.ok) return null;
@@ -213,7 +222,7 @@ async function latestRelease(env) {
   const date = (e.match(/<updated>([^<]+)<\/updated>/) || [])[1];
   const html = decode((e.match(/<content[^>]*>([\s\S]*?)<\/content>/) || [])[1] || "");
   const url = link.startsWith("http") ? link : "https://github.com" + link;
-  return title && date ? relItem(title, (url.match(/\/tag\/([^/?#]+)/) || [])[1] || "", date, url, relNotes([...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map((m) => m[1]))) : null;
+  return title && date ? relItem(title, (url.match(/\/tag\/([^/?#]+)/) || [])[1] || "", date, url, relNotes((() => { const li = [...html.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)].map((m) => m[1]); return li.length ? li : [...html.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/g)].map((m) => m[1]); })())) : null;
 }
 // The Atom feed only gives the tag as title: the release page title carries the full name ("EP236 Release v1.309.0 ...").
 async function releaseName(r) {
