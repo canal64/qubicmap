@@ -67,7 +67,7 @@ canvas{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);display
 .lb li .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lb li .s{font-variant-numeric:tabular-nums;color:var(--ink)}.lb li .k{color:var(--muted)}
 .lb li.me{border-color:var(--neon);color:var(--neon)}.lb li.ex{color:var(--muted);grid-template-columns:2.4em 1fr}
 .leader{margin-top:10px;font-size:12px;color:var(--muted)}.leader b{color:var(--warn);font-weight:500}
-.teams{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:10px}
+.teams{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
 .teams button{min-height:38px;border:1px solid var(--rule);background:#060b12;color:var(--muted);border-radius:9px;font:600 12px var(--mono);cursor:pointer;padding:0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .teams button[aria-pressed="true"]{color:#04070c;border-color:transparent;font-weight:700}
 .tlab{margin-top:14px;font:600 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
@@ -177,7 +177,7 @@ var SHAPES={
  col:["###########","##########","....###....","...####...","...#####...","..######..","..#######..",".########.","###########"]};
 function planFor(st){if(st<PLAN.length)return PLAN[st];var ms=["clear","rescue","tick","quorum"],shs=["Q","V","cube","col",null,null],ob=["ice","lock","burn","bomb"].sort(function(){return Math.random()-.5}).slice(0,2);
   return {m:ms[Math.floor(Math.random()*ms.length)],sh:shs[Math.floor(Math.random()*shs.length)],ob:ob}}
-var TEAMS=[["QCAP","#ffd23f"],["qMine","#ff8a2a"],["QSwap","#3ef0ff"],["Coded","#2fe39a"],["QuHub","#8fd0ff"],["Qearn","#a46bff"],["Anna","#ff3b55"],["Aigarth","#fff6d6"]];
+var TEAMS=[["QCAP","#ffd23f"],["qMine","#ff8a2a"],["QSwap","#3ef0ff"],["Coded","#2fe39a"],["QuHub","#8fd0ff"],["Qearn","#a46bff"],["Anna","#ff3b55"],["Aigarth","#fff6d6"],["QDoge","#e3a64b"]];
 var teamC={};TEAMS.forEach(function(t){teamC[t[0]]=t[1]});
 function epochNow(){return 234+Math.floor((Date.now()-Date.UTC(2026,9,7,12,0,0))/(7*864e5))}
 function kindsFor(lv){return Math.min(K.length,5+Math.floor(lv/2))}      /* 4 kinds at level 1, 7 from level 7 */
