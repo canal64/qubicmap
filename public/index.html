@@ -195,7 +195,7 @@ h1 em{font-style:normal;color:transparent;-webkit-text-stroke:1.5px var(--ice)}
 .rest .sc{font:12px var(--mono);color:var(--muted)}
 .lists{display:flex;flex-direction:column;gap:30px}
 .lists section{display:flex;flex-direction:column;gap:4px}
-.getq{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.4fr);gap:14px 28px;padding-top:10px}
+.getq{padding-top:10px}
 .getq h3{margin:0 0 8px;font:500 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
 .getq .gl{display:flex;flex-wrap:wrap;gap:8px}
 .getq .gi{display:inline-flex;align-items:center;gap:8px;padding:6px 11px 6px 7px;border:1px solid var(--rule);color:var(--ink);text-decoration:none;font:500 13px var(--sans)}
@@ -205,7 +205,6 @@ h1 em{font-style:normal;color:transparent;-webkit-text-stroke:1.5px var(--ice)}
 .getq .gi i{background:var(--rule)}
 .getq .gi.na{color:var(--muted)}
 .getq .gi small{font:400 10.5px var(--mono);color:var(--muted)}
-@media (max-width:700px){.getq{grid-template-columns:1fr}}
 .note{border:1px solid var(--rule);background:var(--panel);padding:16px 18px;display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--muted)}
 .note b{color:var(--ink);font-weight:500}
 .note p{margin:0;max-width:80ch}
@@ -744,8 +743,9 @@ lockLine();
 route();
 /* ---------- where to get QUBIC: exchanges and card on-ramps, apart from the projects ---------- */
 (function(){var box=$("getq");if(!box)return;
-  function draw(){box.innerHTML=ACATS.map(function(c){var it=ACC.filter(function(e){return e[0]===c[0]});
-    return "<div><h3>"+esc(tr(c[1]))+'</h3><div class="gl">'+it.map(function(e){var k=slug(e[1]),m=MEDIA[k]||[0,0];
+  /* one list: the exchanges, then the card on-ramps */
+  function draw(){var it=ACC.filter(function(e){return e[0]==="cex"}).concat(ACC.filter(function(e){return e[0]!=="cex"}));
+    box.innerHTML=[0].map(function(){return '<div><div class="gl">'+it.map(function(e){var k=slug(e[1]),m=MEDIA[k]||[0,0];
       return '<a class="gi'+(e[3]==="live"?"":" na")+'" href="'+esc(e[4])+'" target="_blank" rel="noopener nofollow" title="'+esc(tr(e[5]))+'">'+(m[1]?'<img src="/m/l/'+k+'?v='+m[1]+'" alt="" loading="lazy" decoding="async" onerror="this.outerHTML=\'<i></i>\'">':"<i></i>")+esc(e[1])+(e[3]==="live"?"":"<small>"+esc(tr(ST[e[3]]||e[3]))+"</small>")+"</a>"}).join("")+"</div></div>"}).join("")}
   draw();var al=applyLang;applyLang=function(){al();draw()};
 })();
