@@ -40,7 +40,7 @@ const GAMES = {
 };
 // Qubic Bubble teams: one per ecosystem project; a team's score is the sum of its players' best scores this epoch.
 const TEAMS = ["QCAP", "qMine", "QSwap", "Coded", "QuHub", "Qearn", "Anna", "Garth", "QDoge"];
-const teamOf = (v) => (TEAMS.includes(v) ? v : "");
+const teamOf = (v) => (v === "Aigarth" ? "Garth" : TEAMS.includes(v) ? v : "");  // pages opened before the rename still send "Aigarth"
 const gameOf = (v) => (Object.prototype.hasOwnProperty.call(GAMES, v) ? v : "flappy");
 const BLOCK = /(fuck|shit|bitch|cunt|nigg|fagg|whore|slut|nazi|hitler|porn|pute|salope|connard|encul|merde|bite)/i;
 
