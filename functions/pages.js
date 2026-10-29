@@ -47,7 +47,7 @@ pre{white-space:pre-wrap;word-break:break-all;font:12.5px/1.5 var(--mono);backgr
 canvas{width:100%;height:auto;display:block;border:1px solid var(--rule);margin-top:16px}
 footer{margin-top:40px;font:12.5px var(--mono);color:var(--muted)}
 </style></head><body><div class="wrap">`;
-const FOOT = `<footer><p>Disclaimer: an independent, community-run directory for information only, not affiliated with the Qubic team or with any listed project. A listing is not an endorsement, an audit, a security review or financial advice, and listings are free. Smart contracts, wallets and tokens can fail or be exploited, and funds can be lost: qubicmap does not develop, operate or control any listed project. Check a project's own channels before you connect a wallet, and never type your seed into a website.</p>Qubic Ecosystem Map · <a href="/feed.xml">RSS</a></footer></div></body></html>`;
+const FOOT = `<footer><p>Disclaimer: an independent, community-run directory for information only, not affiliated with the Qubic team or with any listed project. A listing is not an endorsement, an audit, a security review or financial advice, and listings are free. Smart contracts, wallets and tokens can fail or be exploited, and funds can be lost: qubicmap does not develop, operate or control any listed project. Check a project's own channels before you connect a wallet, and never type your seed into a website.</p>Qubic Ecosystem Map · <a href="/feed.xml">RSS</a> · <a href="/legal">Legal notice</a></footer></div></body></html>`;
 const html = (body, status = 200, maxAge = 300) => new Response(body, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": `public, max-age=${maxAge}` } });
 
 export async function projectPage(request, env, slug) {
