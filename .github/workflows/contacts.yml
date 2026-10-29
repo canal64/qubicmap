@@ -1,0 +1,18 @@
+# One-off, run by hand: lists the public contact links shown on each smart-contract project's homepage.
+name: contacts
+on: workflow_dispatch
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i --no-save playwright@1.47.2 && npx playwright install --with-deps chromium
+      - run: node scripts/contacts.mjs > contacts.json && cat contacts.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: contacts
+          path: contacts.json
