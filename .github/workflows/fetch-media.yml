@@ -12,7 +12,11 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     steps:
+      - name: Delete tmp-media (urls = "delete")
+        if: inputs.urls == 'delete'
+        run: git push -q --delete "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-media || true
       - name: Download and push to tmp-media
+        if: inputs.urls != 'delete'
         env:
           URLS: ${{ inputs.urls }}
         run: |
