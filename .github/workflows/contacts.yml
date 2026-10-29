@@ -12,6 +12,8 @@ jobs:
           node-version: 22
       - run: npm i --no-save playwright@1.47.2 && npx playwright install --with-deps chromium
       - run: node scripts/contacts.mjs > contacts.json && cat contacts.json
+      - name: Results as annotations
+        run: node -e 'for (const r of require("./contacts.json")) console.log("::notice title=" + r.name.replace(/[,:]/g, " ") + "::" + JSON.stringify({ l: r.links, e: r.emails, err: r.err }).replace(/%/g, "%25"))'
       - uses: actions/upload-artifact@v4
         with:
           name: contacts
