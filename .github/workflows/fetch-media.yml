@@ -1,0 +1,23 @@
+# Temporary, run by hand: fetches media files generated elsewhere into the tmp-media branch.
+name: fetch-media
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "name=url pairs separated by spaces"
+        required: true
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and push to tmp-media
+        env:
+          URLS: ${{ inputs.urls }}
+        run: |
+          mkdir m && cd m && git init -q && git checkout -q -b tmp-media
+          for p in $URLS; do n="${p%%=*}"; u="${p#*=}"; curl -fsS -m 60 -o "$n" "$u"; done
+          ls -la
+          git add . && git -c user.name=bot -c user.email=bot@users.noreply.github.com commit -qm media
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-media
