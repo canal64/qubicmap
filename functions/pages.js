@@ -31,6 +31,7 @@ a{color:var(--ice);text-underline-offset:3px}
 .back{font:13px var(--mono);color:var(--muted)}.back a{color:inherit}
 .k{font:500 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 h1{margin:10px 0 6px;font:700 clamp(36px,8vw,64px)/1.02 var(--display);letter-spacing:.01em}
+h1 .plogo{width:.9em;height:.9em;object-fit:contain;border-radius:14px;vertical-align:-.1em;margin-right:.28em;background:#fff1}
 .tags{display:flex;flex-wrap:wrap;gap:8px 16px;font:13px var(--mono);color:var(--muted);margin-top:8px}
 .tags b{font-weight:500;color:var(--ink)}.tags .live{color:var(--live)}
 .shot{margin-top:22px;border:1px solid var(--rule);background:var(--panel);aspect-ratio:16/9;overflow:hidden}
@@ -67,7 +68,7 @@ export async function projectPage(request, env, slug) {
   return html(HEAD(title, p.d, url, SITE + "/og/" + slug + ".png" + (m && m.shot_ts ? "?v=" + Math.round(m.shot_ts / 1000) : "")) + `
 <div class="back"><a href="/#${slug}">← Qubic Ecosystem Map</a></div>
 <div class="k" style="margin-top:26px">${esc(c[1])}</div>
-<h1>${esc(p.n)}</h1>
+<h1>${m && m.logo_ts ? `<img class="plogo" src="/m/l/${slug}?v=${Math.round(m.logo_ts / 1000)}" alt="" width="56" height="56">` : ""}${esc(p.n)}</h1>
 <div class="tags"><span class="${p.st === "live" ? "live" : ""}">● ${esc(ST[p.st] || p.st)}</span>${p.sc ? `<span>Smart contract <b>SC ${String(p.sc).padStart(2, "0")}</b> of the Qubic core</span>` : ""}<span>♥ <b>${fmt(lk && lk.n)}</b> likes</span>${p.a ? `<span>On the map since <b>${esc(p.a)}</b></span>` : ""}</div>
 ${shot}
 <p class="d">${esc(p.d)}</p>

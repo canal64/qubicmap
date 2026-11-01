@@ -19,7 +19,9 @@ const UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
 // a new capture each day, and the retry a few minutes later asks for the same one.
 const dayTag = () => new Date().toISOString().slice(0, 10).replace(/-/g, "");
 const fresh = (u) => { try { const x = new URL(u); x.searchParams.set("qm", dayTag()); return x.toString(); } catch (e) { return u; } };
-const shotUrl = (u) => "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(fresh(u)) + "?w=600&h=900&vpw=1280&vph=1920";
+// Sites whose hero sits in the middle of the window (fixed position): captured in a shorter window so it shows.
+const SHORT = { cfb: 800 };
+const shotUrl = (u, slug) => { const h = SHORT[slug] || 1920; return "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(fresh(u)) + "?w=600&h=" + Math.round(600 * h / 1280) + "&vpw=1280&vph=" + h; };
 const googleIcon = (host) => "https://s2.googleusercontent.com/s2/favicons?domain=" + encodeURIComponent(host) + "&sz=128";
 
 // ---- image sniffing -------------------------------------------------------------------------
@@ -111,9 +113,9 @@ async function findLogo(site) {
 }
 
 // mShots answers with a "generating" placeholder (a GIF or a tiny image) until the capture is ready.
-async function findShot(site) {
+async function findShot(site, slug) {
   let r;
-  try { r = await fetch(shotUrl(site), { redirect: "follow", headers: { "User-Agent": UA, Accept: "image/*" }, signal: AbortSignal.timeout(12000) }); }
+  try { r = await fetch(shotUrl(site, slug), { redirect: "follow", headers: { "User-Agent": UA, Accept: "image/*" }, signal: AbortSignal.timeout(12000) }); }
   catch (e) { return { fail: "fetch error" }; }
   const b = r.ok ? await r.arrayBuffer() : (r.body && (await r.body.cancel().catch(() => {})), null);
   const s = b && sniff(b);
@@ -138,7 +140,7 @@ export async function mediaBatch(env, force) {
   }).filter((x) => x.needShot || x.needLogo).sort((a, b) => a.order - b.order).slice(0, BATCH);
   if (!due.length) return;
   for (const x of due) {
-    const [shot, logo] = await Promise.all([x.needShot ? findShot(x.url) : null, x.needLogo ? findLogo(x.url) : null]);
+    const [shot, logo] = await Promise.all([x.needShot ? findShot(x.url, x.slug) : null, x.needLogo ? findLogo(x.url) : null]);
     if (!x.same) await env.DB.prepare("INSERT INTO media (slug, url) VALUES (?1, ?2) ON CONFLICT(slug) DO UPDATE SET url = ?2, shot = NULL, shot_ts = NULL, shot_try = 0, logo = NULL, logo_ts = NULL, logo_try = 0").bind(x.slug, x.url).run();
     const st = [];
     if (x.needShot) st.push(shot && shot.data
