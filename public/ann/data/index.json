@@ -1,51 +1,51 @@
 {
  "epoch": 236,
- "built": "2026-10-28T10:01:06.986Z",
+ "built": "2026-11-01T10:39:41.869Z",
  "items": [
   {
-   "rank": 1,
-   "id": "CXYFAJFICUKKNEUSLWPXKERFMSRAEQZCNOPNKUKSJBANARDFGOACTLYDGQOH",
-   "epoch": 236,
-   "score": 3105,
-   "steps": 146,
-   "built": "2026-10-28T09:39:56.355Z",
-   "solutions": 3658
-  },
-  {
    "rank": 2,
-   "id": "JCLOHADAPCKWPEEPOYLWMEFZDHMCIXVZDYWFJUMLQDEDSCDSCFYQEVNEXDCN",
+   "id": "RMRICULGDWUGXCJSOMWKQMWDYQWASEWHNVYECEFCDAKCUBUISJTZPGGGLPEH",
    "epoch": 236,
-   "score": 3138,
-   "steps": 178,
-   "built": "2026-10-28T09:36:51.805Z",
-   "solutions": 967
-  },
-  {
-   "rank": 3,
-   "id": "APQHRGUCLWQMHAHIKTKRLNEEKGTAFLOTTRHCSYYAOCUKMHHIWYXEDLSAJCIL",
-   "epoch": 236,
-   "score": 3147,
-   "steps": 118,
-   "built": "2026-10-28T09:53:01.340Z",
-   "solutions": 2441
+   "score": 3117,
+   "steps": 161,
+   "built": "2026-11-01T10:29:45.187Z",
+   "solutions": 4849
   },
   {
    "rank": 4,
-   "id": "SHTHQRQQVVXGVBODNSBEVQDHCHGCVKTZFBGHSJHSLDZARRWKABTDOOXECYSE",
+   "id": "MOZCQSZNQXBZCBIMATUAUQLBBWABPQYXZEGYPJTGCCXWMFEXOWJYILXDBDDO",
    "epoch": 236,
    "score": 3150,
-   "steps": 146,
-   "built": "2026-10-28T09:44:28.836Z",
-   "solutions": 1401
+   "steps": 130,
+   "built": "2026-11-01T10:28:28.213Z",
+   "solutions": 474
   },
   {
    "rank": 5,
-   "id": "YJKQRPLIQCGDSECNMBRCPHANLPRBLULIJDTOVVGOZGZTBOTMZEWKPKVFMVVJ",
+   "id": "LPGYBAXDXHPGDEDCNBAGIKPODWQBVSELWMJYRXZTBBXTIGKJYLQINUMDANGK",
    "epoch": 236,
-   "score": 3150,
-   "steps": 96,
-   "built": "2026-10-28T09:57:34.033Z",
-   "solutions": 10000
+   "score": 3161,
+   "steps": 167,
+   "built": "2026-11-01T10:34:41.726Z",
+   "solutions": 3083
+  },
+  {
+   "rank": 6,
+   "id": "KUYRWBDXOLGVMCPXQHOPRFYVBURABRYLNYJVIDJDDBRICHDTZDBJFTAASMBF",
+   "epoch": 236,
+   "score": 3170,
+   "steps": 199,
+   "built": "2026-11-01T10:33:52.851Z",
+   "solutions": 751
+  },
+  {
+   "rank": 7,
+   "id": "DPOYUZNKINAPGFXOKFMPTVNWXIVBPYVOLWRAKEZAOGEWWIYDGFTDANAFLNTG",
+   "epoch": 236,
+   "score": 3171,
+   "steps": 205,
+   "built": "2026-11-01T10:39:32.183Z",
+   "solutions": 1039
   }
  ]
 }
