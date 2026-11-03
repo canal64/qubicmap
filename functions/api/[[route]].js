@@ -17,6 +17,20 @@ const ID = /^[a-z0-9][a-z0-9-]{0,47}$/;
 const json = (body, status = 200, extra = {}) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json", ...extra } });
 
+// ---- e-mail alert for new suggestions (Cloudflare Email Routing; the recipient lives only in the NOTIFY_TO secret)
+const b64 = (t) => { const u = new TextEncoder().encode(t); let s = ""; for (const c of u) s += String.fromCharCode(c); return btoa(s); };
+async function notify(env, s) {
+  if (!env.MAIL || !env.NOTIFY_TO) return;
+  const { EmailMessage } = await import("cloudflare:email");
+  const from = "notify@qubicmap.org", kinds = { new: "New project", broken: "Problem report", other: "Message" };
+  const subject = `qubicmap: ${kinds[s.kind] || "Message"} - ${s.name}`;
+  const body = [`${kinds[s.kind] || "Message"} sent from qubicmap.org`, "", `Name: ${s.name}`, `Link: ${s.url || "-"}`, `Contact: ${s.contact || "-"}`, `Language: ${s.lang || "-"}`, "", s.note || "(no description)", ""].join("\r\n");
+  const raw = [`From: qubicmap <${from}>`, `To: ${env.NOTIFY_TO}`, `Subject: =?UTF-8?B?${b64(subject)}?=`, `Date: ${new Date().toUTCString()}`,
+    `Message-ID: <${crypto.randomUUID()}@qubicmap.org>`, "MIME-Version: 1.0", "Content-Type: text/plain; charset=utf-8", "Content-Transfer-Encoding: base64", "",
+    b64(body).replace(/.{76}/g, "$&\r\n")].join("\r\n");
+  await env.MAIL.send(new EmailMessage(from, env.NOTIFY_TO, raw));
+}
+
 async function voterOf(request, env) {
   const ip = request.headers.get("CF-Connecting-IP") || "unknown";
   const data = new TextEncoder().encode(ip + "|" + (env.SALT || "qubic-ecosystem-map"));
@@ -231,6 +245,7 @@ export async function onRequest({ request, env, waitUntil }) {
       const all = await env.DB.prepare("SELECT count(*) AS c FROM suggestions WHERE ts > ?1").bind(now - DAY).first();
       if (all.c >= MAX_SUGGESTIONS_TOTAL_PER_DAY) return json({ error: "try again tomorrow" }, 429);
       await env.DB.prepare("INSERT INTO suggestions (ts, kind, name, url, note, contact, lang, voter) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)").bind(now, kind, name, link, note, contact, lang, voter).run();
+      waitUntil(notify(env, { kind, name, url: link, note, contact, lang }).catch((e) => console.log("notify failed", String(e))));
       return json({ ok: true });
     }
     if (url.pathname === "/api/ann/featured" && request.method === "GET") return await annFeatured(env, waitUntil, url.origin, url.searchParams.get("epoch"));
