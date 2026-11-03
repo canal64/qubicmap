@@ -252,9 +252,9 @@ footer{font:12.5px var(--mono);color:var(--muted);display:flex;flex-direction:co
 .ai.relbox .ailab{color:var(--warn)}
 .ai.arcbox{margin-top:9px}.ai.whbox{margin-top:9px}
 .ipobox{margin-top:9px}
-.ipobox a.wrow{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font:12.5px var(--sans);color:var(--ink);text-decoration:none;min-width:0;font-variant-numeric:tabular-nums}
-.ipobox a.wrow span:last-child{color:var(--muted);white-space:nowrap}
-.ipobox a.wrow:hover b{text-decoration:underline}
+.ipobox .ailab{font:12.5px var(--sans);color:var(--muted)}
+.ipobox .wrow{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font:12.5px var(--sans);color:var(--ink);text-decoration:none;min-width:0;font-variant-numeric:tabular-nums}
+.ipobox .wrow span:last-child{color:var(--muted);white-space:nowrap}
 .whbox .wl{flex:1 1 100%;display:flex;flex-direction:column;gap:3px;min-width:0}
 .whbox .wrow{display:flex;justify-content:space-between;gap:12px;align-items:baseline;font:12.5px var(--mono);color:var(--ink);text-decoration:none;min-width:0}
 .whbox .wrow b{font-weight:500;min-width:0;overflow-wrap:anywhere}
@@ -784,12 +784,12 @@ route();
   fetch("https://rpc.qubic.org/live/v1/ipos/active").then(function(r){return r.ok?r.json():null}).then(function(j){
     var L=(j&&j.ipos||[]).filter(function(x){return x&&/^[A-Z0-9]{1,7}$/.test(x.assetName||"")&&x.contractIndex>0}).slice(0,4);if(!L.length)return;
     var box=document.createElement("div");box.className="ai ipobox";ai.parentNode.insertBefore(box,ai.nextSibling);
-    box.innerHTML='<a class="ailab" href="https://ipo.qubic.tools/" target="_blank" rel="noopener" title="Contract shares auctioned this epoch · data: rpc.qubic.org"></a><div class="wl"></div>';
+    box.innerHTML='<span class="ailab" title="Contract shares auctioned this epoch · data: rpc.qubic.org"></span><div class="wl"></div>';
     var lab=box.querySelector(".ailab"),list=box.querySelector(".wl");
     function left(){var now=Date.now(),d=new Date(now),end=Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),12)+((3-d.getUTCDay()+7)%7)*864e5;if(end<=now)end+=7*864e5;
       var m=Math.floor((end-now)/6e4),dd=Math.floor(m/1440),hh=Math.floor(m%1440/60),mm=m%60;return dd?tr("{d}d {h}h").replace("{d}",dd).replace("{h}",hh):tr("{h}h {m}m").replace("{h}",hh).replace("{m}",mm)}
-    function draw(){lab.textContent=tr("Open IPOs")+" ↗";
-      list.innerHTML=L.map(function(x){return '<a class="wrow" href="https://ipo.qubic.tools/" target="_blank" rel="noopener"><span><b>'+esc(x.assetName)+'</b> · '+esc(tr("contract {i}").replace("{i}",x.contractIndex))+'</span><span>'+esc(tr("bids close in {t}").replace("{t}",left()))+'</span></a>'}).join("")}
+    function draw(){lab.textContent=tr("Open IPOs");
+      list.innerHTML=L.map(function(x){return '<div class="wrow"><span><b>'+esc(x.assetName)+'</b> · '+esc(tr("contract {i}").replace("{i}",x.contractIndex))+'</span><span>'+esc(tr("bids close in {t}").replace("{t}",left()))+'</span></div>'}).join("")}
     draw();setInterval(draw,60000);var al=applyLang;applyLang=function(){al();draw()};
   }).catch(function(){});
 })();
