@@ -19,7 +19,7 @@ const json = (body, status = 200, extra = {}) =>
 
 // ---- e-mail alert for new suggestions (Cloudflare Email Routing; the recipient lives only in the NOTIFY_TO secret)
 const b64 = (t) => { const u = new TextEncoder().encode(t); let s = ""; for (const c of u) s += String.fromCharCode(c); return btoa(s); };
-async function notify(env, s) {
+export async function notify(env, s) {
   if (!env.MAIL || !env.NOTIFY_TO) return;
   const { EmailMessage } = await import("cloudflare:email");
   const from = "notify@qubicmap.org", kinds = { new: "New project", broken: "Problem report", other: "Message" };
@@ -29,6 +29,15 @@ async function notify(env, s) {
     `Message-ID: <${crypto.randomUUID()}@qubicmap.org>`, "MIME-Version: 1.0", "Content-Type: text/plain; charset=utf-8", "Content-Transfer-Encoding: base64", "",
     b64(body).replace(/.{76}/g, "$&\r\n")].join("\r\n");
   await env.MAIL.send(new EmailMessage(from, env.NOTIFY_TO, raw));
+}
+
+// One-off: e-mail the suggestions received before the alerts existed (runs once from the cron, then remembers it).
+export async function notifyBacklog(env) {
+  if (!env.MAIL || !env.NOTIFY_TO) return;
+  if (await env.DB.prepare("SELECT 1 FROM kv WHERE k = 'notify_backlog'").first()) return;
+  await env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES ('notify_backlog', '', ?1)").bind(Date.now()).run();
+  const rows = (await env.DB.prepare("SELECT kind, name, url, note, contact, lang FROM suggestions WHERE ts < 1793743200000 ORDER BY ts").all()).results;
+  for (const r of rows) await notify(env, r);
 }
 
 async function voterOf(request, env) {

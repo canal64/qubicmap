@@ -1,7 +1,7 @@
 // Worker entry: serves the site from public/ and runs the same server code that
 // used to run as Pages Functions (functions/), so both layouts stay in sync.
 import { onRequest as home, githubIfStale, newsIfStale } from "../functions/index.js";
-import { onRequest as api } from "../functions/api/[[route]].js";
+import { onRequest as api, notifyBacklog } from "../functions/api/[[route]].js";
 import { serveMedia, mediaBatch } from "../functions/media.js";
 import { refreshWhales } from "../functions/whales.js";
 import { projectPage, weekPage, feed } from "../functions/pages.js";
@@ -16,6 +16,7 @@ export default {
     ctx.waitUntil(githubIfStale(env).catch(() => {}));
     ctx.waitUntil(newsIfStale(env).catch(() => {}));
     ctx.waitUntil(refreshWhales(env).catch(() => {}));
+    ctx.waitUntil(notifyBacklog(env).catch((e) => console.log("backlog failed", String(e))));
   },
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
