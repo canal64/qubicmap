@@ -21,6 +21,17 @@ const dayTag = () => new Date().toISOString().slice(0, 10).replace(/-/g, "");
 const fresh = (u) => { try { const x = new URL(u); x.searchParams.set("qm", dayTag()); return x.toString(); } catch (e) { return u; } };
 // Sites whose hero sits in the middle of the window (fixed position): captured in a shorter window so it shows.
 const SHORT = { cfb: 800 };
+// Previews or logos supplied by hand (files in public/), used instead of the automatic capture.
+const MANUAL = { "my-last-match": { shot: "/shots/my-last-match.jpg", logo: "/logos/my-last-match.png" } };
+async function manual(env, slug, kind) {
+  const path = MANUAL[slug] && MANUAL[slug][kind];
+  if (!path || !env.ASSETS) return null;
+  try {
+    const r = await env.ASSETS.fetch(new Request("https://qubicmap.org" + path));
+    const b = r.ok ? await r.arrayBuffer() : null, s = b && sniff(b);
+    return s ? { data: b, ct: OK_TYPES[s.type] || (kind === "shot" ? "image/jpeg" : "image/png"), src: "manual" } : null;
+  } catch (e) { return null; }
+}
 const shotUrl = (u, slug) => { const h = SHORT[slug] || 1920; return "https://s.wordpress.com/mshots/v1/" + encodeURIComponent(fresh(u)) + "?w=600&h=" + Math.round(600 * h / 1280) + "&vpw=1280&vph=" + h; };
 const googleIcon = (host) => "https://s2.googleusercontent.com/s2/favicons?domain=" + encodeURIComponent(host) + "&sz=128";
 
@@ -140,7 +151,7 @@ export async function mediaBatch(env, force) {
   }).filter((x) => x.needShot || x.needLogo).sort((a, b) => a.order - b.order).slice(0, BATCH);
   if (!due.length) return;
   for (const x of due) {
-    const [shot, logo] = await Promise.all([x.needShot ? findShot(x.url, x.slug) : null, x.needLogo ? findLogo(x.url) : null]);
+    const [shot, logo] = await Promise.all([x.needShot ? (MANUAL[x.slug] && MANUAL[x.slug].shot ? manual(env, x.slug, "shot") : findShot(x.url, x.slug)) : null, x.needLogo ? (MANUAL[x.slug] && MANUAL[x.slug].logo ? manual(env, x.slug, "logo") : findLogo(x.url)) : null]);
     if (!x.same) await env.DB.prepare("INSERT INTO media (slug, url) VALUES (?1, ?2) ON CONFLICT(slug) DO UPDATE SET url = ?2, shot = NULL, shot_ts = NULL, shot_try = 0, logo = NULL, logo_ts = NULL, logo_try = 0").bind(x.slug, x.url).run();
     const st = [];
     if (x.needShot) st.push(shot && shot.data
