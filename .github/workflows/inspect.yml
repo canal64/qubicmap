@@ -1,0 +1,26 @@
+# Temporary, run by hand: renders pages and pushes screenshots and text to the tmp-media branch.
+name: inspect
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "name=url pairs separated by spaces"
+        required: true
+permissions:
+  contents: write
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm i --no-save playwright@1.47.2 && npx playwright install --with-deps chromium
+      - env:
+          URLS: ${{ inputs.urls }}
+        run: node scripts/inspect.mjs
+      - run: |
+          cd out && git init -q && git checkout -q -b tmp-media && git add . && git -c user.name=bot -c user.email=bot@users.noreply.github.com commit -qm out
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tmp-media
