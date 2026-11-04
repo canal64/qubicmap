@@ -67,7 +67,7 @@ export async function projectPage(request, env, slug) {
   const xText = `${p.n} on the Qubic Ecosystem Map: ${p.d}`.slice(0, 220);
   return html(HEAD(title, p.d, url, SITE + "/og/" + slug + ".png" + (m && m.shot_ts ? "?v=" + Math.round(m.shot_ts / 1000) : "")) + `
 <div class="back"><a href="/#${slug}">← Qubic Ecosystem Map</a></div>
-<div class="k" style="margin-top:26px">${esc(c[1])}</div>
+<div class="k" style="margin-top:26px">${esc(c[1])}${(p.al || []).length ? " · also " + p.al.map((x) => esc((CAT[x] || [x, x])[1])).join(", ") : ""}</div>
 <h1>${m && m.logo_ts ? `<img class="plogo" src="/m/l/${slug}?v=${Math.round(m.logo_ts / 1000)}" alt="" width="56" height="56">` : ""}${esc(p.n)}</h1>
 <div class="tags"><span class="${p.st === "live" ? "live" : ""}">● ${esc(ST[p.st] || p.st)}</span>${p.sc ? `<span>Smart contract <b>SC ${String(p.sc).padStart(2, "0")}</b> of the Qubic core</span>` : ""}<span>♥ <b>${fmt(lk && lk.n)}</b> likes</span>${p.a ? `<span>On the map since <b>${esc(p.a)}</b></span>` : ""}</div>
 ${shot}
