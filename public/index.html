@@ -620,7 +620,7 @@ function render(){
   if(favs.length)html+='<div class="cat" style="--h:340"><h2>♥ '+tr("Your favourites")+'</h2><p>'+tr("The projects you keep with the heart.")+'</p><span class="n">'+favs.length+'</span></div>'+favs.map(tileHTML).join("");
   if(cat==="all"&&!q&&API){var pop=popular(),wk=pop.length>0;if(!wk)pop=mostLiked();if(pop.length)html+='<div class="cat" style="--h:345"><h2>'+tr(wk?"Popular this week":"Most liked")+'</h2><p>'+tr(wk?"The projects visitors liked most over the last seven days.":"The projects visitors have liked most since the map opened.")+'</p><span class="n">'+pop.length+'</span></div>'+pop.map(tileHTML).join("")}
   CATS.forEach(function(c){
-    if(cat!=="all"&&cat!=="fav"&&c[0]!==cat)return;var rows=E.filter(function(e){return e[0]===c[0]&&match(e)}).concat(cat===c[0]?E.filter(function(e){return e[0]!==c[0]&&alsoIn(e,c[0])&&match(e)}):[]);if(!rows.length)return;shown+=rows.length;
+    if(cat!=="all"&&cat!=="fav"&&c[0]!==cat)return;var rows=E.filter(function(e){return e[0]===c[0]&&match(e)}).concat(cat===c[0]||(cat==="all"&&!q)?E.filter(function(e){return e[0]!==c[0]&&alsoIn(e,c[0])&&match(e)}):[]);if(!rows.length)return;shown+=rows.length;
     var L=LOOK[c[0]];
     html+='<div class="cat" style="--h:'+L[0]+'"><h2>'+shape(c[0],18)+tr(c[1])+'</h2><p>'+tr(c[2])+'</p><span class="n">'+rows.length+'</span></div>'+rows.map(function(e){return tileHTML(e,e[0]!==c[0])}).join("");
   });
