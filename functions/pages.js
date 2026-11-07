@@ -61,11 +61,19 @@ export async function projectPage(request, env, slug) {
     env.DB.prepare("SELECT shot_ts, logo_ts FROM media WHERE slug = ?1").bind(slug).first().catch(() => null),
     env.DB.prepare("SELECT count(*) AS n FROM likes WHERE project = ?1").bind(slug).first().catch(() => null),
   ]);
-  const url = SITE + "/p/" + slug, title = p.n + " · Qubic Ecosystem Map";
+  const url = SITE + "/p/" + slug, title = `${p.n} on Qubic: ${c[1]}, links & overview | QubicMap`;
+  // meta description: category, start of the description, and the like count only when there is one
+  const nl = (lk && lk.n) || 0, base = `${p.n} in the Qubic ecosystem (${c[1]}): ${p.d}`;
+  const desc = (base.length > 150 ? base.slice(0, 150).replace(/\s+\S*$/, "").replace(/[,:;]$/, "") + "…" : base) + (nl > 0 ? ` ${fmt(nl)} like${nl === 1 ? "" : "s"} on QubicMap.` : " Listed on QubicMap.");
+  // internal links: three other projects of the same category (main category first, newest first)
+  const sim = P.filter((x) => x.s !== slug && (x.c === p.c || (x.al || []).includes(p.c) || (p.al || []).includes(x.c)))
+    .sort((a, b) => (b.c === p.c) - (a.c === p.c) || (b.a || "").localeCompare(a.a || "")).slice(0, 3);
+  const cut = (t) => (t.length > 90 ? t.slice(0, 90).replace(/\s+\S*$/, "") + "…" : t);
+  const simHTML = sim.length ? `<section><h2>Other projects in ${esc(c[1])}</h2><div class="sim">${sim.map((x) => `<a href="/p/${x.s}"><b>${esc(x.n)}</b><span>${esc(cut(x.d))}</span></a>`).join("")}</div><p style="margin:12px 0 0"><a href="/#${esc(p.c)}">All ${esc(c[1])} on the map →</a></p></section>` : "";
   const snippet = `<a href="${url}"><img src="${SITE}/badge.svg" alt="Listed on qubicmap.org" width="190" height="40"></a>`;
   const shot = m && m.shot_ts ? `<div class="shot"><img src="/m/s/${slug}.jpg?v=${Math.round(m.shot_ts / 1000)}" alt="${esc(p.n)} website" loading="lazy"></div>` : "";
   const xText = `${p.n} on the Qubic Ecosystem Map: ${p.d}`.slice(0, 220);
-  return html(HEAD(title, p.d, url, SITE + "/og/" + slug + ".png" + (m && m.shot_ts ? "?v=" + Math.round(m.shot_ts / 1000) : "")) + `
+  return html(HEAD(title, desc, url, SITE + "/og/" + slug + ".png" + (m && m.shot_ts ? "?v=" + Math.round(m.shot_ts / 1000) : "")) + `
 <div class="back"><a href="/#${slug}">← Qubic Ecosystem Map</a></div>
 <div class="k" style="margin-top:26px">${esc(c[1])}${(p.al || []).length ? " · also " + p.al.map((x) => esc((CAT[x] || [x, x])[1])).join(", ") : ""}</div>
 <h1>${m && m.logo_ts ? `<img class="plogo" src="/m/l/${slug}?v=${Math.round(m.logo_ts / 1000)}" alt="" width="56" height="56">` : ""}${esc(p.n)}</h1>
@@ -74,6 +82,8 @@ ${shot}
 <p class="d">${esc(p.d)}</p>
 <div class="btns"><a class="btn main" href="${esc(p.u)}" target="_blank" rel="noopener">Open ${esc(host(p.u))} ↗</a><a class="btn" href="/#${slug}">See it on the map</a><button class="btn" type="button" id="cp">Copy link</button><a class="btn" href="https://x.com/intent/post?text=${encodeURIComponent(xText)}&url=${encodeURIComponent(url)}" target="_blank" rel="noopener">Post on X</a></div>
 <section><h2>${esc(c[1])}</h2><p style="margin:0;color:var(--muted)">${esc(c[2])}</p></section>
+${simHTML}
+<style>.sim{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:14px}.sim a{display:block;border:1px solid var(--rule);padding:12px 14px;text-decoration:none;color:inherit}.sim a:hover{border-color:var(--muted)}.sim b{display:block;margin-bottom:4px}.sim span{font-size:13.5px;color:var(--muted);line-height:1.45}</style>
 <section><h2>Listed on qubicmap.org</h2><p style="margin:0;color:var(--muted)">Is this your project? Add this badge to your site. It links back to this page.</p>
 <p style="margin:14px 0 0"><img src="/badge.svg" alt="Listed on qubicmap.org" width="190" height="40"> &nbsp; <img src="/badge-light.svg" alt="Listed on qubicmap.org (light)" width="190" height="40"></p>
 <pre id="snip">${esc(snippet)}</pre><div class="btns"><button class="btn" type="button" id="cps">Copy badge code</button></div>
