@@ -287,7 +287,8 @@ footer{font:12.5px var(--mono);color:var(--muted);display:flex;flex-direction:co
 @media (hover:none){.search .kb{display:none}}
 .sortc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:10px 0 0;font:13px var(--sans);color:var(--muted)}.sortc>span{margin-right:4px}
 .sortc button{font:13px var(--sans);color:var(--muted);background:none;border:1px solid var(--rule);border-radius:999px;padding:4px 11px;cursor:pointer}.sortc button:hover{color:var(--ink)}.sortc button[aria-pressed="true"]{color:var(--ink);border-color:var(--muted)}
-.qbw{position:absolute;left:14px;bottom:52px;display:flex;gap:5px;z-index:4;pointer-events:none}.qbw .qb{display:inline-block;font:500 11px var(--mono);letter-spacing:.04em;padding:2px 7px;border-radius:3px;line-height:1.4}
+.qbw{position:absolute;right:12px;top:44px;display:flex;z-index:4;pointer-events:none}.art .qbw .qb{position:static;width:auto;height:auto;display:inline-block;white-space:nowrap;font:500 11px var(--mono);letter-spacing:.04em;padding:2px 7px;border-radius:3px;line-height:1.4}
+@media(max-width:700px){.qbw{top:56px;right:8px}.qbw .qb{font-size:10px;padding:1px 5px}}
 .qb.top{background:#ffc96b;color:#1a1204}.qb.trd{background:#ff8a65;color:#1a0904}
 </style>
 
@@ -494,7 +495,7 @@ function watch(t){if(seen&&t)seen.observe(t)}
 var ALSO={"BITE":["tokens","nft"],"Qpunks":["games"],"qMine / qRWA":["mining"],"HASHWallet":["earn"]};
 function alsoIn(e,c){return (ALSO[e[1]]||[]).indexOf(c)>=0}
 function catName(c){for(var i=0;i<CATS.length;i++)if(CATS[i][0]===c)return tr(CATS[i][1]);return c}
-var RANK=null;function rankB(name){if(!API)return "";if(!RANK){var t=Object.keys(COUNTS).filter(function(x){return COUNTS[x]>=5}).sort(function(a,b){return COUNTS[b]-COUNTS[a]}).slice(0,7),w=Object.keys(WEEK).filter(function(x){return WEEK[x]>=3}).sort(function(a,b){return WEEK[b]-WEEK[a]}).slice(0,3);RANK={t:t,w:w}}var k=slug(name),h=(RANK.w.indexOf(k)>=0?'<span class="qb trd">'+tr("Trending")+'</span>':"")+(RANK.t.indexOf(k)>=0?'<span class="qb top">'+tr("Top liked")+'</span>':"");return h?'<span class="qbw">'+h+'</span>':""}
+var RANK=null,NOB=0;function rankB(name){if(!API||NOB)return "";if(!RANK){var t=Object.keys(COUNTS).filter(function(x){return COUNTS[x]>=5}).sort(function(a,b){return COUNTS[b]-COUNTS[a]}).slice(0,7),w=Object.keys(WEEK).filter(function(x){return WEEK[x]>=3}).sort(function(a,b){return WEEK[b]-WEEK[a]}).slice(0,3);RANK={t:t,w:w}}var k=slug(name),h=(RANK.t.indexOf(k)>=0?'<span class="qb top">'+tr("Top liked")+'</span>':"");return h?'<span class="qbw">'+h+'</span>':""}
 function tileHTML(e,sec){var L=LOOK[e[0]];
   return '<article class="tile" tabindex="0" style="--h:'+L[0]+'" data-n="'+esc(e[1])+'" data-c="'+e[0]+'"><div class="card"><div class="art'+(IMG[e[1]]?" pic":"")+'">'+(IMG[e[1]]?'<img src="img/'+IMG[e[1]]+'.webp" alt="" loading="lazy" decoding="async">':'<canvas></canvas>')+mediaHTML(e)
     +'<div class="top"><span class="code"'+(e[2]?' data-tip="'+esc(tr("Smart contract {n} of the Qubic core").replace("{n}",e[2]))+'"':"")+'>'+shape(e[0],13)+(sec?'<span class="mainc">'+catName(e[0])+'</span>':'')+(e[2]?"SC "+pad(e[2]):"")+'</span><span class="pill '+e[3]+'" data-tip="'+esc(tr(STIP[e[3]]||ST[e[3]]))+'"><i></i><b style="font-weight:500">'+tr(ST[e[3]])+'</b>'+(isNew(e[1])?'<span class="newb">'+tr("New")+'</span>':"")+'</span></div>'
@@ -617,9 +618,9 @@ function render(){
     shown=rs.length;var HD={liked:["Most liked","All projects, the most liked first."],"new":["Recently added","All projects, the newest on the map first."],az:["A to Z","All projects in alphabetical order."]}[SORT];
     if(rs.length)html='<div class="cat" style="--h:200"><h2>'+tr(HD[0])+'</h2><p>'+tr(HD[1])+'</p><span class="n">'+rs.length+'</span></div>'+rs.map(function(e){return tileHTML(e,true)}).join("")}else{
   var favs=cat==="all"&&!q?E.filter(function(e){return MINE[slug(e[1])]}):[];
-  if(favs.length)html+='<div class="cat" style="--h:340"><h2>♥ '+tr("Your favourites")+'</h2><p>'+tr("The projects you keep with the heart.")+'</p><span class="n">'+favs.length+'</span></div>'+favs.map(tileHTML).join("");
-  if(cat==="all"&&!q&&API){var pop=popular(),wk=pop.length>0;if(!wk)pop=mostLiked();if(pop.length)html+='<div class="cat" style="--h:345"><h2>'+tr(wk?"Popular this week":"Most liked")+'</h2><p>'+tr(wk?"The projects visitors liked most over the last seven days.":"The projects visitors have liked most since the map opened.")+'</p><span class="n">'+pop.length+'</span></div>'+pop.map(tileHTML).join("")}
-  CATS.forEach(function(c){
+  if(favs.length)html+='<div class="cat" style="--h:340"><h2>♥ '+tr("Your favourites")+'</h2><p>'+tr("The projects you keep with the heart.")+'</p><span class="n">'+favs.length+'</span></div>'+favs.map(tileHTML).join("");NOB=0;
+  if(cat==="all"&&!q&&API){var pop=popular(),wk=pop.length>0;if(!wk)pop=mostLiked();if(pop.length)html+='<div class="cat" style="--h:345"><h2>'+tr(wk?"Popular this week":"Most liked")+'</h2><p>'+tr(wk?"The projects visitors liked most over the last seven days.":"The projects visitors have liked most since the map opened.")+'</p><span class="n">'+pop.length+'</span></div>'+(NOB=1,pop.map(tileHTML).join(""))}
+  NOB=0;CATS.forEach(function(c){
     if(cat!=="all"&&cat!=="fav"&&c[0]!==cat)return;var rows=E.filter(function(e){return e[0]===c[0]&&match(e)}).concat(cat===c[0]||(cat==="all"&&!q)?E.filter(function(e){return e[0]!==c[0]&&alsoIn(e,c[0])&&match(e)}):[]);if(!rows.length)return;shown+=rows.length;
     var L=LOOK[c[0]];
     html+='<div class="cat" style="--h:'+L[0]+'"><h2>'+shape(c[0],18)+tr(c[1])+'</h2><p>'+tr(c[2])+'</p><span class="n">'+rows.length+'</span></div>'+rows.map(function(e){return tileHTML(e,e[0]!==c[0])}).join("");
