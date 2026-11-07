@@ -58,5 +58,14 @@ async function route(request, env, ctx, url) {
     if (url.pathname === "/feed.xml" || url.pathname === "/rss") return feed(request, env);
     if (url.pathname === "/" || url.pathname === "/index.html")
       return home({ request, env, waitUntil, next: () => env.ASSETS.fetch(request) });
+    // language versions: /fr/ (the home page in that language, from public/fr/) and /fr/p/<slug>
+    const lm = url.pathname.match(/^\/(fr|es|zh|nl|ru|de)(\/.*)?$/);
+    if (lm) {
+      const rest = lm[2] || "";
+      if (rest === "") return Response.redirect(url.origin + "/" + lm[1] + "/" + url.search, 301);
+      if (rest === "/" || rest === "/index.html") return home({ request, env, waitUntil, next: () => env.ASSETS.fetch(new Request(url.origin + "/" + lm[1] + "/", request)) });
+      const lp = rest.match(/^\/p\/([a-z0-9-]{1,60})\/?$/);
+      if (lp) { const r = await projectPage(request, env, lp[1], lm[1]); if (r) return r; }
+    }
     return env.ASSETS.fetch(request);
 }

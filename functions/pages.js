@@ -1,5 +1,6 @@
 // Server-rendered pages: one page per project (/p/<slug>), the weekly epoch recap (/week) and an RSS feed (/feed.xml).
 import P, { CATS, ACCESS } from "../lib/projects.js";
+import I18N, { LANGS, DISCLAIMER } from "../lib/i18n.js";
 
 const SITE = "https://qubicmap.org";
 const EPOCH0 = Date.UTC(2026, 9, 7, 12, 0, 0), EPOCH0_N = 234, WEEK = 7 * 86400000;
@@ -13,8 +14,8 @@ const fmt = (n) => Number(n || 0).toLocaleString("en-US");
 const short = (id) => String(id || "").slice(0, 6) + "…" + String(id || "").slice(-6);
 
 // Shared look: the site's dark theme, plus the light theme chosen on the home page (stored as qem.theme).
-const HEAD = (title, desc, url, img) => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">
+const HEAD = (title, desc, url, img, lang = "en", alt = "") => `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${url}">${alt}
 <meta property="og:type" content="website"><meta property="og:site_name" content="Qubic Ecosystem Map"><meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:url" content="${url}"><meta property="og:image" content="${img}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(desc)}"><meta name="twitter:image" content="${img}">
 <meta name="theme-color" content="#04070c"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/icons/icon-180.png"><link rel="alternate" type="application/rss+xml" title="Qubic Ecosystem Map" href="/feed.xml">
@@ -51,48 +52,61 @@ footer{margin-top:40px;font:12.5px var(--mono);color:var(--muted)}
 const FOOT = `<footer><p>Disclaimer: an independent, community-run directory for information only, not affiliated with the Qubic team or with any listed project. A listing is not an endorsement, an audit, a security review or financial advice, and listings are free. Smart contracts, wallets and tokens can fail or be exploited, and funds can be lost: qubicmap does not develop, operate or control any listed project. Check a project's own channels before you connect a wallet, and never type your seed into a website.</p>Qubic Ecosystem Map · <a href="/feed.xml">RSS</a> · <a href="/legal">Legal notice</a></footer></div></body></html>`;
 const html = (body, status = 200, maxAge = 300) => new Response(body, { status, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": `public, max-age=${maxAge}` } });
 
-export async function projectPage(request, env, slug) {
+// lang: "en" for /p/<slug>, or one of LANGS for /<lang>/p/<slug> (texts from lib/i18n.js, English when a string is missing).
+export async function projectPage(request, env, slug, lang = "en") {
+  const li = LANGS.indexOf(lang), pre = li >= 0 ? "/" + lang : "";
+  const t = (k) => { const v = I18N[k]; return li >= 0 && v && v[li] ? v[li] : k; };
+  const f = (k, o) => t(k).replace(/\{(\w)\}/g, (_, x) => (x in o ? o[x] : "{" + x + "}"));
   const p = P.find((x) => x.s === slug);
   // exchanges and card on-ramps are no longer project pages: send their old address to the list on the home page
-  if (!p && (ACCESS || []).includes(slug)) return new Response(null, { status: 301, headers: { Location: SITE + "/#get", "Cache-Control": "public, max-age=86400" } });
+  if (!p && (ACCESS || []).includes(slug)) return new Response(null, { status: 301, headers: { Location: SITE + pre + "/#get", "Cache-Control": "public, max-age=86400" } });
   if (!p) return null;
-  const c = CAT[p.c] || [p.c, p.c, ""];
+  const c0 = CAT[p.c] || [p.c, p.c, ""], cn = t(c0[1]), cd = t(c0[2]), pd = t(p.d);
   const [m, lk] = await Promise.all([
     env.DB.prepare("SELECT shot_ts, logo_ts FROM media WHERE slug = ?1").bind(slug).first().catch(() => null),
     env.DB.prepare("SELECT count(*) AS n FROM likes WHERE project = ?1").bind(slug).first().catch(() => null),
   ]);
-  const url = SITE + "/p/" + slug, title = `${p.n} on Qubic: ${c[1]}, links & overview | QubicMap`;
+  const url = SITE + pre + "/p/" + slug, title = f("{p} on Qubic: {c}, links & overview | QubicMap", { p: p.n, c: cn });
+  // the same page in every language, for search engines
+  const hl = (l) => (l === "zh" ? "zh-Hans" : l);
+  const alt = ["en", ...LANGS].map((l) => `<link rel="alternate" hreflang="${hl(l)}" href="${SITE}${l === "en" ? "" : "/" + l}/p/${slug}">`).join("") + `<link rel="alternate" hreflang="x-default" href="${SITE}/p/${slug}">`;
   // meta description: category, start of the description, and the like count only when there is one
-  const nl = (lk && lk.n) || 0, base = `${p.n} in the Qubic ecosystem (${c[1]}): ${p.d}`;
-  const desc = (base.length > 150 ? base.slice(0, 150).replace(/\s+\S*$/, "").replace(/[,:;]$/, "") + "…" : base) + (nl > 0 ? ` ${fmt(nl)} like${nl === 1 ? "" : "s"} on QubicMap.` : " Listed on QubicMap.");
+  const nl = (lk && lk.n) || 0, base = f("{p} in the Qubic ecosystem ({c}): {d}", { p: p.n, c: cn, d: pd });
+  const desc = (base.length > 150 ? base.slice(0, 150).replace(/\s+\S*$/, "").replace(/[,:;，：；]$/, "") + "…" : base) + " " + (nl > 1 ? f("{n} likes on QubicMap.", { n: fmt(nl) }) : nl === 1 ? t("1 like on QubicMap.") : t("Listed on QubicMap."));
   // internal links: three other projects of the same category (main category first, newest first)
   const sim = P.filter((x) => x.s !== slug && (x.c === p.c || (x.al || []).includes(p.c) || (p.al || []).includes(x.c)))
     .sort((a, b) => (b.c === p.c) - (a.c === p.c) || (b.a || "").localeCompare(a.a || "")).slice(0, 3);
-  const cut = (t) => (t.length > 90 ? t.slice(0, 90).replace(/\s+\S*$/, "") + "…" : t);
-  const simHTML = sim.length ? `<section><h2>Other projects in ${esc(c[1])}</h2><div class="sim">${sim.map((x) => `<a href="/p/${x.s}"><b>${esc(x.n)}</b><span>${esc(cut(x.d))}</span></a>`).join("")}</div><p style="margin:12px 0 0"><a href="/#${esc(p.c)}">All ${esc(c[1])} on the map →</a></p></section>` : "";
-  const snippet = `<a href="${url}"><img src="${SITE}/badge.svg" alt="Listed on qubicmap.org" width="190" height="40"></a>`;
-  const shot = m && m.shot_ts ? `<div class="shot"><img src="/m/s/${slug}.jpg?v=${Math.round(m.shot_ts / 1000)}" alt="${esc(p.n)} website" loading="lazy"></div>` : "";
-  const xText = `${p.n} on the Qubic Ecosystem Map: ${p.d}`.slice(0, 220);
-  return html(HEAD(title, desc, url, SITE + "/og/" + slug + ".png" + (m && m.shot_ts ? "?v=" + Math.round(m.shot_ts / 1000) : "")) + `
-<div class="back"><a href="/#${slug}">← Qubic Ecosystem Map</a></div>
-<div class="k" style="margin-top:26px">${esc(c[1])}${(p.al || []).length ? " · also " + p.al.map((x) => esc((CAT[x] || [x, x])[1])).join(", ") : ""}</div>
+  const cut = (x) => (x.length > 90 ? x.slice(0, 90).replace(/\s+\S*$/, "") + "…" : x);
+  const simHTML = sim.length ? `<section><h2>${esc(f("Other projects in {c}", { c: cn }))}</h2><div class="sim">${sim.map((x) => `<a href="${pre}/p/${x.s}"><b>${esc(x.n)}</b><span>${esc(cut(t(x.d)))}</span></a>`).join("")}</div><p style="margin:12px 0 0"><a href="${pre}/#${esc(p.c)}">${esc(f("All {c} on the map →", { c: cn }))}</a></p></section>` : "";
+  const snippet = `<a href="${SITE}/p/${slug}"><img src="${SITE}/badge.svg" alt="Listed on qubicmap.org" width="190" height="40"></a>`;
+  const shot = m && m.shot_ts ? `<div class="shot"><img src="/m/s/${slug}.jpg?v=${Math.round(m.shot_ts / 1000)}" alt="${esc(f("{p} website", { p: p.n }))}" loading="lazy"></div>` : "";
+  const xText = f("{p} on the Qubic Ecosystem Map: {d}", { p: p.n, d: pd }).slice(0, 220);
+  const sc = p.sc ? `<b>SC ${String(p.sc).padStart(2, "0")}</b>` : "";
+  const scLine = p.sc ? esc(t("Smart contract {n} of the Qubic core")).replace("{n}", sc) : "";
+  const likes = esc(nl === 1 ? t("1 like") : t("{n} likes")).replace("{n}", `<b>${fmt(nl)}</b>`).replace("1", nl === 1 ? "<b>1</b>" : "1");
+  const since = p.a ? esc(t("On the map since {d}")).replace("{d}", `<b>${esc(p.a)}</b>`) : "";
+  const foot = `<footer><p>${t(DISCLAIMER)}</p>Qubic Ecosystem Map · <a href="/feed.xml">RSS</a> · <a href="/legal">${esc(t("Legal notice"))}</a></footer></div></body></html>`;
+  return html(HEAD(title, desc, url, SITE + "/og/" + slug + ".png" + (m && m.shot_ts ? "?v=" + Math.round(m.shot_ts / 1000) : ""), hl(li >= 0 ? lang : "en"), alt) + `
+<div class="back"><a href="${pre}/#${slug}">← Qubic Ecosystem Map</a></div>
+<div class="k" style="margin-top:26px">${esc(cn)}${(p.al || []).length ? " · " + esc(t("also")) + " " + p.al.map((x) => esc(t((CAT[x] || [x, x])[1]))).join(", ") : ""}</div>
 <h1>${m && m.logo_ts ? `<img class="plogo" src="/m/l/${slug}?v=${Math.round(m.logo_ts / 1000)}" alt="" width="56" height="56">` : ""}${esc(p.n)}</h1>
-<div class="tags"><span class="${p.st === "live" ? "live" : ""}">● ${esc(ST[p.st] || p.st)}</span>${p.sc ? `<span>Smart contract <b>SC ${String(p.sc).padStart(2, "0")}</b> of the Qubic core</span>` : ""}<span>♥ <b>${fmt(lk && lk.n)}</b> likes</span>${p.a ? `<span>On the map since <b>${esc(p.a)}</b></span>` : ""}</div>
+<div class="tags"><span class="${p.st === "live" ? "live" : ""}">● ${esc(t(ST[p.st] || p.st))}</span>${scLine ? `<span>${scLine}</span>` : ""}<span>♥ ${likes}</span>${since ? `<span>${since}</span>` : ""}</div>
 ${shot}
-<p class="d">${esc(p.d)}</p>
-<div class="btns"><a class="btn main" href="${esc(p.u)}" target="_blank" rel="noopener">Open ${esc(host(p.u))} ↗</a><a class="btn" href="/#${slug}">See it on the map</a><button class="btn" type="button" id="cp">Copy link</button><a class="btn" href="https://x.com/intent/post?text=${encodeURIComponent(xText)}&url=${encodeURIComponent(url)}" target="_blank" rel="noopener">Post on X</a></div>
-<section><h2>${esc(c[1])}</h2><p style="margin:0;color:var(--muted)">${esc(c[2])}</p></section>
+<p class="d">${esc(pd)}</p>
+<div class="btns"><a class="btn main" href="${esc(p.u)}" target="_blank" rel="noopener">${esc(t("Open"))} ${esc(host(p.u))} ↗</a><a class="btn" href="${pre}/#${slug}">${esc(t("See it on the map"))}</a><button class="btn" type="button" id="cp">${esc(t("Copy link"))}</button><a class="btn" href="https://x.com/intent/post?text=${encodeURIComponent(xText)}&url=${encodeURIComponent(url)}" target="_blank" rel="noopener">${esc(t("Post on X"))}</a></div>
+<section><h2>${esc(cn)}</h2><p style="margin:0;color:var(--muted)">${esc(cd)}</p></section>
 ${simHTML}
 <style>.sim{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:14px}.sim a{display:block;border:1px solid var(--rule);padding:12px 14px;text-decoration:none;color:inherit}.sim a:hover{border-color:var(--muted)}.sim b{display:block;margin-bottom:4px}.sim span{font-size:13.5px;color:var(--muted);line-height:1.45}</style>
-<section><h2>Listed on qubicmap.org</h2><p style="margin:0;color:var(--muted)">Is this your project? Add this badge to your site. It links back to this page.</p>
+<section><h2>${esc(t("Listed on qubicmap.org"))}</h2><p style="margin:0;color:var(--muted)">${esc(t("Is this your project? Add this badge to your site. It links back to this page."))}</p>
 <p style="margin:14px 0 0"><img src="/badge.svg" alt="Listed on qubicmap.org" width="190" height="40"> &nbsp; <img src="/badge-light.svg" alt="Listed on qubicmap.org (light)" width="190" height="40"></p>
-<pre id="snip">${esc(snippet)}</pre><div class="btns"><button class="btn" type="button" id="cps">Copy badge code</button></div>
-<p style="margin:10px 0 0;font:12.5px var(--mono);color:var(--muted)">For a light background, use badge-light.svg instead of badge.svg.</p></section>
+<pre id="snip">${esc(snippet)}</pre><div class="btns"><button class="btn" type="button" id="cps">${esc(t("Copy badge code"))}</button></div>
+<p style="margin:10px 0 0;font:12.5px var(--mono);color:var(--muted)">${esc(t("For a light background, use badge-light.svg instead of badge.svg."))}</p></section>
 <script>
-function cp(t,b,l){function ok(){b.textContent="Copied ✓";setTimeout(function(){b.textContent=l},1800)}try{navigator.clipboard.writeText(t).then(ok)}catch(e){}}
-document.getElementById("cp").onclick=function(){cp(${JSON.stringify(url)},this,"Copy link")};
-document.getElementById("cps").onclick=function(){cp(document.getElementById("snip").textContent,this,"Copy badge code")};
-</script>` + FOOT);
+var OK=${JSON.stringify(t("Copied ✓"))};
+function cp(t,b,l){function ok(){b.textContent=OK;setTimeout(function(){b.textContent=l},1800)}try{navigator.clipboard.writeText(t).then(ok)}catch(e){}}
+document.getElementById("cp").onclick=function(){cp(${JSON.stringify(url)},this,${JSON.stringify(t("Copy link"))})};
+document.getElementById("cps").onclick=function(){cp(document.getElementById("snip").textContent,this,${JSON.stringify(t("Copy badge code"))})};
+</script>` + foot);
 }
 
 async function weekData(env, ep) {
