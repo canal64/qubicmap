@@ -185,7 +185,7 @@ h1 em{font-style:normal;color:transparent;-webkit-text-stroke:1.5px var(--ice)}
 .go:hover{text-decoration:underline}
 .tile.on{z-index:30}
 .tile.on .card{transform:scale(1.24);border-color:hsl(var(--h) 60% 55%);box-shadow:0 26px 70px rgba(0,0,0,.72),0 0 0 1px hsl(var(--h) 60% 55% / .25),0 0 44px hsl(var(--h) 80% 55% / .16)}
-.tile.on .more{max-height:350px;border-top-color:var(--rule)}
+.tile.on .more{max-height:min(900px,72vh);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;border-top-color:var(--rule)}
 .none{grid-column:1 / -1;padding:30px 0;color:var(--muted)}
 
 .sechead{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:baseline;border-bottom:1px solid var(--rule);padding-bottom:8px}
