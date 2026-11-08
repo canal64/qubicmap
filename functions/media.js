@@ -23,7 +23,7 @@ const fresh = (u, tok) => { try { const x = new URL(u); x.searchParams.set("qm",
 // Sites whose hero sits in the middle of the window (fixed position): captured in a shorter window so it shows.
 const SHORT = { cfb: 800 };
 // Previews or logos supplied by hand (files in public/), used instead of the automatic capture.
-const MANUAL = { "my-last-match": { shot: "/shots/my-last-match.jpg", logo: "/logos/my-last-match.png" } };
+const MANUAL = { "my-last-match": { shot: "/shots/my-last-match.jpg", logo: "/logos/my-last-match.png" }, starforge: { shot: "/shots/starforge.jpg" } };
 async function manual(env, slug, kind) {
   const path = MANUAL[slug] && MANUAL[slug][kind];
   if (!path || !env.ASSETS) return null;
