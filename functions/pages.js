@@ -1,6 +1,7 @@
 // Server-rendered pages: one page per project (/p/<slug>), the weekly epoch recap (/week) and an RSS feed (/feed.xml).
 import P, { CATS, ACCESS } from "../lib/projects.js";
 import I18N, { LANGS, DISCLAIMER } from "../lib/i18n.js";
+import EDGES from "../lib/edges.js";
 
 const SITE = "https://qubicmap.org";
 const EPOCH0 = Date.UTC(2026, 9, 7, 12, 0, 0), EPOCH0_N = 234, WEEK = 7 * 86400000;
@@ -78,6 +79,13 @@ export async function projectPage(request, env, slug, lang = "en") {
     .sort((a, b) => (b.c === p.c) - (a.c === p.c) || (b.a || "").localeCompare(a.a || "")).slice(0, 3);
   const cut = (x) => (x.length > 90 ? x.slice(0, 90).replace(/\s+\S*$/, "") + "…" : x);
   const simHTML = sim.length ? `<section><h2>${esc(f("Other projects in {c}", { c: cn }))}</h2><div class="sim">${sim.map((x) => `<a href="${pre}/p/${x.s}"><b>${esc(x.n)}</b><span>${esc(cut(t(x.d)))}</span></a>`).join("")}</div><p style="margin:12px 0 0"><a href="${pre}/#${esc(p.c)}">${esc(f("All {c} on the map →", { c: cn }))}</a></p></section>` : "";
+  // what the Connections page says about this project: other projects link to their own page here
+  const ed = EDGES[slug] || [];
+  const edHTML = ed.length ? `<section><h2>${esc(t("Connected to"))}</h2><ul class="cn">${ed.map(([n, s2, lab, inv]) => {
+    const o = s2 && P.find((x) => x.s === s2), note = li >= 0 ? (o ? t((CAT[o.c] || [o.c, o.c])[1]) : "") : lab;
+    const name = s2 ? `<a href="${pre}/p/${s2}">${esc(n)}</a>` : `<b>${esc(n)}</b>`, sp = note ? `<span>${esc(note)}</span>` : "";
+    return `<li>${inv && li < 0 ? sp + name : name + sp}</li>`;
+  }).join("")}</ul><p style="margin:12px 0 0"><a href="/connections">Connections →</a></p></section>` : "";
   const snippet = `<a href="${SITE}/p/${slug}"><img src="${SITE}/badge.svg" alt="Listed on qubicmap.org" width="190" height="40"></a>`;
   const shot = m && m.shot_ts ? `<div class="shot"><img src="/m/s/${slug}.jpg?v=${Math.round(m.shot_ts / 1000)}" alt="${esc(f("{p} website", { p: p.n }))}" loading="lazy"></div>` : "";
   const xText = f("{p} on the Qubic Ecosystem Map: {d}", { p: p.n, d: pd }).slice(0, 220);
@@ -90,19 +98,28 @@ export async function projectPage(request, env, slug, lang = "en") {
 <div class="back"><a href="${pre}/#${slug}">← Qubic Ecosystem Map</a></div>
 <div class="k" style="margin-top:26px">${esc(cn)}${(p.al || []).length ? " · " + esc(t("also")) + " " + p.al.map((x) => esc(t((CAT[x] || [x, x])[1]))).join(", ") : ""}</div>
 <h1>${m && m.logo_ts ? `<img class="plogo" src="/m/l/${slug}?v=${Math.round(m.logo_ts / 1000)}" alt="" width="56" height="56">` : ""}${esc(p.n)}</h1>
-<div class="tags"><span class="${p.st === "live" ? "live" : ""}">● ${esc(t(ST[p.st] || p.st))}</span>${scLine ? `<span>${scLine}</span>` : ""}<span>♥ ${likes}</span>${since ? `<span>${since}</span>` : ""}</div>
+<div class="tags"><span class="${p.st === "live" ? "live" : ""}">● ${esc(t(ST[p.st] || p.st))}</span>${scLine ? `<span>${scLine}</span>` : ""}<button type="button" class="lkb" id="lk" aria-pressed="false" aria-label="${esc(t("Like"))} ${esc(p.n)}">♥ <span id="lkn">${likes}</span></button>${since ? `<span>${since}</span>` : ""}</div>
 ${shot}
 <p class="d">${esc(pd)}</p>
 <div class="btns"><a class="btn main" href="${esc(p.u)}" target="_blank" rel="noopener">${esc(t("Open"))} ${esc(host(p.u))} ↗</a><a class="btn" href="${pre}/#${slug}">${esc(t("See it on the map"))}</a><button class="btn" type="button" id="cp">${esc(t("Copy link"))}</button><a class="btn" href="https://x.com/intent/post?text=${encodeURIComponent(xText)}&url=${encodeURIComponent(url)}" target="_blank" rel="noopener">${esc(t("Post on X"))}</a></div>
 <section><h2>${esc(cn)}</h2><p style="margin:0;color:var(--muted)">${esc(cd)}</p></section>
+${edHTML}
 ${simHTML}
-<style>.sim{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:14px}.sim a{display:block;border:1px solid var(--rule);padding:12px 14px;text-decoration:none;color:inherit}.sim a:hover{border-color:var(--muted)}.sim b{display:block;margin-bottom:4px}.sim span{font-size:13.5px;color:var(--muted);line-height:1.45}</style>
+<style>.lkb{font:inherit;color:inherit;background:none;border:1px solid var(--rule);padding:2px 10px;margin:-3px 0;cursor:pointer}.lkb:hover{border-color:var(--muted)}.lkb[aria-pressed="true"]{color:#ff7a9c;border-color:#ff7a9c}.lkb[aria-pressed="true"] b{color:inherit}.cn{list-style:none;padding:0;margin:14px 0 0;display:grid;gap:8px}.cn li{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;border-left:2px solid var(--rule);padding:3px 0 3px 12px}.cn a,.cn b{font-weight:600;color:var(--ink)}.cn span{color:var(--muted);font-size:14.5px}.sim{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:14px}.sim a{display:block;border:1px solid var(--rule);padding:12px 14px;text-decoration:none;color:inherit}.sim a:hover{border-color:var(--muted)}.sim b{display:block;margin-bottom:4px}.sim span{font-size:13.5px;color:var(--muted);line-height:1.45}</style>
 <section><h2>${esc(t("Listed on qubicmap.org"))}</h2><p style="margin:0;color:var(--muted)">${esc(t("Is this your project? Add this badge to your site. It links back to this page."))}</p>
 <p style="margin:14px 0 0"><img src="/badge.svg" alt="Listed on qubicmap.org" width="190" height="40"> &nbsp; <img src="/badge-light.svg" alt="Listed on qubicmap.org (light)" width="190" height="40"></p>
 <pre id="snip">${esc(snippet)}</pre><div class="btns"><button class="btn" type="button" id="cps">${esc(t("Copy badge code"))}</button></div>
 <p style="margin:10px 0 0;font:12.5px var(--mono);color:var(--muted)">${esc(t("For a light background, use badge-light.svg instead of badge.svg."))}</p></section>
 <script>
 var OK=${JSON.stringify(t("Copied ✓"))};
+/* like: same list as the map (kept in this browser), count kept by the server */
+(function(){var K=${JSON.stringify(slug)},n=${nl},T1=${JSON.stringify(esc(t("1 like")).replace("1", "<b>1</b>"))},TN=${JSON.stringify(esc(t("{n} likes")))},b=document.getElementById("lk"),o=document.getElementById("lkn");
+function mine(){try{var a=JSON.parse(localStorage.getItem("qem.likes")||"[]");return Array.isArray(a)?a:[]}catch(e){return[]}}
+function paint(on){b.setAttribute("aria-pressed",on?"true":"false");o.innerHTML=n===1?T1:TN.replace("{n}","<b>"+Number(n).toLocaleString("en-US")+"</b>")}
+var on=mine().indexOf(K)>=0;paint(on);
+b.onclick=function(){on=!on;var a=mine().filter(function(x){return x!==K});if(on)a.push(K);try{localStorage.setItem("qem.likes",JSON.stringify(a))}catch(e){}
+n=Math.max(0,n+(on?1:-1));paint(on);
+fetch("/api/like",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:K,on:on})}).then(function(r){return r.ok?r.json():null}).then(function(j){if(j&&typeof j.count==="number"){n=j.count;paint(on)}}).catch(function(){})}})();
 function cp(t,b,l){function ok(){b.textContent=OK;setTimeout(function(){b.textContent=l},1800)}try{navigator.clipboard.writeText(t).then(ok)}catch(e){}}
 document.getElementById("cp").onclick=function(){cp(${JSON.stringify(url)},this,${JSON.stringify(t("Copy link"))})};
 document.getElementById("cps").onclick=function(){cp(document.getElementById("snip").textContent,this,${JSON.stringify(t("Copy badge code"))})};

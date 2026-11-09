@@ -112,11 +112,29 @@ wr('lib/projects.js', '// Generated from the page data: every project, its categ
 cp = {"cats": [[c[0], c[1]] for c in CATS], "p": [{"s": x["s"], "n": x["n"], "c": x["c"], "st": x["st"], "sc": x["sc"], "d": x["d"]} for x in P]}
 wr('public/connections.html', rd('connections.tpl.html').replace('__DATA__', json.dumps(cp, ensure_ascii=False).replace('</', '<\\/')))
 
+# links between projects, for the "Connected to" block of the project pages: taken from the Connections page,
+# by running its ln(a,b,type,label,inverse) lines with Node. edges[slug] = [[other name, its slug or "", label, inv], ...]
+# inv = 1 when the label reads before the name ("powers" QXBoard), 0 when it reads after it (Qx: "trades on Qx").
+import subprocess
+_tpl = rd('connections.tpl.html'); _a = _tpl.find('\n', _tpl.find('function ln(a,b,t,l,il)')); _b = _tpl.find('var famAng')
+try:
+    _js = 'var D={p:' + json.dumps([{"n": x["n"], "c": x["c"]} for x in P]) + '},FAM={},OUT=[];function ln(a,b,t,l,il){OUT.push([a,b,l||"",il||""])}\n' + _tpl[_a:_b] + '\nconsole.log(JSON.stringify(OUT))'
+    _out = json.loads(subprocess.run(['node', '-e', _js], capture_output=True, text=True, check=True).stdout)
+    _sl = {x["n"]: x["s"] for x in P}; _skip = {"Qubic network", "QU coin"}; ED = {}
+    for a, b, l, il in _out:
+        for me, other, lab, inv in ((a, b, l, 0), (b, a, il, 1)):
+            if me in _sl and other not in _skip: ED.setdefault(_sl[me], []).append([other, _sl.get(other, ""), lab, inv])
+    for k in ED: ED[k].sort(key=lambda x: (x[1] == "", x[0].lower()))
+    wr('lib/edges.js', '// Generated from the Connections page: for each project, [other name, its slug or "", what links them, 1 if the label reads before the name].\nexport default ' + json.dumps(ED, ensure_ascii=False, sort_keys=True) + ';\n')
+    print('edges for', len(ED), 'projects')
+except Exception as ex:
+    print('WARNING edges not rebuilt (Node needed):', ex)
+
 # what the server needs for /<lang>/p/<slug>
 keys = {"Live", "Testnet", "Upgrading", "Contract only", "Early stage", "Not checked", "In development", "Smart contract {n} of the Qubic core", "Open", "Copy link", "Legal notice",
         "{p} on Qubic: {c}, links & overview | QubicMap", "{p} in the Qubic ecosystem ({c}): {d}", "{n} likes on QubicMap.", "1 like on QubicMap.", "Listed on QubicMap.", "also", "{n} likes", "1 like",
         "On the map since {d}", "See it on the map", "Post on X", "Copied ✓", "{p} website", "Other projects in {c}", "All {c} on the map →", "Listed on qubicmap.org",
-        "Is this your project? Add this badge to your site. It links back to this page.", "Copy badge code", "For a light background, use badge-light.svg instead of badge.svg.", "{p} on the Qubic Ecosystem Map: {d}"}
+        "Is this your project? Add this badge to your site. It links back to this page.", "Connected to", "Copy badge code", "For a light background, use badge-light.svg instead of badge.svg.", "{p} on the Qubic Ecosystem Map: {d}"}
 keys |= {c[1] for c in CATS + ACATS} | {c[2] for c in CATS + ACATS} | {e[5] for e in E}
 disc = [k for k in TR if k.startswith('<b>Disclaimer.</b>')]; assert len(disc) == 1; keys.add(disc[0])
 miss = [k for k in keys if k not in TR and k != 'RWA']
