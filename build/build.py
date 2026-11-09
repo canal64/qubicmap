@@ -85,7 +85,7 @@ for i, l in enumerate(LG):
 
 # robots and sitemap
 wr('public/robots.txt', 'User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: %ssitemap.xml\n' % URL)
-SM = [('', '2026-10-11'), ('arcade', '2026-10-13'), ('play', '2026-10-13'), ('whack', '2026-10-13'), ('quorum', '2026-10-13'), ('breaker', '2026-10-13'), ('ann', '2026-10-17'),
+SM = [('', '2026-10-11'), ('arcade', '2026-10-13'), ('play', '2026-10-13'), ('whack', '2026-10-13'), ('quorum', '2026-10-13'), ('breaker', '2026-10-13'),
       ('bubble', ''), ('connections', ''), ('gallery', ''), ('donate', ''), ('week', '')]
 u = lambda loc, lm='': '<url><loc>%s</loc>%s</url>' % (loc, '<lastmod>%s</lastmod>' % lm if lm else '')
 sm = ''.join(u(URL + p, lm) for p, lm in SM) + ''.join(u(URL + 'p/' + slug(e[1])) for e in E) + u(URL + 'legal', '2026-10-29')

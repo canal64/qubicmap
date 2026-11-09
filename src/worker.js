@@ -58,6 +58,8 @@ async function route(request, env, ctx, url) {
     if (url.pathname === "/feed.xml" || url.pathname === "/rss") return feed(request, env);
     if (url.pathname === "/" || url.pathname === "/index.html")
       return home({ request, env, waitUntil, next: () => env.ASSETS.fetch(request) });
+    // ANN Replay is archived (files in archive/ann/): old links go to the map
+    if (url.pathname === "/ann" || url.pathname === "/ann.html" || url.pathname.startsWith("/ann/")) return Response.redirect(url.origin + "/", 301);
     // language versions: /fr/ (the home page in that language, from public/fr/) and /fr/p/<slug>
     const lm = url.pathname.match(/^\/(fr|es|zh|nl|ru|de)(\/.*)?$/);
     if (lm) {

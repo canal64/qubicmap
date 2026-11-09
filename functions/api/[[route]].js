@@ -163,46 +163,6 @@ async function game(url, request, env) {
   return null;
 }
 
-// ---- Featured ANN networks for /ann: best verified solutions of the current epoch (JetskiPool archive) ----
-async function annFeatured(env, waitUntil, origin, want) {
-  // want: a specific epoch (the viewer can only replay epochs it carries the task for), else the current one
-  want = /^\d{3,4}$/.test(want || "") ? +want : 0;
-  const kk = want ? "ann:" + want : "ann";
-  const cache = typeof caches !== "undefined" && caches.default;
-  const key = new Request(origin + "/api/ann-cache/" + kk);
-  const hit = cache && (await cache.match(key));
-  if (hit) return hit;
-  const row = await env.DB.prepare("SELECT v, ts FROM kv WHERE k = ?1").bind(kk).first();
-  let out = row ? JSON.parse(row.v) : null;
-  if (!row || Date.now() - row.ts > 3600000) {
-    try {
-      const ep = want || epochNow().n, best = new Map();
-      for (const e of want ? [want] : [ep, ep - 1]) {
-        for (let off = 0; off < 1000; off += 200) {
-          const r = await fetch(`https://annexplorer.jetskipool.ai/api/v1/solutions?epoch=${e}&limit=200&offset=${off}`, { headers: { "User-Agent": "QubicEcosystemMap/1.0 (+https://qubicmap.org)", Accept: "application/json" }, signal: AbortSignal.timeout(8000) });
-          if (!r.ok) break;
-          const j = await r.json();
-          for (const s of j.items || []) {
-            const v = s.verification || {};
-            if (v.status !== "verified" || !v.passesThreshold || !/^[A-Z]{60}$/.test(s.computorId || "")) continue;
-            const b = best.get(s.computorId);
-            if (!b || v.score < b.score) best.set(s.computorId, { id: s.computorId, score: v.score, epoch: s.epoch, tick: s.tickNumber });
-          }
-          if (!j.hasMore) break;
-        }
-        if (best.size >= 3) break;
-      }
-      const list = [...best.values()].sort((a, b) => a.score - b.score).slice(0, 8);
-      if (list.length) {
-        out = { epoch: list[0].epoch, items: list };
-        await env.DB.prepare("INSERT INTO kv (k, v, ts) VALUES (?3, ?1, ?2) ON CONFLICT(k) DO UPDATE SET v = ?1, ts = ?2").bind(JSON.stringify(out), Date.now(), kk).run();
-      }
-    } catch (e) {}
-  }
-  const res = json(out || { items: [] }, 200, { "Cache-Control": "public, max-age=600" });
-  if (cache && out) waitUntil(cache.put(key, res.clone()));
-  return res;
-}
 
 export async function onRequest({ request, env, waitUntil }) {
   const url = new URL(request.url);
@@ -257,7 +217,7 @@ export async function onRequest({ request, env, waitUntil }) {
       waitUntil(notify(env, { kind, name, url: link, note, contact, lang }).catch((e) => console.log("notify failed", String(e))));
       return json({ ok: true });
     }
-    if (url.pathname === "/api/ann/featured" && request.method === "GET") return await annFeatured(env, waitUntil, url.origin, url.searchParams.get("epoch"));
+    if (url.pathname.startsWith("/api/ann")) return new Response("ANN Replay is archived", { status: 410 });
     if (url.pathname.startsWith("/api/game/")) {
       const r = await game(url, request, env);
       if (r) return r;
