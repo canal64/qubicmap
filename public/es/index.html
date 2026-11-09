@@ -745,7 +745,7 @@ function render(){
     var L=LOOK[el.getAttribute("data-c")],t={el:el,cv:el.querySelector("canvas"),S:barsSpec(el.getAttribute("data-n")),hue:L[0]};
     el.addEventListener("pointerenter",function(e){if(e.pointerType==="mouse"&&Date.now()>holdUntil)open(t)});
     el.addEventListener("pointerleave",function(e){if(e.pointerType==="mouse"&&active===t)stop()});
-    el.addEventListener("focus",function(){open(t)});
+    el.addEventListener("focus",function(){if(!SHQ.matches)open(t)});
     el.addEventListener("click",function(e){var lk=e.target.closest(".like");if(lk){e.preventDefault();toggleLike(lk.getAttribute("data-k"));return}var ac=e.target.closest("[data-a]");if(ac){e.preventDefault();tileAct(ac,el.getAttribute("data-n"));return}if(e.target.closest("a"))return;if(active===t&&Date.now()-t.at>350&&matchMedia("(hover: none)").matches)stop();else open(t)});
     el.addEventListener("keydown",function(e){if(e.target.closest(".like,[data-a]"))return;if(e.key==="Enter"){var a=el.querySelector("a.go");if(a)a.click()}else if(e.key==="Escape")stop()});
     return t;
@@ -826,7 +826,7 @@ var ALIAS={wallets:"custody",wallet:"custody",exchanges:"cex",dex:"trade",defi:"
 function setHash(h){try{history.replaceState(null,"",h?"#"+h:location.pathname+location.search)}catch(e){}}
 var holdUntil=0;
 function goTile(sl){holdUntil=Date.now()+1300;if(cat!=="all"||q){cat="all";q="";$("q").value="";chips();render()}
-  for(var i=tiles.length-1;i>=0;i--){var t=tiles[i];if(slug(t.el.getAttribute("data-n"))===sl){t.el.scrollIntoView({block:"center",behavior:reduce?"auto":"smooth"});(function(t){setTimeout(function(){open(t)},reduce?0:420)})(t);return true}}
+  for(var i=tiles.length-1;i>=0;i--){var t=tiles[i];if(slug(t.el.getAttribute("data-n"))===sl){t.el.scrollIntoView({block:"center",behavior:reduce?"auto":"smooth"});(function(t){setTimeout(function(){if(SHQ.matches)setHash("");open(t)},reduce?0:420)})(t);return true}}
   return false}
 function route(){var h="";try{h=decodeURIComponent((location.hash||"").slice(1)).toLowerCase()}catch(e){}
   if(!h||LANGS.indexOf(h)>=0)return;
