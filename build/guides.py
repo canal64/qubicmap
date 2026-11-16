@@ -42,6 +42,8 @@ def gt(k, i):
     return t(k, i)  # map translations (project descriptions, "Project page", "Open", "Explorers"...)
 
 Y = True
+# the small Qubic logo of the home page header, linked to the map
+_a = s.find('<svg class="qlogo"'); QLOGO = '\n'.join(x for x in s[_a:s.find('</svg>', _a) + 6].split('\n') if x.strip())
 GUIDES = [{
   "page": "explorers", "cat": "explorer", "lastmod": "2026-11-16",
   "title": "Qubic explorers: compare block explorers and network tools",
@@ -66,6 +68,7 @@ CSS = """:root{color-scheme:dark;--void:#04070c;--panel:#0a1019;--rule:#182434;-
 *{box-sizing:border-box}body{margin:0;background:var(--void);color:var(--ink);font:16px/1.55 var(--sans)}
 a{color:var(--ice);text-underline-offset:3px}
 .wrap{max-width:860px;margin:0 auto;padding:22px 16px 60px}
+.logo{display:inline-block;margin-bottom:14px}.qlogo{display:block;height:26px;width:auto;color:var(--ink)}
 .back{font:13px var(--mono);color:var(--muted)}.back a{color:inherit}
 h1{margin:10px 0 8px;font:700 clamp(32px,7vw,54px)/1.05 var(--display);letter-spacing:.01em}
 .lead{color:var(--muted);max-width:64ch;margin:0}
@@ -123,7 +126,7 @@ def guide_html(g, i):
         '<script>try{if(localStorage.getItem("qem.theme")==="light")document.documentElement.setAttribute("data-theme","light")}catch(e){}</script>'
         '<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
         '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">'
-        '<script type="application/ld+json">%s</script><style>%s</style></head><body><div class="wrap">'
+        '<script type="application/ld+json">%s</script><style>%s</style></head><body><div class="wrap"><a class="logo" href="%s">%s</a>'
         '<div class="back"><a href="%s">QubicMap</a> › <a href="%s#%s">%s</a></div>'
         '<h1>%s</h1><p class="lead">%s</p>'
         '<h2>%s</h2><div class="tw"><table><thead><tr><th>%s</th>%s</tr></thead><tbody>%s</tbody></table></div><p class="note">%s</p>'
@@ -131,7 +134,7 @@ def guide_html(g, i):
         '<h2>%s</h2><div class="rel"><a class="btn" href="%s">%s</a><a class="btn" href="/connections">%s</a></div>'
         '<footer><p>%s</p>Qubic Ecosystem Map · <a href="/legal">%s</a></footer></div></body></html>\n') % (
         HL.get(l, l), esc(T), esc(D), url, alt, esc(T), esc(D), url, URL,
-        _json.dumps(ld, ensure_ascii=False).replace('</', '<\\/'), CSS,
+        _json.dumps(ld, ensure_ascii=False).replace('</', '<\\/'), CSS, home, QLOGO,
         home, home, g['cat'], esc(gt('Explorers', i)),
         esc(gt(g['h1'], i)), esc(gt(g['lead'], i)),
         esc(gt('At a glance', i)), esc(gt('Tool', i)), ''.join('<th>%s</th>' % esc(gt(c, i)) for c in g['cols']), rows, esc(gt('Details on each tool below.', i)),
