@@ -250,11 +250,23 @@ export async function refreshGithub(env) {
   await refreshRelease(env).catch(() => {});
   let items = null, note = "";
   try {
-    const [rel, repos] = await Promise.all([
+    const [rel, repos, pulls] = await Promise.all([
       ghJson("repos/qubic/core/releases?per_page=4", env).catch(() => []),
       ghJson("orgs/qubic/repos?sort=pushed&direction=desc&per_page=6", env),
+      ghJson("repos/qubic/core/pulls?state=open&sort=updated&direction=desc&per_page=10", env).catch(() => []),
     ]);
     const out = [];
+    // Open pull requests of qubic/core that are ready for review (not drafts), approved ones first: at most 2.
+    const prs = (pulls || []).filter((p) => !p.draft && p.html_url).slice(0, 4);
+    const revs = await Promise.all(prs.map((p) => ghJson("repos/qubic/core/pulls/" + p.number + "/reviews?per_page=50", env).catch(() => [])));
+    const prItems = prs.map((p, i) => {
+      const last = {}; // latest review state per reviewer
+      for (const r of revs[i] || []) if (r.user && r.state !== "COMMENTED") last[r.user.login] = r;
+      const st = Object.values(last), ok = st.filter((r) => r.state === "APPROVED"), no = st.some((r) => r.state === "CHANGES_REQUESTED");
+      const approved = ok.length > 0 && !no;
+      const d = approved ? ok.map((r) => r.submitted_at).sort().pop() : p.updated_at;
+      return { k: "pr", a: approved ? 1 : 0, t: "qubic/core · PR #" + p.number + (approved ? " approved" : " in review") + " · " + firstLine(p.title), d, u: p.html_url };
+    }).sort((a, b) => b.a - a.a || (a.d < b.d ? 1 : -1)).slice(0, 2);
     for (const r of rel || []) if (!r.draft && r.published_at)
       out.push({ k: "rel", t: "qubic/core · " + (r.name && r.name !== r.tag_name ? r.tag_name + " · " + r.name : "Release " + r.tag_name), d: r.published_at, u: r.html_url });
     const top = (repos || []).filter((r) => !r.private && r.pushed_at).slice(0, 4);
@@ -265,8 +277,9 @@ export async function refreshGithub(env) {
       out.push({ k: "push", t: "qubic/" + r.name + " · " + (c ? firstLine(c.commit && c.commit.message) : "updated"), d: (c && c.commit && c.commit.committer && c.commit.committer.date) || r.pushed_at, u: c ? c.html_url : r.html_url });
     });
     out.sort((a, b) => (a.d < b.d ? 1 : -1));
-    if (out.length) items = out.slice(0, 6);
-    note = (rel || []).length + " releases, " + top.length + " repos";
+    const all = [...prItems, ...out.slice(0, 6 - prItems.length)].sort((a, b) => (a.d < b.d ? 1 : -1));
+    if (all.length) items = all;
+    note = (rel || []).length + " releases, " + top.length + " repos, " + prItems.length + " PRs";
   } catch (e) { note = String((e && e.message) || e).slice(0, 140); }
   // GitHub limits its API for unauthenticated calls from shared hosts: fall back to the public Atom feeds of qubic/core.
   if (!items) {
