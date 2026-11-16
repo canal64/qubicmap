@@ -27,7 +27,8 @@ TR = obj('TR')
 def t(k, i):
     v = TR.get(k); return v[i] if v and i < len(v) and v[i] else k
 
-GL = {'explorer': 'explorers'}  # category -> its guide page (build/guides.py)
+GL = {'explorer': 'explorers', 'custody': 'wallets'}
+GLT = {'explorer': 'Compare explorers →', 'custody': 'Compare wallets →'}  # category -> its guide page (build/guides.py)
 # crawlable list written into #list (replaced by the tiles once the script runs)
 def static(i=None):
     parts = []
@@ -35,10 +36,10 @@ def static(i=None):
         items = [e for e in E if e[0] == c[0]]
         if not items: continue
         if i is None:
-            parts.append('<section><h2>%s</h2><p>%s%s</p><ul>' % (esc(c[1]), esc(c[2]), ' <a href="/%s">%s</a>' % (GL[c[0]], esc('Compare explorers →')) if c[0] in GL else ''))
+            parts.append('<section><h2>%s</h2><p>%s%s</p><ul>' % (esc(c[1]), esc(c[2]), ' <a href="/%s">%s</a>' % (GL[c[0]], esc(GLT[c[0]])) if c[0] in GL else ''))
             for e in items: parts.append('<li><a href="%s" rel="noopener">%s</a> — %s</li>' % (esc(e[4]), esc(e[1]), esc(e[5])))
         else:
-            parts.append('<section><h2>%s</h2><p>%s%s</p><ul>' % (esc(t(c[1], i)), esc(t(c[2], i)), ' <a href="/%s/%s">%s</a>' % (LG[i], GL[c[0]], esc(t('Compare explorers →', i))) if c[0] in GL else ''))
+            parts.append('<section><h2>%s</h2><p>%s%s</p><ul>' % (esc(t(c[1], i)), esc(t(c[2], i)), ' <a href="/%s/%s">%s</a>' % (LG[i], GL[c[0]], esc(t(GLT[c[0]], i))) if c[0] in GL else ''))
             for e in items: parts.append('<li><a href="/%s/p/%s">%s</a> — %s</li>' % (LG[i], slug(e[1]), esc(e[1]), esc(t(e[5], i))))
         parts.append('</ul></section>')
     if i is None:

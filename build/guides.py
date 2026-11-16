@@ -33,6 +33,32 @@ GT = {
  "All {n} projects on the map": ["Les {n} projets sur la carte", "Los {n} proyectos en el mapa", "地图上的全部 {n} 个项目", "Alle {n} projecten op de kaart", "Все {n} проектов на карте", "Alle {n} Projekte auf der Karte"],
  "Connections between projects": ["Liens entre les projets", "Conexiones entre proyectos", "项目之间的关联", "Verbanden tussen projecten", "Связи между проектами", "Verbindungen zwischen Projekten"],
  "Independent, community-run directory, for information only. A listing is not an endorsement: check each tool yourself, and never type your seed into a website.": ["Annuaire indépendant tenu par la communauté, à titre d'information uniquement. Être listé n'est pas une recommandation : vérifiez chaque outil vous-même et ne saisissez jamais votre seed sur un site web.", "Directorio independiente y comunitario, solo con fines informativos. Figurar aquí no es una recomendación: comprueba cada herramienta por tu cuenta y nunca escribas tu seed en un sitio web.", "独立的社区目录，仅供参考。被收录并不代表推荐：请自行核实每个工具，切勿在任何网站输入你的种子（seed）。", "Onafhankelijke, door de community beheerde gids, alleen ter informatie. Een vermelding is geen aanbeveling: controleer elke tool zelf en typ je seed nooit in op een website.", "Независимый каталог, который ведёт сообщество, только для информации. Включение в список — не рекомендация: проверяйте каждый инструмент сами и никогда не вводите свой seed на сайте.", "Unabhängiges, von der Community geführtes Verzeichnis, nur zur Information. Ein Eintrag ist keine Empfehlung: Prüfe jedes Tool selbst und gib deinen Seed nie auf einer Website ein."],
+ "Qubic wallets: compare web, desktop and hardware wallets": ["Wallets Qubic : comparez les portefeuilles web, desktop et matériels", "Wallets de Qubic: compara monederos web, de escritorio y hardware", "Qubic 钱包：比较网页、桌面和硬件钱包", "Qubic-wallets: vergelijk web-, desktop- en hardwarewallets", "Кошельки Qubic: сравнение веб-, десктопных и аппаратных кошельков", "Qubic-Wallets: Web-, Desktop- und Hardware-Wallets im Vergleich"],
+ "Where to keep QUBIC: the official Qubic Wallet, desktop and hardware wallets, a MetaMask Snap and multisig vaults, side by side.": ["Où garder vos QUBIC : le Qubic Wallet officiel, des wallets desktop et matériels, un Snap MetaMask et des coffres multisignatures, côte à côte.", "Dónde guardar tus QUBIC: el Qubic Wallet oficial, monederos de escritorio y hardware, un Snap de MetaMask y bóvedas multifirma, lado a lado.", "在哪里存放 QUBIC：官方 Qubic Wallet、桌面和硬件钱包、MetaMask Snap 以及多签金库，一目了然。", "Waar bewaar je QUBIC: de officiële Qubic Wallet, desktop- en hardwarewallets, een MetaMask Snap en multisig-kluizen naast elkaar.", "Где хранить QUBIC: официальный Qubic Wallet, десктопные и аппаратные кошельки, Snap для MetaMask и мультиподписные хранилища — в одном сравнении.", "Wo du QUBIC aufbewahrst: die offizielle Qubic Wallet, Desktop- und Hardware-Wallets, ein MetaMask Snap und Multisig-Tresore im Vergleich."],
+ "Qubic wallets": ["Wallets Qubic", "Wallets de Qubic", "Qubic 钱包", "Qubic-wallets", "Кошельки Qubic", "Qubic-Wallets"],
+ "Wallets and custody services for QUBIC and Qubic tokens. All are listed on QubicMap; each links to its project page and to the wallet itself.": ["Wallets et services de conservation pour les QUBIC et les tokens Qubic. Tous sont référencés sur QubicMap ; chacun renvoie à sa fiche projet et au wallet lui-même.", "Monederos y servicios de custodia para QUBIC y los tokens de Qubic. Todos figuran en QubicMap; cada uno enlaza a su página de proyecto y al propio monedero.", "用于存放 QUBIC 和 Qubic 代币的钱包与托管服务。它们都收录在 QubicMap 上，每个都链接到其项目页面和钱包本身。", "Wallets en bewaardiensten voor QUBIC en Qubic-tokens. Ze staan allemaal op QubicMap; elk linkt naar zijn projectpagina en naar de wallet zelf.", "Кошельки и кастодиальные сервисы для QUBIC и токенов Qubic. Все они есть на QubicMap; у каждого есть ссылка на страницу проекта и на сам кошелёк.", "Wallets und Verwahrdienste für QUBIC und Qubic-Token. Alle sind auf QubicMap gelistet; jede verlinkt auf ihre Projektseite und auf die Wallet selbst."],
+ "Wallet": ["Wallet", "Monedero", "钱包", "Wallet", "Кошелёк", "Wallet"],
+ "Type": ["Type", "Tipo", "类型", "Type", "Тип", "Typ"],
+ "Keys held by": ["Clés détenues par", "Claves en manos de", "私钥持有者", "Sleutels bij", "Ключи у", "Schlüssel bei"],
+ "Web": ["Web", "Web", "网页", "Web", "Веб", "Web"],
+ "Hardware": ["Matériel", "Hardware", "硬件", "Hardware", "Аппаратный", "Hardware"],
+ "Multisig contract": ["Contrat multisignature", "Contrato multifirma", "多签合约", "Multisig-contract", "Мультиподписной контракт", "Multisig-Vertrag"],
+ "Rust wallet": ["Wallet en Rust", "Monedero en Rust", "Rust 钱包", "Wallet in Rust", "Кошелёк на Rust", "Wallet in Rust"],
+ "Desktop": ["Desktop", "Escritorio", "桌面", "Desktop", "Десктоп", "Desktop"],
+ "Institutional custody": ["Conservation institutionnelle", "Custodia institucional", "机构托管", "Institutionele bewaring", "Институциональное хранение", "Institutionelle Verwahrung"],
+ "You": ["Vous", "Tú", "你自己", "Jij", "Вы", "Du"],
+ "You (on the device)": ["Vous (sur l'appareil)", "Tú (en el dispositivo)", "你自己（在设备上）", "Jij (op het apparaat)", "Вы (на устройстве)", "Du (auf dem Gerät)"],
+ "You (in MetaMask)": ["Vous (dans MetaMask)", "Tú (en MetaMask)", "你自己（在 MetaMask 中）", "Jij (in MetaMask)", "Вы (в MetaMask)", "Du (in MetaMask)"],
+ "Co-owners": ["Les co-propriétaires", "Los copropietarios", "共同所有人", "De mede-eigenaars", "Совладельцы", "Die Miteigentümer"],
+ "The provider": ["Le prestataire", "El proveedor", "服务商", "De aanbieder", "Провайдер", "Der Anbieter"],
+ "Details on each wallet below.": ["Le détail de chaque wallet ci-dessous.", "Detalles de cada monedero más abajo.", "各钱包详情见下文。", "Details per wallet hieronder.", "Подробнее о каждом кошельке ниже.", "Details zu jeder Wallet weiter unten."],
+ "Everyday wallets": ["Wallets du quotidien", "Monederos para el día a día", "日常钱包", "Wallets voor dagelijks gebruik", "Кошельки на каждый день", "Wallets für den Alltag"],
+ "Hardware and shared vaults": ["Matériel et coffres partagés", "Hardware y bóvedas compartidas", "硬件钱包与共享金库", "Hardware en gedeelde kluizen", "Аппаратные кошельки и общие хранилища", "Hardware und geteilte Tresore"],
+ "For institutions": ["Pour les institutions", "Para instituciones", "面向机构", "Voor instellingen", "Для организаций", "Für Institutionen"],
+ "Which Qubic wallet is the official one?": ["Quel est le wallet Qubic officiel ?", "¿Cuál es el monedero oficial de Qubic?", "哪个是官方 Qubic 钱包？", "Welke Qubic-wallet is de officiële?", "Какой кошелёк Qubic официальный?", "Welche Qubic-Wallet ist die offizielle?"],
+ "Qubic Wallet, at wallet.qubic.org, is the official web wallet. Check the address in your browser before you type anything.": ["Qubic Wallet, à l'adresse wallet.qubic.org, est le wallet web officiel. Vérifiez l'adresse dans votre navigateur avant de saisir quoi que ce soit.", "Qubic Wallet, en wallet.qubic.org, es el monedero web oficial. Comprueba la dirección en tu navegador antes de escribir nada.", "Qubic Wallet（wallet.qubic.org）是官方网页钱包。输入任何内容之前，请先核对浏览器中的网址。", "Qubic Wallet, op wallet.qubic.org, is de officiële webwallet. Controleer het adres in je browser voordat je iets intypt.", "Qubic Wallet по адресу wallet.qubic.org — официальный веб-кошелёк. Прежде чем что-либо вводить, проверьте адрес в браузере.", "Qubic Wallet unter wallet.qubic.org ist die offizielle Web-Wallet. Prüfe die Adresse in deinem Browser, bevor du etwas eingibst."],
+ "What is a Qubic seed?": ["Qu'est-ce qu'une seed Qubic ?", "¿Qué es una seed de Qubic?", "什么是 Qubic 种子（seed）？", "Wat is een Qubic-seed?", "Что такое seed Qubic?", "Was ist ein Qubic-Seed?"],
+ "The seed is the 55-letter secret that controls a Qubic address. Anyone who has it can move the funds: keep it offline, and only enter it in a wallet you have checked.": ["La seed est le secret de 55 lettres qui contrôle une adresse Qubic. Quiconque la possède peut déplacer les fonds : gardez-la hors ligne et ne la saisissez que dans un wallet que vous avez vérifié.", "La seed es el secreto de 55 letras que controla una dirección de Qubic. Quien la tenga puede mover los fondos: guárdala sin conexión y escríbela solo en un monedero que hayas comprobado.", "种子是控制一个 Qubic 地址的 55 个字母的密钥。任何拿到它的人都能转走资金：请离线保存，只在你核实过的钱包中输入。", "De seed is het geheim van 55 letters dat een Qubic-adres beheert. Wie hem heeft, kan de tegoeden verplaatsen: bewaar hem offline en voer hem alleen in bij een wallet die je hebt gecontroleerd.", "Seed — это секрет из 55 букв, который управляет адресом Qubic. Любой, у кого он есть, может перевести средства: храните его офлайн и вводите только в проверенный кошелёк.", "Der Seed ist das Geheimnis aus 55 Buchstaben, das eine Qubic-Adresse kontrolliert. Wer ihn hat, kann die Guthaben bewegen: Bewahre ihn offline auf und gib ihn nur in eine Wallet ein, die du geprüft hast."],
 }
 
 def gt(k, i):
@@ -45,7 +71,7 @@ Y = True
 # the small Qubic logo of the home page header, linked to the map
 _a = s.find('<svg class="qlogo"'); QLOGO = '\n'.join(x for x in s[_a:s.find('</svg>', _a) + 6].split('\n') if x.strip())
 GUIDES = [{
-  "page": "explorers", "cat": "explorer", "lastmod": "2026-11-16",
+  "page": "explorers", "cat": "explorer", "catname": "Explorers", "lastmod": "2026-11-16", "colh": "Tool", "note": "Details on each tool below.", "text": False,
   "title": "Qubic explorers: compare block explorers and network tools",
   "desc": "Look up Qubic addresses, transactions, ticks and epochs. Compare the official Qubic Explorer, Qubic Report and live network tools side by side.",
   "h1": "Qubic explorers",
@@ -60,6 +86,25 @@ GUIDES = [{
              ["Network views and analytics", ["Qubic Live", "Tick Unlocked", "Jetski Tracker"]]],
   "faq": [["How do I check a Qubic transaction?", "Paste the transaction ID or the address into Qubic Explorer. Qubic Report also shows the transactions of each tick as they happen."],
           ["What is a tick?", "A tick is one step of the Qubic network, during which the computors agree on a set of transactions. An epoch groups the ticks of one week."]],
+}, {
+  "page": "wallets", "cat": "custody", "catname": "Wallets and custody", "lastmod": "2026-11-16", "colh": "Wallet", "note": "Details on each wallet below.", "text": True,
+  "title": "Qubic wallets: compare web, desktop and hardware wallets",
+  "desc": "Where to keep QUBIC: the official Qubic Wallet, desktop and hardware wallets, a MetaMask Snap and multisig vaults, side by side.",
+  "h1": "Qubic wallets",
+  "lead": "Wallets and custody services for QUBIC and Qubic tokens. All are listed on QubicMap; each links to its project page and to the wallet itself.",
+  "cols": ["Type", "Keys held by"],
+  "rows": [["Qubic Wallet", "official", ["Web", "You"]],
+           ["Glyph", "", ["Desktop", "You"]],
+           ["Rubic", "", ["Rust wallet", "You"]],
+           ["Qubic-Connect", "", ["MetaMask Snap", "You (in MetaMask)"]],
+           ["HASHWallet", "", ["Hardware", "You (on the device)"]],
+           ["MSVault", "", ["Multisig contract", "Co-owners"]],
+           ["Onyze", "", ["Institutional custody", "The provider"]]],
+  "groups": [["Everyday wallets", ["Qubic Wallet", "Glyph", "Rubic", "Qubic-Connect"]],
+             ["Hardware and shared vaults", ["HASHWallet", "MSVault"]],
+             ["For institutions", ["Onyze"]]],
+  "faq": [["Which Qubic wallet is the official one?", "Qubic Wallet, at wallet.qubic.org, is the official web wallet. Check the address in your browser before you type anything."],
+          ["What is a Qubic seed?", "The seed is the 55-letter secret that controls a Qubic address. Anyone who has it can move the funds: keep it offline, and only enter it in a wallet you have checked."]],
 }]
 
 CSS = """:root{color-scheme:dark;--void:#04070c;--panel:#0a1019;--rule:#182434;--ink:#dfe9f3;--muted:#7f93a8;--ice:#cfe6ff;--live:#62d6a0;--warn:#f1bb5c;
@@ -107,7 +152,7 @@ def guide_html(g, i):
             {"@type": "ListItem", "position": 2, "name": gt(g['h1'], i), "item": url}]},
           {"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
             {"@type": "Question", "name": gt(q, i), "acceptedAnswer": {"@type": "Answer", "text": gt(a, i)}} for q, a in g['faq']]}]
-    cell = lambda v: '<td class="n">–</td>' if not v else ('<td class="y">✓</td>' if v is True else '<td class="y">✓ %s</td>' % esc(gt(v, i)))
+    cell = (lambda v: '<td>%s</td>' % esc(gt(v, i))) if g['text'] else (lambda v: '<td class="n">–</td>' if not v else ('<td class="y">✓</td>' if v is True else '<td class="y">✓ %s</td>' % esc(gt(v, i))))
     rows = ''.join('<tr><td><a href="%s/p/%s">%s</a>%s</td>%s</tr>' % (pre, slug(n), esc(n), '<small>%s</small>' % esc(gt(tag, i)) if tag else '', ''.join(cell(v) for v in vals))
                    for n, tag, vals in g['rows'])
     tagof = {n: tag for n, tag, _ in g['rows']}
@@ -131,13 +176,13 @@ def guide_html(g, i):
         '<h1>%s</h1><p class="lead">%s</p>'
         '<h2>%s</h2><div class="tw"><table><thead><tr><th>%s</th>%s</tr></thead><tbody>%s</tbody></table></div><p class="note">%s</p>'
         '%s<h2>%s</h2>%s'
-        '<h2>%s</h2><div class="rel"><a class="btn" href="%s">%s</a><a class="btn" href="/connections">%s</a></div>'
+        '<h2>%s</h2><div class="rel">' + ''.join('<a class="btn" href="%s/%s">%s</a>' % (pre, o['page'], esc(gt(o['h1'], i))) for o in GUIDES if o is not g) + '<a class="btn" href="%s">%s</a><a class="btn" href="/connections">%s</a></div>'
         '<footer><p>%s</p>Qubic Ecosystem Map · <a href="/legal">%s</a></footer></div></body></html>\n') % (
         HL.get(l, l), esc(T), esc(D), url, alt, esc(T), esc(D), url, URL,
         _json.dumps(ld, ensure_ascii=False).replace('</', '<\\/'), CSS, home, QLOGO,
-        home, home, g['cat'], esc(gt('Explorers', i)),
+        home, home, g['cat'], esc(gt(g['catname'], i)),
         esc(gt(g['h1'], i)), esc(gt(g['lead'], i)),
-        esc(gt('At a glance', i)), esc(gt('Tool', i)), ''.join('<th>%s</th>' % esc(gt(c, i)) for c in g['cols']), rows, esc(gt('Details on each tool below.', i)),
+        esc(gt('At a glance', i)), esc(gt(g['colh'], i)), ''.join('<th>%s</th>' % esc(gt(c, i)) for c in g['cols']), rows, esc(gt(g['note'], i)),
         groups, esc(gt('Common questions', i)), faq,
         esc(gt('See also', i)), home, esc(gt('All {n} projects on the map', i).replace('{n}', str(len(E)))), esc(gt('Connections between projects', i)),
         esc(gt('Independent, community-run directory, for information only. A listing is not an endorsement: check each tool yourself, and never type your seed into a website.', i)),

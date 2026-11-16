@@ -321,31 +321,59 @@ async function release(request, env) {
 
 const safe = (v) => JSON.stringify(v).replace(/</g, "\\u003c").replace(/[\u2028\u2029]/g, "");
 
+// The data injected into the home page is the same for every visitor: it is built at most once a minute and kept
+// (in this worker's memory and in the edge cache), so a visit does not wait for the database. A copy up to an hour
+// old is served at once while a fresh one is built in the background.
+const HOME_FRESH = 60000, HOME_STALE = 3600000;
+let homeMem = null; // { s: script, t: built at }
+async function buildScript(request, env, waitUntil) {
+  const [l, n, k, m, g, r, a, wh] = await Promise.all([
+    likes(request, env, waitUntil).catch(() => null),
+    news(request, env, waitUntil).catch(() => null),
+    links(request, env, waitUntil).catch(() => null),
+    media(request, env, waitUntil).catch(() => null),
+    github(request, env, waitUntil).catch(() => null),
+    release(request, env).catch(() => null),
+    arcade(request, env, waitUntil).catch(() => null),
+    whales(env).catch(() => null),
+  ]);
+  let script = "";
+  if (l) script += "window.__LIKES=" + safe(l) + ";";
+  if (n && n.length) script += "window.__NEWS=" + safe(n) + ";";
+  if (k && Object.keys(k).length) script += "window.__LINKS=" + safe(k) + ";";
+  if (m && Object.keys(m).length) script += "window.__MEDIA=" + safe(m) + ";";
+  if (g && g.length) script += "window.__GH=" + safe(g) + ";";
+  if (r && r.v) script += "window.__REL=" + safe(r) + ";";
+  if (a && (a.lead || a.champ)) script += "window.__ARC=" + safe(a) + ";";
+  if (wh && (wh.l.length || wh.t)) script += "window.__WH=" + safe(wh) + ";";
+  const out = { s: script, t: Date.now() };
+  if (script) {
+    homeMem = out;
+    const cache = typeof caches !== "undefined" && caches.default;
+    if (cache) waitUntil(cache.put(new Request(new URL(request.url).origin + "/api/home-cache"),
+      new Response(JSON.stringify(out), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=3600" } })).catch(() => {}));
+  }
+  return out;
+}
+async function homeScript(request, env, waitUntil) {
+  let c = homeMem;
+  if (!c) {
+    const cache = typeof caches !== "undefined" && caches.default;
+    const hit = cache && (await cache.match(new Request(new URL(request.url).origin + "/api/home-cache")).catch(() => null));
+    if (hit) c = homeMem = await hit.json().catch(() => null);
+  }
+  const age = c ? Date.now() - c.t : Infinity;
+  if (age < HOME_FRESH) return c.s;
+  if (age < HOME_STALE) { waitUntil(buildScript(request, env, waitUntil).catch(() => {})); return c.s; }
+  return (await buildScript(request, env, waitUntil)).s;
+}
+
 export async function onRequest(context) {
   const { request, env, next, waitUntil } = context;
-  const res = await next();
   try {
-    if (request.method !== "GET" || !(res.headers.get("content-type") || "").includes("text/html")) return res;
-    const [l, n, k, m, g, r, a, wh] = await Promise.all([
-      likes(request, env, waitUntil).catch(() => null),
-      news(request, env, waitUntil).catch(() => null),
-      links(request, env, waitUntil).catch(() => null),
-      media(request, env, waitUntil).catch(() => null),
-      github(request, env, waitUntil).catch(() => null),
-      release(request, env).catch(() => null),
-      arcade(request, env, waitUntil).catch(() => null),
-      whales(env).catch(() => null),
-    ]);
-    let script = "";
-    if (l) script += "window.__LIKES=" + safe(l) + ";";
-    if (n && n.length) script += "window.__NEWS=" + safe(n) + ";";
-    if (k && Object.keys(k).length) script += "window.__LINKS=" + safe(k) + ";";
-    if (m && Object.keys(m).length) script += "window.__MEDIA=" + safe(m) + ";";
-    if (g && g.length) script += "window.__GH=" + safe(g) + ";";
-    if (r && r.v) script += "window.__REL=" + safe(r) + ";";
-    if (a && (a.lead || a.champ)) script += "window.__ARC=" + safe(a) + ";";
-    if (wh && (wh.l.length || wh.t)) script += "window.__WH=" + safe(wh) + ";";
-    if (!script) return res;
+    if (request.method !== "GET") return await next();
+    const [res, script] = await Promise.all([next(), homeScript(request, env, waitUntil).catch(() => "")]);
+    if (!(res.headers.get("content-type") || "").includes("text/html") || !script) return res;
     const out = new HTMLRewriter()
       .on("head", { element(el) { el.append("<script>" + script + "</script>", { html: true }); } })
       .transform(res);
@@ -353,6 +381,6 @@ export async function onRequest(context) {
     headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     return new Response(out.body, { status: out.status, headers });
   } catch (e) {
-    return res;
+    return next();
   }
 }
