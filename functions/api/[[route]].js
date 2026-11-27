@@ -1,3 +1,4 @@
+import { likeTotals, dropLikeTotals } from "../likes.js";
 // Likes API for the Qubic Ecosystem Map (Cloudflare Pages Function + D1).
 //   GET  /api/likes          -> { counts: {project: n}, week: {project: n} }   (cached 60 s)
 //   POST /api/like {id, on}  -> { count }
@@ -172,12 +173,7 @@ export async function onRequest({ request, env, waitUntil }) {
       const key = new Request(url.origin + "/api/likes");
       const hit = cache && (await cache.match(key));
       if (hit) return hit;
-      const all = await env.DB.prepare("SELECT project, count(*) AS n FROM likes GROUP BY project").all();
-      const recent = await env.DB.prepare("SELECT project, count(*) AS n FROM likes WHERE ts > ?1 GROUP BY project").bind(Date.now() - 7 * DAY).all();
-      const counts = {}, week = {};
-      for (const r of all.results) counts[r.project] = r.n;
-      for (const r of recent.results) week[r.project] = r.n;
-      const res = json({ counts, week }, 200, { "Cache-Control": "public, max-age=60" });
+      const res = json(await likeTotals(env), 200, { "Cache-Control": "public, max-age=60" });
       if (cache) waitUntil(cache.put(key, res.clone()));
       return res;
     }
@@ -195,6 +191,7 @@ export async function onRequest({ request, env, waitUntil }) {
       } else {
         await env.DB.prepare("DELETE FROM likes WHERE project = ?1 AND voter = ?2").bind(id, voter).run();
       }
+      waitUntil(dropLikeTotals(env));
       const row = await env.DB.prepare("SELECT count(*) AS n FROM likes WHERE project = ?1").bind(id).first();
       return json({ count: row ? row.n : 0 });
     }

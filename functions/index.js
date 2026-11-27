@@ -4,6 +4,7 @@
 
 import LIST from "../lib/links.js";
 import { mediaBatch, mediaIndex } from "./media.js";
+import { likeTotals } from "./likes.js";
 
 const DAY = 86400000;
 const NEWS_URL = "https://qubic.org/blog-grid";
@@ -16,12 +17,7 @@ async function likes(request, env, waitUntil) {
   const key = new Request(origin + "/api/likes");
   const hit = cache && (await cache.match(key));
   if (hit) return await hit.json();
-  const all = await env.DB.prepare("SELECT project, count(*) AS n FROM likes GROUP BY project").all();
-  const recent = await env.DB.prepare("SELECT project, count(*) AS n FROM likes WHERE ts > ?1 GROUP BY project").bind(Date.now() - 7 * DAY).all();
-  const counts = {}, week = {};
-  for (const r of all.results) counts[r.project] = r.n;
-  for (const r of recent.results) week[r.project] = r.n;
-  const body = { counts, week };
+  const body = await likeTotals(env);
   if (cache)
     waitUntil(cache.put(key, new Response(JSON.stringify(body), { headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=60" } })));
   return body;
